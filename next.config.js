@@ -168,15 +168,11 @@ const withPWA = require('next-pwa')({
 const nextConfig = {
   reactStrictMode: true,
   experimental: {
-    serverActions: true
+    serverActions: true,
   },
   images: {
     domains: ['res.cloudinary.com'],
-    unoptimized: true
   },
-  basePath: process.env.NODE_ENV === 'production' ? '/meu-portal' : '',
-  assetPrefix: process.env.NODE_ENV === 'production' ? '/meu-portal/' : '',
-  trailingSlash: true,
 }
 
 module.exports = withPWA(nextConfig); 
