@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
+import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
@@ -21,7 +21,7 @@ export async function GET(request: Request) {
       include: {
         team: {
           include: {
-            monthlyFeeConfig: true,
+            monthlyFees: true,
           },
         },
       },
@@ -32,20 +32,23 @@ export async function GET(request: Request) {
     }
 
     const today = new Date()
-    const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1)
-    const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0)
+    const currentMonth = today.getMonth() + 1
+    const currentYear = today.getFullYear()
 
     // Buscar todos os jogadores do time
     const players = await prisma.player.findMany({
       where: { teamId: teamUser.team.id },
       include: {
-        feeException: true,
+        monthlyFeeExceptions: {
+          where: {
+            month: currentMonth,
+            year: currentYear
+          }
+        },
         payments: {
           where: {
-            dueDate: {
-              gte: firstDayOfMonth,
-              lte: lastDayOfMonth
-            }
+            month: currentMonth,
+            year: currentYear
           }
         }
       }
@@ -55,17 +58,16 @@ export async function GET(request: Request) {
 
     for (const player of players) {
       // Verificar se o jogador tem uma exceção de mensalidade
-      const monthlyFee = player.feeException?.amount || teamUser.team.monthlyFeeConfig?.amount || 0
-      const isExempt = player.feeException?.isExempt || false
+      const feeException = player.monthlyFeeExceptions[0]
+      const monthlyFee = feeException?.isExempt ? 0 : (teamUser.team.monthlyFees[0]?.amount || 0)
+      const isExempt = feeException?.isExempt || false
 
       if (isExempt) continue
 
       // Verificar se já pagou a mensalidade deste mês
-      const hasPaid = player.payments.some(p => 
+      const hasPaid = player.payments.some((p: any) => 
         p.amount >= monthlyFee && 
-        p.status === 'PAID' &&
-        p.dueDate >= firstDayOfMonth && 
-        p.dueDate <= lastDayOfMonth
+        p.paid === true
       )
 
       if (!hasPaid) {
@@ -76,7 +78,7 @@ export async function GET(request: Request) {
             playerName: player.name,
             message: `Pagamento da mensalidade atrasado`,
             type: 'overdue',
-            dueDate: firstDayOfMonth
+            dueDate: new Date(currentYear, currentMonth - 1, 5)
           })
         } else {
           // Se ainda não chegou no dia 5, é um lembrete
@@ -85,7 +87,7 @@ export async function GET(request: Request) {
             playerName: player.name,
             message: `Pagamento da mensalidade pendente`,
             type: 'missing',
-            dueDate: new Date(today.getFullYear(), today.getMonth(), 5)
+            dueDate: new Date(currentYear, currentMonth - 1, 5)
           })
         }
       }
