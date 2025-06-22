@@ -1,26 +1,37 @@
-# Meu Portal
+# Meu Portal - Sistema de Gerenciamento de Times Esportivos
 
-Um aplicativo web progressivo (PWA) para gerenciamento de times esportivos.
+Um sistema completo para gerenciamento de times esportivos, desenvolvido com Next.js, TypeScript e Prisma.
 
 ## Funcionalidades
 
-- Autenticação de usuários
-- Gerenciamento de times
-- Cadastro e gerenciamento de jogadores
-- Registro de partidas e estatísticas
-- Controle financeiro
-- Suporte offline
-- Interface responsiva
+*   **Gerenciamento de Times:** Crie e gerencie times com cores personalizadas e logos.
+*   **Gerenciamento de Jogadores:** Cadastre jogadores com fotos, números e informações detalhadas.
+*   **Controle de Partidas:** Registre resultados de partidas e estatísticas dos jogadores.
+*   **Gerenciamento Financeiro:** Controle de mensalidades, pagamentos e balanço financeiro.
+*   **Progressive Web App (PWA):** Instale no seu celular e use offline.
+*   **Deploy na Vercel:** Sistema totalmente funcional na nuvem.
 
 ## Tecnologias Utilizadas
 
-- Next.js 13 (App Router)
-- TypeScript
-- Tailwind CSS
-- Prisma (ORM)
-- NextAuth.js
-- SQLite (Banco de dados)
-- PWA (Progressive Web App)
+*   **Frontend:** Next.js 13, React, TypeScript, Tailwind CSS
+*   **Backend:** Next.js API Routes, Prisma ORM
+*   **Banco de Dados:** MongoDB Atlas
+*   **Autenticação:** NextAuth.js
+*   **Deploy:** Vercel
+*   **PWA:** next-pwa, Service Workers
+
+## Como Usar
+
+1.  Acesse o sistema através do link da Vercel
+2.  Crie uma conta ou faça login
+3.  Crie seu time e comece a gerenciar seus jogadores
+4.  Instale como PWA no seu dispositivo móvel
+
+## Status do Deploy
+
+✅ Sistema funcionando na Vercel com MongoDB Atlas
+✅ PWA configurado e funcional
+✅ Todas as funcionalidades operacionais
 
 ## Pré-requisitos
 
@@ -89,7 +100,4 @@ public/               # Arquivos estáticos
 
 ## Licença
 
-Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
-
-*   **Gerenciamento Financeiro:** Controle de mensalidades, pagamentos e balanço financeiro.
-*   **Progressive Web App (PWA):** Instale no seu celular e use offline. 
+Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes. 
