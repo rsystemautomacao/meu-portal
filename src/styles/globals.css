@@ -1,0 +1,43 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+  }
+
+  body {
+    @apply antialiased;
+  }
+
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0px 1000px white inset;
+    transition: background-color 5000s ease-in-out 0s;
+  }
+}
+
+@layer components {
+  .form-input {
+    @apply block w-full rounded-xl border-0 py-2.5 px-4 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary transition-shadow sm:text-sm sm:leading-6;
+  }
+
+  .btn-primary {
+    @apply relative w-full rounded-xl bg-gradient-to-r from-primary to-secondary py-3 px-4 text-sm font-semibold text-white shadow-sm hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary transition-all disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-secondary {
+    @apply rounded-lg py-2 px-4 font-medium text-primary hover:text-secondary transition-colors duration-200 hover:bg-primary/5;
+  }
+
+  .card {
+    @apply bg-white/80 backdrop-blur-sm p-8 rounded-2xl shadow-2xl border border-gray-100;
+  }
+
+  .gradient-bg {
+    @apply bg-gradient-to-br from-primary/10 via-white to-secondary/10;
+  }
+} 

@@ -1,0 +1,89 @@
+{
+  "name": "Meu Portal - Gerenciamento de Times",
+  "short_name": "Meu Portal",
+  "description": "Aplicativo completo para gerenciamento de times esportivos com controle de jogadores, partidas, estatísticas e finanças",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#1a365d",
+  "scope": "/",
+  "lang": "pt-BR",
+  "categories": ["sports", "productivity", "utilities"],
+  "icons": [
+    {
+      "src": "/icons/icon-72x72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-96x96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-128x128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-384x384.png",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Jogadores",
+      "short_name": "Jogadores",
+      "description": "Gerenciar jogadores do time",
+      "url": "/dashboard/players",
+      "icons": [
+        {
+          "src": "/icons/players-96x96.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Partidas",
+      "short_name": "Partidas",
+      "description": "Gerenciar partidas e estatísticas",
+      "url": "/dashboard/matches",
+      "icons": [
+        {
+          "src": "/icons/matches-96x96.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Financeiro",
+      "short_name": "Financeiro",
+      "description": "Controle financeiro do time",
+      "url": "/dashboard/financial",
+      "icons": [
+        {
+          "src": "/icons/financial-96x96.png",
+          "sizes": "96x96"
+        }
+      ]
+    }
+  ]
+} 

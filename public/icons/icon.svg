@@ -1,0 +1,26 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="512" height="512" rx="128" fill="url(#gradient)"/>
+  
+  <!-- Círculo central representando uma bola -->
+  <circle cx="256" cy="256" r="120" fill="white" opacity="0.9"/>
+  
+  <!-- Linhas da bola de futebol -->
+  <path d="M256 136 L256 376" stroke="#1a365d" stroke-width="8" stroke-linecap="round"/>
+  <path d="M136 256 L376 256" stroke="#1a365d" stroke-width="8" stroke-linecap="round"/>
+  <path d="M180 180 L332 332" stroke="#2b6cb0" stroke-width="6" stroke-linecap="round"/>
+  <path d="M332 180 L180 332" stroke="#2b6cb0" stroke-width="6" stroke-linecap="round"/>
+  
+  <!-- Pequenos círculos nos pontos de interseção -->
+  <circle cx="256" cy="256" r="12" fill="#1a365d"/>
+  <circle cx="256" cy="136" r="8" fill="#2b6cb0"/>
+  <circle cx="256" cy="376" r="8" fill="#2b6cb0"/>
+  <circle cx="136" cy="256" r="8" fill="#2b6cb0"/>
+  <circle cx="376" cy="256" r="8" fill="#2b6cb0"/>
+  
+  <defs>
+    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a365d;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#2b6cb0;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+</svg> 

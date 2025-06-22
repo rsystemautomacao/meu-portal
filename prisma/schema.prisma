@@ -1,0 +1,236 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  password      String?
+  emailVerified DateTime?
+  image         String?
+  isAdmin       Boolean   @default(false)  // Para administradores gerais
+  teams         TeamUser[]
+  accounts      Account[]
+  sessions      Session[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Team {
+  id            String    @id @default(cuid())
+  name          String
+  primaryColor  String    @default("#000000")
+  secondaryColor String  @default("#FFFFFF")
+  logo          String?
+  users         TeamUser[]
+  matches       Match[]
+  players       Player[]
+  transactions  Transaction[]
+  monthlyFeeConfig MonthlyFeeConfig?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model TeamUser {
+  id        String   @id @default(cuid())
+  teamId    String
+  userId    String
+  role      String    @default("member") // owner, admin, member
+  team      Team      @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([teamId, userId])
+}
+
+model Player {
+  id              String    @id @default(cuid())
+  name            String
+  position        String
+  number          Int?      // Número da camisa
+  photoUrl        String?   // URL da foto do jogador
+  birthDate       DateTime?
+  joinDate        DateTime  @default(now())
+  status          String    @default("ACTIVE") // ACTIVE, INACTIVE
+  monthlyFee      Float     @default(0)
+  teamId          String
+  team            Team      @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  feeException    MonthlyFeeException?
+  transactions    Transaction[]
+  matchStats      MatchStats[]
+  payments        Payment[]
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+model Match {
+  id            String    @id @default(cuid())
+  date          DateTime
+  opponent      String
+  score         String?
+  teamId        String
+  team          Team      @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  stats         MatchStats[]
+  matchSheet    MatchSheet?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model MatchStats {
+  id          String   @id @default(cuid())
+  matchId     String
+  match       Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  playerId    String
+  player      Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  goals       Int      @default(0)
+  assists     Int      @default(0)
+  yellowCards Int      @default(0)
+  redCards    Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([matchId, playerId])
+}
+
+enum TransactionType {
+  INCOME
+  EXPENSE
+}
+
+enum IncomeType {
+  DONATION
+  FESTIVAL
+  MONTHLY_FEE
+  RAFFLE
+  OTHER
+}
+
+enum ExpenseType {
+  CHAMPIONSHIP
+  CLEANING
+  GAME_MATERIALS
+  LEAGUE_MONTHLY
+  COURT_MONTHLY
+  UNIFORMS
+  OTHER
+}
+
+model Transaction {
+  id          String         @id @default(cuid())
+  amount      Float
+  type        TransactionType
+  incomeType IncomeType?
+  expenseType ExpenseType?
+  description String
+  date        DateTime
+  players     Player[]       // Relacionamento com jogadores (para mensalidades)
+  teamId      String
+  team        Team           @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@index([teamId])
+  @@index([date])
+}
+
+model MonthlyFeeConfig {
+  id          String    @id @default(cuid())
+  amount      Float
+  dueDay      Int       // Dia do vencimento
+  team        Team      @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  teamId      String    @unique
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  isActive    Boolean   @default(true)
+}
+
+model MatchSheet {
+  id             String       @id @default(cuid())
+  shareToken     String       @unique
+  status         String       @default("pending") // pending, in_progress, finished
+  startTime      DateTime?
+  endTime        DateTime?
+  firstHalfEnd   DateTime?
+  secondHalfStart DateTime?
+  matchId        String       @unique
+  match          Match        @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  events         MatchEvent[]
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+}
+
+model MatchEvent {
+  id           String     @id @default(cuid())
+  type         String     // goal, assist, yellow_card, red_card, substitution
+  minute       Int
+  playerName   String
+  playerNumber Int?
+  teamSide     String     // home, away
+  details      String?
+  matchSheetId String
+  matchSheet   MatchSheet @relation(fields: [matchSheetId], references: [id])
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Payment {
+  id          String    @id @default(cuid())
+  amount      Float
+  dueDate     DateTime
+  paymentDate DateTime?
+  status      String    // PENDING, PAID, LATE
+  player      Player    @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  playerId    String
+  month       Int
+  year        Int
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([playerId])
+  @@index([status])
+  @@index([month, year])
+}
+
+model MonthlyFeeException {
+  id        String   @id @default(cuid())
+  player    Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  playerId  String   @unique
+  amount    Float?
+  isExempt  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+} 

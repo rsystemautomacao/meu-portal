@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerador de Ícones PWA</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .icon-preview {
+            display: inline-block;
+            margin: 10px;
+            text-align: center;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .icon-preview canvas {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .download-btn {
+            display: block;
+            margin-top: 10px;
+            padding: 8px 16px;
+            background: #1a365d;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 12px;
+        }
+        .download-btn:hover {
+            background: #2b6cb0;
+        }
+        h1 {
+            color: #1a365d;
+            text-align: center;
+        }
+        .instructions {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+    <h1>Gerador de Ícones PWA - Meu Portal</h1>
+    
+    <div class="instructions">
+        <h3>Instruções:</h3>
+        <ol>
+            <li>Clique em "Baixar" para cada tamanho de ícone</li>
+            <li>Salve os arquivos na pasta <code>public/icons/</code></li>
+            <li>Renomeie os arquivos conforme o manifest.json</li>
+        </ol>
+    </div>
+
+    <div id="icons-container"></div>
+
+    <script>
+        const sizes = [72, 96, 128, 144, 152, 192, 384, 512];
+        
+        function createIcon(size) {
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+            
+            // Criar gradiente de fundo
+            const gradient = ctx.createLinearGradient(0, 0, size, size);
+            gradient.addColorStop(0, '#1a365d');
+            gradient.addColorStop(1, '#2b6cb0');
+            
+            // Desenhar fundo arredondado
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.roundRect(0, 0, size, size, size * 0.25);
+            ctx.fill();
+            
+            // Círculo central (bola)
+            const centerX = size / 2;
+            const centerY = size / 2;
+            const ballRadius = size * 0.23;
+            
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, ballRadius, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            // Linhas da bola
+            ctx.strokeStyle = '#1a365d';
+            ctx.lineWidth = size * 0.015;
+            ctx.lineCap = 'round';
+            
+            // Linha vertical
+            ctx.beginPath();
+            ctx.moveTo(centerX, centerY - ballRadius);
+            ctx.lineTo(centerX, centerY + ballRadius);
+            ctx.stroke();
+            
+            // Linha horizontal
+            ctx.beginPath();
+            ctx.moveTo(centerX - ballRadius, centerY);
+            ctx.lineTo(centerX + ballRadius, centerY);
+            ctx.stroke();
+            
+            // Linhas diagonais
+            ctx.strokeStyle = '#2b6cb0';
+            ctx.lineWidth = size * 0.012;
+            
+            ctx.beginPath();
+            ctx.moveTo(centerX - ballRadius * 0.7, centerY - ballRadius * 0.7);
+            ctx.lineTo(centerX + ballRadius * 0.7, centerY + ballRadius * 0.7);
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.moveTo(centerX + ballRadius * 0.7, centerY - ballRadius * 0.7);
+            ctx.lineTo(centerX - ballRadius * 0.7, centerY + ballRadius * 0.7);
+            ctx.stroke();
+            
+            // Círculos nos pontos de interseção
+            ctx.fillStyle = '#1a365d';
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, size * 0.023, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            ctx.fillStyle = '#2b6cb0';
+            const smallRadius = size * 0.015;
+            
+            // Pontos nas extremidades
+            ctx.beginPath();
+            ctx.arc(centerX, centerY - ballRadius, smallRadius, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            ctx.beginPath();
+            ctx.arc(centerX, centerY + ballRadius, smallRadius, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            ctx.beginPath();
+            ctx.arc(centerX - ballRadius, centerY, smallRadius, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            ctx.beginPath();
+            ctx.arc(centerX + ballRadius, centerY, smallRadius, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            return canvas;
+        }
+        
+        function downloadCanvas(canvas, filename) {
+            const link = document.createElement('a');
+            link.download = filename;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+        
+        // Criar ícones para cada tamanho
+        sizes.forEach(size => {
+            const container = document.createElement('div');
+            container.className = 'icon-preview';
+            
+            const canvas = createIcon(size);
+            container.appendChild(canvas);
+            
+            const label = document.createElement('div');
+            label.textContent = `${size}x${size}`;
+            label.style.marginTop = '10px';
+            label.style.fontWeight = 'bold';
+            container.appendChild(label);
+            
+            const downloadBtn = document.createElement('a');
+            downloadBtn.href = '#';
+            downloadBtn.className = 'download-btn';
+            downloadBtn.textContent = 'Baixar';
+            downloadBtn.onclick = (e) => {
+                e.preventDefault();
+                downloadCanvas(canvas, `icon-${size}x${size}.png`);
+            };
+            container.appendChild(downloadBtn);
+            
+            document.getElementById('icons-container').appendChild(container);
+        });
+        
+        // Adicionar suporte para roundRect em navegadores mais antigos
+        if (!CanvasRenderingContext2D.prototype.roundRect) {
+            CanvasRenderingContext2D.prototype.roundRect = function(x, y, width, height, radius) {
+                this.beginPath();
+                this.moveTo(x + radius, y);
+                this.lineTo(x + width - radius, y);
+                this.quadraticCurveTo(x + width, y, x + width, y + radius);
+                this.lineTo(x + width, y + height - radius);
+                this.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+                this.lineTo(x + radius, y + height);
+                this.quadraticCurveTo(x, y + height, x, y + height - radius);
+                this.lineTo(x, y + radius);
+                this.quadraticCurveTo(x, y, x + radius, y);
+                this.closePath();
+            };
+        }
+    </script>
+</body>
+</html> 
