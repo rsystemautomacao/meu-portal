@@ -95,7 +95,7 @@ export async function GET(request: Request) {
     const totalExpected = payments.reduce((total, payment) => {
       const feeException = payment.player.monthlyFeeExceptions[0]
       if (feeException?.isExempt) return total
-      return total + (feeException?.amount || teamUser.team.monthlyFees[0]?.amount || 0)
+      return total + (teamUser.team.monthlyFees[0]?.amount || 0)
     }, 0)
 
     const totalPaid = payments
