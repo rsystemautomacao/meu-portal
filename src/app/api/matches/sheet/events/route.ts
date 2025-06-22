@@ -1,31 +1,15 @@
+// Este arquivo foi desabilitado temporariamente
+// Depende do modelo matchSheet que foi removido do schema atual
+// Será reativado após o deploy funcionar
+
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
 export async function POST(request: Request) {
-  try {
-    const data = await request.json()
-    const { matchSheetId, type, minute, playerName, playerNumber, teamSide, details } = data
-
-    const event = await prisma.matchEvent.create({
-      data: {
-        matchSheetId,
-        type,
-        minute,
-        playerName,
-        playerNumber,
-        teamSide,
-        details
-      }
-    })
-
-    return NextResponse.json(event)
-  } catch (error) {
-    console.error('Erro ao criar evento:', error)
-    return NextResponse.json(
-      { error: 'Erro ao criar evento' },
-      { status: 500 }
-    )
-  }
+  return NextResponse.json(
+    { error: 'Funcionalidade temporariamente desabilitada' },
+    { status: 501 }
+  )
 }
 
 export async function DELETE(request: Request) {

@@ -39,26 +39,30 @@ export async function GET() {
 
     // Buscar jogadores do time com suas exceções de mensalidade
     const players = await prisma.player.findMany({
-      where: {
-        teamId: teamUser.team.id,
-        status: 'ACTIVE', // Apenas jogadores ativos
-      },
+      where: { teamId: teamUser.team.id },
       include: {
-        monthlyFeeExceptions: true,
         payments: {
-          orderBy: {
-            dueDate: 'desc'
+          orderBy: { createdAt: 'desc' },
+          take: 1,
+        },
+        monthlyFeeExceptions: {
+          where: {
+            month: new Date().getMonth() + 1,
+            year: new Date().getFullYear(),
           },
-          take: 1
-        }
-      }
+        },
+      },
+    })
+
+    const monthlyFeeConfig = await prisma.monthlyFeeConfig.findUnique({
+      where: { teamId: teamUser.team.id },
     })
 
     // Formatar os dados dos jogadores
     const formattedPlayers = players.map((player: PlayerWithRelations) => {
       const lastPayment = player.payments[0]
       const isExempt = !!player.monthlyFeeExceptions[0]?.isExempt
-      const monthlyFee = isExempt ? 0 : (player.monthlyFeeExceptions[0]?.amount || 0)
+      const monthlyFee = isExempt ? 0 : (monthlyFeeConfig?.amount || 0)
 
       return {
         id: player.id,

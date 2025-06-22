@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { getServerSession } from 'next-auth/next'
+import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 
 export async function PUT(
@@ -17,18 +17,11 @@ export async function PUT(
     }
 
     const data = await request.json()
-    const { name, position, status, birthDate, monthlyFee, isExempt } = data
+    const { name, position, status, birthDate, isExempt } = data
 
     if (!name || !position || !status) {
       return NextResponse.json(
         { error: 'Dados incompletos' },
-        { status: 400 }
-      )
-    }
-
-    if (!isExempt && (!monthlyFee || monthlyFee <= 0)) {
-      return NextResponse.json(
-        { error: 'Mensalidade é obrigatória quando o jogador não está isento' },
         { status: 400 }
       )
     }
@@ -57,8 +50,13 @@ export async function PUT(
     const player = await prisma.player.findUnique({
       where: { id: params.id },
       include: {
-        monthlyFeeExceptions: true
-      }
+        monthlyFeeExceptions: {
+          where: {
+            month: new Date().getMonth() + 1,
+            year: new Date().getFullYear(),
+          },
+        },
+      },
     })
 
     if (!player) {
@@ -85,25 +83,38 @@ export async function PUT(
         birthDate: birthDate ? new Date(birthDate) : null
       },
       include: {
-        monthlyFeeExceptions: true
-      }
+        monthlyFeeExceptions: {
+          where: {
+            month: new Date().getMonth() + 1,
+            year: new Date().getFullYear(),
+          },
+        },
+      },
     })
 
     // Atualizar ou criar exceção de mensalidade
-    if (isExempt) {
-      if (!player.feeException) {
+    if (isExempt !== undefined) {
+      // Deletar exceção existente se houver
+      await prisma.monthlyFeeException.deleteMany({
+        where: {
+          playerId: player.id,
+          month: new Date().getMonth() + 1,
+          year: new Date().getFullYear(),
+        },
+      })
+
+      // Criar nova exceção se for isento
+      if (isExempt) {
         await prisma.monthlyFeeException.create({
           data: {
+            teamId: teamUser.teamId,
             playerId: player.id,
+            month: new Date().getMonth() + 1,
+            year: new Date().getFullYear(),
             isExempt: true,
-            amount: 0
           }
         })
       }
-    } else if (player.feeException) {
-      await prisma.monthlyFeeException.delete({
-        where: { playerId: player.id }
-      })
     }
 
     return NextResponse.json(updatedPlayer)
@@ -171,14 +182,7 @@ export async function DELETE(
       },
     })
 
-    // Excluir estatísticas de partidas do jogador
-    await prisma.matchStats.deleteMany({
-      where: {
-        playerId: playerId,
-      },
-    })
-
-    // Excluir o jogador
+    // Excluir o jogador (as exceções e pagamentos já foram deletados)
     await prisma.player.delete({
       where: {
         id: playerId,

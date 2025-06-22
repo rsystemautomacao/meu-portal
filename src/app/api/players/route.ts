@@ -1,22 +1,20 @@
 import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
-import { getServerSession } from 'next-auth/next'
+import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
+import { prisma } from '@/lib/prisma'
 
-// GET - Listar jogadores do time
+// GET - Listar jogadores
 export async function GET(req: Request) {
   try {
     const session = await getServerSession(authOptions)
-    console.log('Session:', session)
-
-    if (!session?.user?.id) {
+    if (!session?.user) {
       return NextResponse.json(
         { message: 'Não autorizado' },
         { status: 401 }
       )
     }
 
-    // Buscar o time do usuário com jogadores e suas exceções de mensalidade
+    // Buscar o time do usuário
     const teamUser = await prisma.teamUser.findFirst({
       where: {
         userId: session.user.id,
@@ -24,20 +22,11 @@ export async function GET(req: Request) {
       include: {
         team: {
           include: {
-            players: {
-              include: {
-                monthlyFeeExceptions: true,
-              },
-              orderBy: {
-                name: 'asc',
-              },
-            },
+            monthlyFees: true,
           },
         },
       },
     })
-
-    console.log('TeamUser:', teamUser)
 
     if (!teamUser?.team) {
       return NextResponse.json(
@@ -46,24 +35,37 @@ export async function GET(req: Request) {
       )
     }
 
-    // Buscar configuração padrão de mensalidade do time
-    const monthlyFeeConfig = await prisma.monthlyFeeConfig.findUnique({
-      where: { teamId: teamUser.team.id }
+    // Buscar jogadores com exceções de mensalidade
+    const players = await prisma.player.findMany({
+      where: {
+        teamId: teamUser.team.id,
+      },
+      include: {
+        monthlyFeeExceptions: {
+          where: {
+            month: new Date().getMonth() + 1,
+            year: new Date().getFullYear(),
+          },
+        },
+      },
     })
 
-    // Formatar os jogadores para incluir informação de isenção e mensalidade
-    const players = teamUser.team.players.map(player => {
-      const feeException = player.monthlyFeeExceptions[0];
-      let monthlyFeeStatus = 'Não definido';
-      let monthlyFeeValue = null;
+    const monthlyFeeConfig = teamUser.team.monthlyFees[0]
+
+    // Formatar resposta
+    const formattedPlayers = players.map((player) => {
+      const feeException = player.monthlyFeeExceptions[0]
+      let monthlyFeeStatus = 'Não definido'
+      let monthlyFeeValue = 0
 
       if (feeException) {
         if (feeException.isExempt) {
           monthlyFeeStatus = 'Isento';
           monthlyFeeValue = 0;
-        } else if (feeException.amount !== null) {
-          monthlyFeeStatus = `R$ ${feeException.amount.toFixed(2)}`;
-          monthlyFeeValue = feeException.amount;
+        } else {
+          // Se não é isento, usa o valor padrão do time
+          monthlyFeeStatus = `R$ ${monthlyFeeConfig?.amount.toFixed(2) || '0.00'}`;
+          monthlyFeeValue = monthlyFeeConfig?.amount || 0;
         }
       } else if (monthlyFeeConfig) {
         monthlyFeeStatus = `R$ ${monthlyFeeConfig.amount.toFixed(2)}`;
@@ -78,7 +80,7 @@ export async function GET(req: Request) {
       };
     });
 
-    return NextResponse.json(players)
+    return NextResponse.json(formattedPlayers)
   } catch (error) {
     console.error('Erro ao listar jogadores:', error)
     return NextResponse.json(
@@ -134,7 +136,11 @@ export async function POST(req: Request) {
         userId: session.user.id,
       },
       include: {
-        team: true,
+        team: {
+          include: {
+            monthlyFees: true,
+          },
+        },
       },
     })
 
@@ -180,33 +186,29 @@ export async function POST(req: Request) {
     if (isExempt) {
       feeException = await prisma.monthlyFeeException.create({
         data: {
+          teamId: teamUser.team.id,
           playerId: player.id,
+          month: new Date().getMonth() + 1,
+          year: new Date().getFullYear(),
           isExempt: true,
-          amount: 0,
-        },
-      })
-    } else if (monthlyFee) {
-      feeException = await prisma.monthlyFeeException.create({
-        data: {
-          playerId: player.id,
-          isExempt: false,
-          amount: Number(monthlyFee),
         },
       })
     }
+
+    const monthlyFeeConfig = teamUser.team.monthlyFees[0]
 
     // Formatar a resposta com os mesmos campos do GET
     const monthlyFeeStatus = feeException
       ? feeException.isExempt
         ? 'Isento'
-        : `R$ ${(feeException.amount || 0).toFixed(2)}`
+        : `R$ ${(monthlyFeeConfig?.amount || 0).toFixed(2)}`
       : 'Não definido';
 
     const response = {
       ...player,
       feeException,
       isExempt: !!feeException?.isExempt,
-      monthlyFee: feeException?.amount || null,
+      monthlyFee: feeException?.isExempt ? 0 : (monthlyFeeConfig?.amount || null),
       monthlyFeeStatus
     };
 
@@ -248,7 +250,11 @@ export async function PUT(req: Request) {
         role: 'owner'
       },
       include: {
-        team: true
+        team: {
+          include: {
+            monthlyFees: true,
+          },
+        },
       }
     })
 
@@ -259,21 +265,22 @@ export async function PUT(req: Request) {
       )
     }
 
-    const player = await prisma.player.findFirst({
+    // Verificar se o jogador existe e pertence ao time
+    const existingPlayer = await prisma.player.findFirst({
       where: {
         id,
-        teamId: teamUser.team.id
-      }
+        teamId: teamUser.team.id,
+      },
     })
 
-    if (!player) {
+    if (!existingPlayer) {
       return NextResponse.json(
         { message: 'Jogador não encontrado' },
         { status: 404 }
       )
     }
 
-    // Atualizar jogador
+    // Atualizar o jogador
     const updatedPlayer = await prisma.player.update({
       where: { id },
       data: {
@@ -281,53 +288,49 @@ export async function PUT(req: Request) {
         birthDate: birthDate ? new Date(birthDate) : null,
         joinDate: joinDate ? new Date(joinDate) : null,
       },
-      include: {
-        monthlyFeeExceptions: true
-      }
     })
 
-    // Atualizar exceção de mensalidade
-    let feeException = updatedPlayer.feeException;
-    if (isExempt !== undefined || monthlyFee !== undefined) {
-      // Deletar exceção existente
-      if (feeException) {
-        await prisma.monthlyFeeException.delete({
-          where: { playerId: id }
-        })
-      }
+    // Atualizar ou criar exceção de mensalidade
+    let feeException = null;
 
-      // Criar nova exceção se necessário
+    if (isExempt !== undefined) {
+      // Deletar exceção existente se houver
+      await prisma.monthlyFeeException.deleteMany({
+        where: {
+          playerId: id,
+          month: new Date().getMonth() + 1,
+          year: new Date().getFullYear(),
+        },
+      })
+
+      // Criar nova exceção se for isento
       if (isExempt) {
         feeException = await prisma.monthlyFeeException.create({
           data: {
+            teamId: teamUser.team.id,
             playerId: id,
+            month: new Date().getMonth() + 1,
+            year: new Date().getFullYear(),
             isExempt: true,
-            amount: 0
-          }
-        })
-      } else if (monthlyFee !== undefined && monthlyFee !== null) {
-        feeException = await prisma.monthlyFeeException.create({
-          data: {
-            playerId: id,
-            isExempt: false,
-            amount: Number(monthlyFee)
           }
         })
       }
     }
 
+    const monthlyFeeConfig = teamUser.team.monthlyFees[0]
+
     // Formatar a resposta
     const monthlyFeeStatus = feeException
       ? feeException.isExempt
         ? 'Isento'
-        : `R$ ${(feeException.amount || 0).toFixed(2)}`
+        : `R$ ${(monthlyFeeConfig?.amount || 0).toFixed(2)}`
       : 'Não definido';
 
     const response = {
       ...updatedPlayer,
       feeException,
       isExempt: !!feeException?.isExempt,
-      monthlyFee: feeException?.amount || null,
+      monthlyFee: feeException?.isExempt ? 0 : (monthlyFeeConfig?.amount || null),
       monthlyFeeStatus
     };
 
@@ -341,63 +344,70 @@ export async function PUT(req: Request) {
   }
 }
 
-// DELETE - Excluir jogador
+// DELETE - Deletar jogador
 export async function DELETE(req: Request) {
   try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user) {
+      return NextResponse.json(
+        { message: 'Não autorizado' },
+        { status: 401 }
+      )
+    }
+
     const { searchParams } = new URL(req.url)
     const id = searchParams.get('id')
-    const userId = searchParams.get('userId')
 
-    if (!id || !userId) {
+    if (!id) {
       return NextResponse.json(
-        { message: 'ID do jogador ou do usuário não fornecido' },
+        { message: 'ID do jogador não fornecido' },
         { status: 400 }
       )
     }
 
     // Verificar se o jogador pertence ao time do usuário
-    const team = await prisma.team.findFirst({
+    const teamUser = await prisma.teamUser.findFirst({
       where: {
-        users: {
-          some: {
-            userId: userId,
-            role: 'owner'
-          }
-        }
+        userId: session.user.id,
+        role: 'owner'
+      },
+      include: {
+        team: true
       }
     })
 
-    if (!team) {
+    if (!teamUser?.team) {
       return NextResponse.json(
         { message: 'Time não encontrado' },
         { status: 404 }
       )
     }
 
-    const player = await prisma.player.findFirst({
+    // Verificar se o jogador existe e pertence ao time
+    const existingPlayer = await prisma.player.findFirst({
       where: {
         id,
-        teamId: team.id
-      }
+        teamId: teamUser.team.id,
+      },
     })
 
-    if (!player) {
+    if (!existingPlayer) {
       return NextResponse.json(
         { message: 'Jogador não encontrado' },
         { status: 404 }
       )
     }
 
-    // Excluir jogador
+    // Deletar o jogador (as exceções serão deletadas automaticamente por cascade)
     await prisma.player.delete({
-      where: { id }
+      where: { id },
     })
 
-    return NextResponse.json({ message: 'Jogador excluído com sucesso' })
+    return NextResponse.json({ message: 'Jogador deletado com sucesso' })
   } catch (error) {
-    console.error('Erro ao excluir jogador:', error)
+    console.error('Erro ao deletar jogador:', error)
     return NextResponse.json(
-      { message: 'Erro ao excluir jogador' },
+      { message: 'Erro ao deletar jogador' },
       { status: 500 }
     )
   }
