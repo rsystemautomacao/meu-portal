@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
+import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { Player, Payment, MonthlyFeeException } from '@prisma/client'
 
 interface PlayerWithRelations extends Player {
-  feeException: MonthlyFeeException | null
+  monthlyFeeExceptions: MonthlyFeeException[]
   payments: Payment[]
 }
 
@@ -44,7 +44,7 @@ export async function GET() {
         status: 'ACTIVE', // Apenas jogadores ativos
       },
       include: {
-        feeException: true,
+        monthlyFeeExceptions: true,
         payments: {
           orderBy: {
             dueDate: 'desc'
@@ -57,8 +57,8 @@ export async function GET() {
     // Formatar os dados dos jogadores
     const formattedPlayers = players.map((player: PlayerWithRelations) => {
       const lastPayment = player.payments[0]
-      const isExempt = !!player.feeException?.isExempt
-      const monthlyFee = isExempt ? 0 : (player.feeException?.amount || 0)
+      const isExempt = !!player.monthlyFeeExceptions[0]?.isExempt
+      const monthlyFee = isExempt ? 0 : (player.monthlyFeeExceptions[0]?.amount || 0)
 
       return {
         id: player.id,

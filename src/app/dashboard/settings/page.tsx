@@ -96,7 +96,7 @@ export default function SettingsPage() {
           primaryColor: data.primaryColor || '#000000',
           secondaryColor: data.secondaryColor || '#ffffff',
           logo: data.logo || '',
-          dueDay: data.monthlyFeeConfig?.dueDay || 10,
+          dueDay: data.monthlyFees[0]?.day || 10,
         })
         setLogoPreview(data.logo || null)
       } catch (error) {

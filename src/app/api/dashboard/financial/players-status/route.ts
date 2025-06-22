@@ -1,15 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { getServerSession } from 'next-auth'
+import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { Player } from '@prisma/client'
 
 // Função para calcular o status do pagamento
 const getPaymentStatus = (player: any, dueDay: number, today: Date) => {
-  const { payments, feeException, joinDate } = player
+  const { payments, monthlyFeeExceptions, joinDate } = player
 
   // 1. Verificar isenção
-  if (feeException?.isExempt) {
+  if (monthlyFeeExceptions[0]?.isExempt) {
     return { status: 'exempt', daysLate: 0 }
   }
 
@@ -60,13 +60,23 @@ export async function GET(request: NextRequest) {
       include: {
         team: {
           include: {
-            monthlyFeeConfig: true,
             players: {
               include: {
-                payments: true,
-                feeException: true,
+                payments: {
+                  where: {
+                    month: new Date().getMonth() + 1,
+                    year: new Date().getFullYear(),
+                  },
+                },
+                monthlyFeeExceptions: {
+                  where: {
+                    month: new Date().getMonth() + 1,
+                    year: new Date().getFullYear(),
+                  },
+                },
               },
             },
+            monthlyFees: true,
           },
         },
       },
@@ -76,8 +86,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Time não encontrado' }, { status: 404 })
     }
 
-    const { players, monthlyFeeConfig } = teamUser.team
-    const dueDay = monthlyFeeConfig?.dueDay || 10
+    const { players, monthlyFees } = teamUser.team
+    const dueDay = monthlyFees[0]?.day || 10
     const today = new Date()
 
     const playersWithStatus = players.map((player: any) => {

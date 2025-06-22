@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { getServerSession } from 'next-auth'
+import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 
 // GET - Listar jogadores do time
@@ -26,7 +26,7 @@ export async function GET(req: Request) {
           include: {
             players: {
               include: {
-                feeException: true,
+                monthlyFeeExceptions: true,
               },
               orderBy: {
                 name: 'asc',
@@ -53,7 +53,7 @@ export async function GET(req: Request) {
 
     // Formatar os jogadores para incluir informação de isenção e mensalidade
     const players = teamUser.team.players.map(player => {
-      const feeException = player.feeException;
+      const feeException = player.monthlyFeeExceptions[0];
       let monthlyFeeStatus = 'Não definido';
       let monthlyFeeValue = null;
 
@@ -282,7 +282,7 @@ export async function PUT(req: Request) {
         joinDate: joinDate ? new Date(joinDate) : null,
       },
       include: {
-        feeException: true
+        monthlyFeeExceptions: true
       }
     })
 

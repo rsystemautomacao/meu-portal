@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { getServerSession } from 'next-auth'
+import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 
 export async function PUT(
@@ -57,7 +57,7 @@ export async function PUT(
     const player = await prisma.player.findUnique({
       where: { id: params.id },
       include: {
-        feeException: true
+        monthlyFeeExceptions: true
       }
     })
 
@@ -85,7 +85,7 @@ export async function PUT(
         birthDate: birthDate ? new Date(birthDate) : null
       },
       include: {
-        feeException: true
+        monthlyFeeExceptions: true
       }
     })
 

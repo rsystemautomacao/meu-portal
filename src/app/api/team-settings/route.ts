@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { getServerSession } from 'next-auth'
+import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 
 async function getTeamId(userId: string) {
@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
         const team = await prisma.team.findUnique({
             where: { id: teamId },
             include: {
-                monthlyFeeConfig: true,
+                monthlyFees: true,
             },
         });
 

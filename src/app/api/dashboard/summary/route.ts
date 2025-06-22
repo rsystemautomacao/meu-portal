@@ -79,7 +79,7 @@ export async function GET() {
                     year: currentYear
                 }
             },
-            feeException: true
+            monthlyFeeExceptions: true
         }
     });
 

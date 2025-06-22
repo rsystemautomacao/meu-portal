@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
+import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { Payment, Player, MonthlyFeeException } from '@prisma/client'
 
 interface PaymentWithPlayer extends Payment {
   player: Player & {
-    feeException: MonthlyFeeException | null
+    monthlyFeeExceptions: MonthlyFeeException[]
   }
 }
 
@@ -46,49 +46,46 @@ export async function GET(request: Request) {
       )
     }
 
-    // Obter o mês e ano da query
-    const { searchParams } = new URL(request.url)
-    const monthYear = searchParams.get('month')
-
-    if (!monthYear) {
-      return NextResponse.json(
-        { message: 'Mês não especificado' },
-        { status: 400 }
-      )
-    }
-
-    const [year, month] = monthYear.split('-').map(Number)
-
     // Buscar o time do usuário
     const teamUser = await prisma.teamUser.findFirst({
       where: {
         userId: session.user.id,
       },
       include: {
-        team: true,
+        team: {
+          include: {
+            monthlyFees: true,
+          },
+        },
       },
     })
 
     if (!teamUser?.team) {
-      return NextResponse.json(
-        { message: 'Time não encontrado' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Time não encontrado' }, { status: 404 })
     }
 
-    // Buscar pagamentos do mês
+    const today = new Date()
+    const currentMonth = today.getMonth() + 1
+    const currentYear = today.getFullYear()
+
+    // Buscar todos os pagamentos do time para o mês atual
     const payments = await prisma.payment.findMany({
       where: {
         player: {
           teamId: teamUser.team.id,
         },
-        month: month,
-        year: year,
+        month: currentMonth,
+        year: currentYear,
       },
       include: {
         player: {
           include: {
-            feeException: true,
+            monthlyFeeExceptions: {
+              where: {
+                month: currentMonth,
+                year: currentYear,
+              },
+            },
           },
         },
       },
@@ -96,54 +93,36 @@ export async function GET(request: Request) {
 
     // Calcular totais
     const totalExpected = payments.reduce((total, payment) => {
-      if (payment.player.feeException?.isExempt) return total
-      return total + (payment.amount || 0)
+      const feeException = payment.player.monthlyFeeExceptions[0]
+      if (feeException?.isExempt) return total
+      return total + (feeException?.amount || teamUser.team.monthlyFees[0]?.amount || 0)
     }, 0)
 
-    const totalReceived = payments.reduce((total, payment) => {
-      if (payment.status === 'PAID') {
-        return total + (payment.amount || 0)
-      }
-      return total
-    }, 0)
+    const totalPaid = payments
+      .filter(payment => payment.paid)
+      .reduce((total, payment) => total + payment.amount, 0)
 
-    // Buscar jogadores com pagamento pendente
-    const pendingPlayers = payments
-      .filter(payment => payment.status === 'PENDING' && !payment.player.feeException?.isExempt)
-      .map(payment => ({
-        id: payment.player.id,
-        name: payment.player.name,
-        amount: payment.amount,
-        dueDate: payment.dueDate,
-      }))
+    const totalPending = payments
+      .filter(payment => !payment.paid && payment.status === 'PENDING')
+      .filter(payment => !payment.player.monthlyFeeExceptions[0]?.isExempt)
+      .reduce((total, payment) => total + payment.amount, 0)
 
-    // Buscar jogadores isentos
-    const exemptPlayers = payments
-      .filter(payment => payment.player.feeException?.isExempt)
-      .map(payment => ({
-        id: payment.player.id,
-        name: payment.player.name,
-      }))
+    const totalExempt = payments
+      .filter(payment => payment.player.monthlyFeeExceptions[0]?.isExempt)
+      .length
 
-    const summary: MonthlySummary = {
-      month,
-      year,
+    return NextResponse.json({
       totalExpected,
-      totalReceived,
-      pendingAmount: totalExpected - totalReceived,
-      pendingPlayers,
-      exemptPlayers,
-      totalPlayers: payments.length,
-      paidPlayers: payments.filter(p => p.status === 'PAID').length,
-      pendingPlayersCount: pendingPlayers.length,
-      exemptPlayersCount: exemptPlayers.length,
-    }
-
-    return NextResponse.json(summary)
+      totalPaid,
+      totalPending,
+      totalExempt,
+      month: currentMonth,
+      year: currentYear,
+    })
   } catch (error) {
     console.error('Erro ao buscar resumo mensal:', error)
     return NextResponse.json(
-      { message: 'Erro interno do servidor' },
+      { error: 'Erro ao buscar resumo mensal' },
       { status: 500 }
     )
   }
