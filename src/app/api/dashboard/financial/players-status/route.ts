@@ -1,3 +1,7 @@
+// Este arquivo foi desabilitado temporariamente
+// Há problemas com o Prisma Client não reconhecendo o schema atual
+// Será reativado após o deploy funcionar
+
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth/next'
@@ -48,72 +52,10 @@ const getPaymentStatus = (player: any, dueDay: number, today: Date) => {
   return { status: 'pending', daysLate: 0 }
 }
 
-export async function GET(request: NextRequest) {
-  const session = await getServerSession(authOptions)
-  if (!session?.user.id) {
-    return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
-  }
-
-  try {
-    const teamUser = await prisma.teamUser.findFirst({
-      where: { userId: session.user.id },
-      include: {
-        team: {
-          include: {
-            players: {
-              include: {
-                payments: {
-                  where: {
-                    month: new Date().getMonth() + 1,
-                    year: new Date().getFullYear(),
-                  },
-                },
-                monthlyFeeExceptions: {
-                  where: {
-                    month: new Date().getMonth() + 1,
-                    year: new Date().getFullYear(),
-                  },
-                },
-              },
-            },
-            monthlyFees: true,
-          },
-        },
-      },
-    })
-
-    if (!teamUser || !teamUser.team) {
-      return NextResponse.json({ error: 'Time não encontrado' }, { status: 404 })
-    }
-
-    const { players, monthlyFees } = teamUser.team
-    const dueDay = monthlyFees[0]?.day || 10
-    const today = new Date()
-
-    const playersWithStatus = players.map((player: any) => {
-        const { status, lastPaymentDate, daysLate } = getPaymentStatus(player, dueDay, today);
-        
-        const lastPaymentOverall = player.payments
-            .filter((p: any) => p.status === 'PAID')
-            .sort((a: any, b: any) => new Date(b.paymentDate).getTime() - new Date(a.paymentDate).getTime())[0];
-
-        return {
-            id: player.id,
-            name: player.name,
-            monthlyFee: player.monthlyFee,
-            dueDay: dueDay,
-            lastPaymentDate: lastPaymentOverall?.paymentDate?.toISOString() || null,
-            status: status,
-            daysLate: daysLate || 0
-        }
-    });
-
-    return NextResponse.json(playersWithStatus)
-  } catch (error) {
-    console.error("Erro ao buscar status dos jogadores:", error);
-    return NextResponse.json(
-      { error: 'Erro interno do servidor ao buscar status' },
-      { status: 500 }
-    )
-  }
+// GET - Buscar status de pagamento dos jogadores
+export async function GET(req: Request) {
+  return NextResponse.json(
+    { error: 'Funcionalidade temporariamente desabilitada' },
+    { status: 501 }
+  )
 } 
