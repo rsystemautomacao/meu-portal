@@ -60,7 +60,9 @@ export async function POST(req: Request) {
     // Verificar se já existem mensalidades para este mês
     const existingPayments = await prisma.payment.findMany({
       where: {
-        teamId: teamUser.teamId,
+        team: {
+          id: teamUser.teamId
+        },
         month: currentMonth,
         year: currentYear
       }
