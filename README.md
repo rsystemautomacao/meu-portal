@@ -89,4 +89,7 @@ public/               # Arquivos estáticos
 
 ## Licença
 
-Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes. 
+Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
+
+*   **Gerenciamento Financeiro:** Controle de mensalidades, pagamentos e balanço financeiro.
+*   **Progressive Web App (PWA):** Instale no seu celular e use offline. 
