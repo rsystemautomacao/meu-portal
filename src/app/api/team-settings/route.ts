@@ -30,9 +30,9 @@ export async function GET(request: NextRequest) {
 
         const team = await prisma.team.findUnique({
             where: { id: teamId },
-            include: {
-                monthlyFeeConfig: true,
-            },
+            // include: {
+            //     monthlyFeeConfig: true,
+            // },
         });
 
         if (!team) {
