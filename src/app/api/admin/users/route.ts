@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { getServerSession } from 'next-auth'
+import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { User, Team } from '@prisma/client'
 
@@ -94,20 +94,38 @@ export async function DELETE(req: Request) {
     // Excluir os times que o usuário é dono
     for (const teamUser of user.teams) {
       if (teamUser.role === 'owner') {
-        // Deletar dados relacionados ao time antes de deletar o time
-        await prisma.$transaction([
-          // Deleta MatchStats e MatchSheet que dependem de Match
-          prisma.matchStats.deleteMany({ where: { match: { teamId: teamUser.team.id } } }),
-          prisma.matchSheet.deleteMany({ where: { match: { teamId: teamUser.team.id } } }),
-          // Agora deleta Match
-          prisma.match.deleteMany({ where: { teamId: teamUser.team.id } }),
-          // Deleta dados restantes
-          prisma.transaction.deleteMany({ where: { teamId: teamUser.team.id } }),
-          prisma.monthlyFeeConfig.deleteMany({ where: { teamId: teamUser.team.id } }),
-          prisma.player.deleteMany({ where: { teamId: teamUser.team.id } }),
-          prisma.teamUser.deleteMany({ where: { teamId: teamUser.team.id } }),
-          prisma.team.delete({ where: { id: teamUser.team.id } })
-        ]);
+        // Deletar dados relacionados ao time de forma sequencial
+        // Primeiro, encontrar todos os matches do time
+        const matches = await prisma.match.findMany({ 
+          where: { teamId: teamUser.team.id },
+          select: { id: true }
+        });
+        
+        // Deletar MatchEvents relacionados aos matches
+        for (const match of matches) {
+          await prisma.matchEvent.deleteMany({ where: { matchId: match.id } });
+        }
+        
+        // Deletar matches
+        await prisma.match.deleteMany({ where: { teamId: teamUser.team.id } });
+        
+        // Encontrar todos os players do time
+        const players = await prisma.player.findMany({
+          where: { teamId: teamUser.team.id },
+          select: { id: true }
+        });
+        
+        // Deletar payments relacionados aos players
+        for (const player of players) {
+          await prisma.payment.deleteMany({ where: { playerId: player.id } });
+        }
+        
+        // Deletar dados restantes
+        await prisma.transaction.deleteMany({ where: { teamId: teamUser.team.id } });
+        await prisma.monthlyFeeConfig.deleteMany({ where: { teamId: teamUser.team.id } });
+        await prisma.player.deleteMany({ where: { teamId: teamUser.team.id } });
+        await prisma.teamUser.deleteMany({ where: { teamId: teamUser.team.id } });
+        await prisma.team.delete({ where: { id: teamUser.team.id } });
       }
     }
 
