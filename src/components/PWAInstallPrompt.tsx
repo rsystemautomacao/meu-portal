@@ -77,22 +77,61 @@ export default function PWAInstallPrompt() {
   }
 
   const handleManualInstall = () => {
-    // Tentar instalar manualmente
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.ready.then((registration) => {
-        // Mostrar instruções de instalação manual
-        alert('Para instalar o app:\n\n1. Toque no menu do navegador (⋮)\n2. Selecione "Adicionar à tela inicial"\n3. Toque em "Adicionar"')
-      })
+    console.log('Botão "Como Instalar" clicado')
+    
+    // Verificar se estamos em um dispositivo móvel
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+    
+    if (isMobile) {
+      // Instruções específicas para mobile
+      const instructions = `
+Para instalar o app no seu celular:
+
+📱 Android (Chrome):
+1. Toque no menu do navegador (⋮)
+2. Selecione "Adicionar à tela inicial"
+3. Toque em "Adicionar"
+
+📱 iPhone (Safari):
+1. Toque no botão de compartilhar (□↑)
+2. Selecione "Adicionar à Tela Inicial"
+3. Toque em "Adicionar"
+
+O app aparecerá na sua tela inicial como um ícone!
+      `
+      alert(instructions)
+    } else {
+      // Instruções para desktop
+      const instructions = `
+Para instalar o app no seu computador:
+
+🖥️ Chrome/Edge:
+1. Clique no ícone de instalação (⬇️) na barra de endereços
+2. Ou pressione Ctrl+Shift+I e clique em "Install"
+
+🖥️ Firefox:
+1. Clique no ícone de instalação na barra de endereços
+2. Ou vá em Menu > Aplicações Web > Instalar
+
+O app será instalado como um programa normal!
+      `
+      alert(instructions)
     }
+    
+    // Marcar como dispensado após mostrar as instruções
+    setDismissed(true)
+    localStorage.setItem('pwa-install-dismissed', 'true')
   }
 
+  console.log('PWAInstallPrompt render:', { isInstalled, showInstallPrompt, dismissed, deferredPrompt: !!deferredPrompt })
+  
   if (isInstalled || !showInstallPrompt || dismissed) {
     return null
   }
 
   return (
-    <div className="fixed bottom-4 left-4 right-4 z-50">
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl shadow-2xl p-4 border border-blue-200">
+    <div className="fixed bottom-4 left-4 right-4 z-50" style={{ pointerEvents: 'auto' }}>
+      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl shadow-2xl p-4 border border-blue-200" style={{ pointerEvents: 'auto' }}>
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <div className="bg-white bg-opacity-20 rounded-lg p-2">
@@ -109,10 +148,41 @@ export default function PWAInstallPrompt() {
           </div>
           <div className="flex items-center space-x-2">
             <button
-              onClick={deferredPrompt ? handleInstallClick : handleManualInstall}
-              className="bg-white text-blue-600 px-4 py-2 rounded-lg font-semibold hover:bg-blue-50 transition-colors"
+              onClick={(e) => {
+                console.log('Botão clicado:', e.target)
+                console.log('Evento:', e)
+                e.preventDefault()
+                e.stopPropagation()
+                if (deferredPrompt) {
+                  handleInstallClick()
+                } else {
+                  handleManualInstall()
+                }
+              }}
+              onTouchStart={(e) => {
+                console.log('Touch start:', e)
+              }}
+              onTouchEnd={(e) => {
+                console.log('Touch end:', e)
+              }}
+              className="bg-white text-blue-600 px-4 py-2 rounded-lg font-semibold hover:bg-blue-50 transition-colors cursor-pointer select-none touch-manipulation"
+              style={{ 
+                userSelect: 'none', 
+                WebkitUserSelect: 'none',
+                WebkitTouchCallout: 'none',
+                WebkitTapHighlightColor: 'transparent'
+              }}
             >
               {deferredPrompt ? 'Instalar' : 'Como Instalar'}
+            </button>
+            <button
+              onClick={() => {
+                console.log('Botão de teste clicado')
+                alert('Teste de clique funcionando!')
+              }}
+              className="bg-red-500 text-white px-2 py-1 rounded text-xs"
+            >
+              TESTE
             </button>
             <button
               onClick={handleDismiss}

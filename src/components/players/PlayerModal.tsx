@@ -113,22 +113,37 @@ export default function PlayerModal({ isOpen, onClose, onSave, player }: PlayerM
   }
 
   const handlePhotoClick = () => {
+    console.log('handlePhotoClick chamado')
+    
+    // Verificar se estamos no mobile
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+    
     // Usar o input existente se disponível
     if (fileInputRef.current) {
+      console.log('Usando input existente')
       fileInputRef.current.click()
       return
     }
     
+    console.log('Criando input temporário para mobile')
     // Criar input temporário para mobile
     const input = document.createElement('input')
     input.type = 'file'
     input.accept = 'image/*'
-    input.capture = 'environment' // Permitir câmera no mobile
+    
+    // Configurações específicas para mobile
+    if (isMobile) {
+      // Remover capture para permitir escolha entre galeria e câmera
+      // input.capture = 'environment'
+      console.log('Configurado para mobile')
+    }
     
     input.onchange = (e) => {
+      console.log('Input change detectado')
       const target = e.target as HTMLInputElement
       if (target.files?.[0]) {
         const file = target.files[0]
+        console.log('Arquivo selecionado:', file.name, file.type, file.size)
         
         // Validar tipo de arquivo
         if (!file.type.startsWith('image/')) {
@@ -144,18 +159,35 @@ export default function PlayerModal({ isOpen, onClose, onSave, player }: PlayerM
         
         const reader = new FileReader()
         reader.onloadend = () => {
+          console.log('Arquivo lido com sucesso')
           setPhotoPreview(reader.result as string)
           setFormData({ ...formData, photoUrl: reader.result as string })
         }
         reader.onerror = () => {
+          console.error('Erro ao ler arquivo')
           alert('Erro ao ler o arquivo. Tente novamente.')
         }
         reader.readAsDataURL(file)
+      } else {
+        console.log('Nenhum arquivo selecionado')
       }
     }
     
+    // Adicionar ao DOM temporariamente para garantir que funcione no mobile
+    input.style.position = 'absolute'
+    input.style.left = '-9999px'
+    input.style.top = '-9999px'
+    document.body.appendChild(input)
+    
     // Trigger do input
     input.click()
+    
+    // Remover do DOM após um tempo
+    setTimeout(() => {
+      if (document.body.contains(input)) {
+        document.body.removeChild(input)
+      }
+    }, 1000)
   }
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -210,6 +242,10 @@ export default function PlayerModal({ isOpen, onClose, onSave, player }: PlayerM
                           <div
                             className="relative mt-2 h-32 w-32 cursor-pointer overflow-hidden rounded-xl bg-gradient-to-br from-gray-100 to-gray-200 border-2 border-dashed border-gray-300 hover:border-blue-400 transition-colors flex items-center justify-center"
                             onClick={handlePhotoClick}
+                            style={{ 
+                              touchAction: 'manipulation',
+                              WebkitTapHighlightColor: 'transparent'
+                            }}
                           >
                             {photoPreview ? (
                               <img
@@ -229,8 +265,31 @@ export default function PlayerModal({ isOpen, onClose, onSave, player }: PlayerM
                               onChange={handlePhotoChange}
                               accept="image/*"
                               className="hidden"
+                              style={{ 
+                                position: 'absolute',
+                                left: '-9999px',
+                                top: '-9999px',
+                                opacity: 0,
+                                pointerEvents: 'none'
+                              }}
                             />
                           </div>
+                        </div>
+
+                        {/* Botão de teste para mobile */}
+                        <div className="flex justify-center">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              console.log('Botão de teste clicado')
+                              if (fileInputRef.current) {
+                                fileInputRef.current.click()
+                              }
+                            }}
+                            className="bg-red-500 text-white px-4 py-2 rounded text-sm"
+                          >
+                            Teste Upload
+                          </button>
                         </div>
 
                         <div>
