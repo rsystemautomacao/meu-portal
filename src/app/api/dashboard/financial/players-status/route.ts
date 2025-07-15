@@ -33,6 +33,16 @@ const getPaymentStatus = (player: any, dueDay: number, today: Date) => {
   }
 
   // 3. Lógica para novos jogadores
+  if (!joinDate) {
+    // Se não tem data de entrada, usar lógica padrão
+    const dueDateForThisMonth = new Date(currentYear, currentMonth - 1, dueDay)
+    if (today > dueDateForThisMonth) {
+      const daysLate = Math.floor((today.getTime() - dueDateForThisMonth.getTime()) / (1000 * 60 * 60 * 24))
+      return { status: daysLate > 20 ? 'veryLate' : 'late', daysLate }
+    }
+    return { status: 'pending', daysLate: 0 }
+  }
+  
   const playerJoinDate = new Date(joinDate)
   const joinYear = playerJoinDate.getFullYear()
   const joinMonth = playerJoinDate.getMonth() + 1
@@ -116,6 +126,11 @@ export async function GET(req: Request) {
     // Calcular jogadores com mensalidades em aberto há mais de um mês
     const playersWithOverdueFees = players
       .filter(player => {
+        // Verificar se joinDate existe
+        if (!player.joinDate) {
+          return false // Se não tem data de entrada, não tem mensalidades em aberto
+        }
+        
         const playerJoinDate = new Date(player.joinDate)
         const joinYear = playerJoinDate.getFullYear()
         const joinMonth = playerJoinDate.getMonth() + 1
