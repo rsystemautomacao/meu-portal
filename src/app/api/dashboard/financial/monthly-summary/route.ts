@@ -27,12 +27,13 @@ export async function GET(req: Request) {
     let targetMonth: Date
     if (monthParam) {
       const [year, month] = monthParam.split('-').map(Number)
-      targetMonth = new Date(year, month - 1, 1)
+      // Corrigir: usar month diretamente (não subtrair 1) para o Date
+      targetMonth = new Date(year, month - 1, 1) // month - 1 porque Date usa 0-11
     } else {
       targetMonth = new Date()
     }
 
-    const month = targetMonth.getMonth() + 1
+    const month = targetMonth.getMonth() + 1 // Converter de volta para 1-12
     const year = targetMonth.getFullYear()
 
     // Buscar transações do mês
@@ -40,8 +41,8 @@ export async function GET(req: Request) {
       where: {
         teamId: teamUser.teamId,
         date: {
-          gte: new Date(year, month - 1, 1),
-          lt: new Date(year, month, 1)
+          gte: new Date(year, month - 1, 1), // month - 1 para Date (0-11)
+          lt: new Date(year, month, 1) // Próximo mês
         }
       }
     })

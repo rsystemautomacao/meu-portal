@@ -101,7 +101,7 @@ export default function MonthlyReport() {
   }
 
   return (
-    <div className="bg-white shadow rounded-lg p-6">
+    <div className="bg-white shadow rounded-lg p-6 w-full">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-lg font-medium text-gray-900">Resumo Financeiro</h2>
         <input
@@ -113,8 +113,8 @@ export default function MonthlyReport() {
       </div>
 
       {/* Cards de resumo com fallback */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 mb-6">
-        <div className="bg-white overflow-hidden shadow rounded-lg">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 mb-6 w-full">
+        <div className="bg-gray-50 overflow-hidden shadow rounded-lg">
           <div className="p-4 sm:p-5">
             <div className="flex items-center">
               <div className="flex-shrink-0">
@@ -134,7 +134,7 @@ export default function MonthlyReport() {
           </div>
         </div>
 
-        <div className="bg-white overflow-hidden shadow rounded-lg">
+        <div className="bg-gray-50 overflow-hidden shadow rounded-lg">
           <div className="p-4 sm:p-5">
             <div className="flex items-center">
               <div className="flex-shrink-0">
@@ -154,7 +154,7 @@ export default function MonthlyReport() {
           </div>
         </div>
 
-        <div className="bg-white overflow-hidden shadow rounded-lg">
+        <div className="bg-gray-50 overflow-hidden shadow rounded-lg">
           <div className="p-4 sm:p-5">
             <div className="flex items-center">
               <div className="flex-shrink-0">
@@ -176,11 +176,11 @@ export default function MonthlyReport() {
       </div>
 
       {/* Detalhamento por tipo */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 w-full">
         {/* Entradas por tipo */}
-        <div>
+        <div className="w-full">
           <h3 className="text-lg font-medium text-gray-900 mb-4">Entradas por Tipo</h3>
-          <div className="bg-white shadow overflow-hidden sm:rounded-md">
+          <div className="bg-gray-50 shadow overflow-hidden sm:rounded-md w-full">
             <ul className="divide-y divide-gray-200">
               {Object.entries(summary?.incomeByType || {})
                 .sort(([a], [b]) => {
@@ -205,9 +205,9 @@ export default function MonthlyReport() {
         </div>
 
         {/* Saídas por tipo */}
-        <div>
+        <div className="w-full">
           <h3 className="text-lg font-medium text-gray-900 mb-4">Saídas por Tipo</h3>
-          <div className="bg-white shadow overflow-hidden sm:rounded-md">
+          <div className="bg-gray-50 shadow overflow-hidden sm:rounded-md w-full">
             <ul className="divide-y divide-gray-200">
               {Object.entries(summary?.expenseByType || {})
                 .sort(([a], [b]) => {

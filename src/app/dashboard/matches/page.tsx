@@ -417,18 +417,18 @@ export default function MatchesPage() {
         <Transition.Root show={showSumulaForm} as={Fragment}>
           <Dialog as="div" className="relative z-30" onClose={() => setShowSumulaForm(false)}>
             <div className="fixed inset-0 bg-black bg-opacity-40" />
-            <div className="fixed inset-0 z-30 flex items-center justify-center">
-              <Dialog.Panel className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md mx-auto">
+            <div className="fixed inset-0 z-30 flex items-center justify-center overflow-y-auto p-2 sm:p-0">
+              <Dialog.Panel className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md sm:max-w-lg mx-auto">
                 <Dialog.Title as="h3" className="text-2xl font-bold leading-6 text-gray-900 mb-6 text-center">
                   Nova Súmula Online
                 </Dialog.Title>
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Data da partida</label>
+                <div className="mb-4 flex flex-col items-center">
+                  <label className="block text-sm font-medium text-gray-700 mb-1 text-center">Data da partida</label>
                   <DatePicker
                     selected={sumulaForm.date}
                     onChange={date => setSumulaForm(f => ({ ...f, date }))}
                     dateFormat="dd/MM/yyyy"
-                    className="w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm p-2"
+                    className="w-full max-w-xs rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm p-2 text-center font-bold text-lg"
                     placeholderText="Selecione a data"
                   />
                 </div>
@@ -442,20 +442,18 @@ export default function MatchesPage() {
                     onChange={e => setSumulaForm(f => ({ ...f, opponent: e.target.value }))}
                   />
                 </div>
-                <div className="mb-6">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Local</label>
-                  <select
-                    className="w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm p-2"
-                    value={sumulaForm.location}
-                    onChange={e => setSumulaForm(f => ({ ...f, location: e.target.value }))}
-                  >
-                    <option value="">Selecione o local</option>
-                    <option value="Casa">Casa</option>
-                    <option value="Visitante">Visitante</option>
-                  </select>
-                </div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Local</label>
+                <select
+                  className="w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm p-2"
+                  value={sumulaForm.location}
+                  onChange={e => setSumulaForm(f => ({ ...f, location: e.target.value }))}
+                >
+                  <option value="">Selecione o local</option>
+                  <option value="Casa">Casa</option>
+                  <option value="Visitante">Visitante</option>
+                </select>
                 {sumulaFormError && <div className="text-red-500 text-sm mb-4">{sumulaFormError}</div>}
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-col gap-2 mt-4">
                   <button
                     className="w-full bg-black text-white font-bold py-3 rounded-lg hover:bg-gray-900 transition"
                     onClick={handleConfirmSumulaForm}

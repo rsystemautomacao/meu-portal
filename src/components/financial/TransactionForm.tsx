@@ -107,24 +107,39 @@ export default function TransactionForm({ onTransactionCreated }: TransactionFor
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    // Validações
+    // Validações mais robustas
+    if (formData.type === 'INCOME' && !formData.incomeType) {
+      toast.error('Selecione uma categoria para entrada')
+      return
+    }
+
+    if (formData.type === 'EXPENSE' && !formData.expenseType) {
+      toast.error('Selecione uma categoria para saída')
+      return
+    }
+
     if (formData.type === 'INCOME' && formData.incomeType === 'MONTHLY_FEE' && selectedPlayers.length === 0) {
-      toast.error('Selecione pelo menos um jogador')
+      toast.error('Selecione pelo menos um jogador para mensalidade')
       return
     }
 
-    if (formData.type === 'INCOME' && formData.incomeType !== 'MONTHLY_FEE' && !formData.amount) {
-      toast.error('Informe o valor')
+    if (formData.type === 'INCOME' && formData.incomeType !== 'MONTHLY_FEE' && (!formData.amount || parseFloat(formData.amount) <= 0)) {
+      toast.error('Informe um valor válido para entrada')
       return
     }
 
-    if (formData.type === 'EXPENSE' && !formData.amount) {
-      toast.error('Informe o valor')
+    if (formData.type === 'EXPENSE' && (!formData.amount || parseFloat(formData.amount) <= 0)) {
+      toast.error('Informe um valor válido para saída')
       return
     }
 
-    if (formData.type === 'INCOME' && formData.incomeType === 'OTHER' && !formData.description) {
-      toast.error('Informe a descrição')
+    if (formData.type === 'INCOME' && formData.incomeType === 'OTHER' && !formData.description.trim()) {
+      toast.error('Informe a descrição para outros tipos de entrada')
+      return
+    }
+
+    if (formData.type === 'EXPENSE' && formData.expenseType === 'OTHER' && !formData.description.trim()) {
+      toast.error('Informe a descrição para outros tipos de saída')
       return
     }
 
@@ -132,28 +147,32 @@ export default function TransactionForm({ onTransactionCreated }: TransactionFor
       setLoading(true)
       console.log('Enviando dados:', formData)
 
+      const requestData = {
+        ...formData,
+        amount: formData.type === 'INCOME' && formData.incomeType === 'MONTHLY_FEE'
+          ? calculateTotalAmount()
+          : parseFloat(formData.amount),
+        playerIds: formData.type === 'INCOME' && formData.incomeType === 'MONTHLY_FEE'
+          ? selectedPlayers
+          : [],
+        description: formData.description.trim() || getCategoryLabel(formData.type === 'INCOME' ? formData.incomeType : formData.expenseType)
+      }
+
+      console.log('Dados formatados:', requestData)
+
       const response = await fetch('/api/dashboard/financial/transactions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...formData,
-          amount: formData.type === 'INCOME' && formData.incomeType === 'MONTHLY_FEE'
-            ? calculateTotalAmount()
-            : parseFloat(formData.amount),
-          playerIds: formData.type === 'INCOME' && formData.incomeType === 'MONTHLY_FEE'
-            ? selectedPlayers
-            : [],
-        })
+        body: JSON.stringify(requestData)
       })
 
+      const responseData = await response.json()
+      console.log('Resposta da API:', responseData)
+
       if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.message || 'Erro ao criar transação')
+        throw new Error(responseData.error || responseData.message || 'Erro ao criar transação')
       }
 
-      const transaction = await response.json()
-      console.log('Transação criada:', transaction)
-      
       toast.success('Transação registrada com sucesso!')
       onTransactionCreated?.()
       
@@ -169,7 +188,8 @@ export default function TransactionForm({ onTransactionCreated }: TransactionFor
       setSelectedPlayers([])
     } catch (error) {
       console.error('Erro ao criar transação:', error)
-      toast.error(error instanceof Error ? error.message : 'Erro ao registrar transação')
+      const errorMessage = error instanceof Error ? error.message : 'Erro ao registrar transação'
+      toast.error(`Erro: ${errorMessage}`)
     } finally {
       setLoading(false)
     }

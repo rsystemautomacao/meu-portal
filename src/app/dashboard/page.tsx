@@ -16,6 +16,7 @@ import {
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import StatsModal from '@/components/matches/StatsModal'
+import { toast } from 'react-hot-toast';
 
 // Desabilitar pré-renderização estática
 export const dynamic = 'force-dynamic'
@@ -152,12 +153,23 @@ export default function DashboardPage() {
     let golsPro = 0;
     let golsContra = 0;
     let presencas: Record<string, number> = {};
+    
     matches.forEach(match => {
       if (!Array.isArray(match.events)) return;
+      
       // Presenças: para cada quadro, se o jogador tem evento 'home' naquele quadro, conta presença
       [1, 2].forEach(quadro => {
         const presentesQuadro = new Set(
-          (match.events || []).filter(ev => ev.team === 'home' && ev.quadro === quadro && ev.player && typeof ev.player === 'string' && ev.player !== 'Adversário').map(ev => ev.player)
+          (match.events || [])
+            .filter(ev => 
+              ev.team === 'home' && 
+              ev.quadro === quadro && 
+              ev.player && 
+              typeof ev.player === 'string' && 
+              ev.player !== 'Adversário' &&
+              ev.player.trim() !== ''
+            )
+            .map(ev => ev.player)
         );
         presentesQuadro.forEach(playerName => {
           allPlayers.add(playerName);
@@ -165,18 +177,26 @@ export default function DashboardPage() {
           presencas[playerName]++;
         });
       });
+      
       (match.events || []).forEach(ev => {
         // Gols sofridos por goleiro: contabilizar SEMPRE que houver campo goleiro
-        if (ev.goleiro && typeof ev.goleiro === 'string' && ev.type === 'goal' && ev.team === 'away') {
+        if (ev.goleiro && typeof ev.goleiro === 'string' && ev.type === 'goal' && ev.team === 'away' && ev.goleiro !== 'Adversário' && ev.goleiro.trim() !== '') {
           allPlayers.add(ev.goleiro);
           if (!stats[ev.goleiro]) stats[ev.goleiro] = { presencas: 0, gols: 0, assist: 0, amarelo: 0, vermelho: 0, golsSofridos: 0 };
           stats[ev.goleiro].golsSofridos++;
         }
-        // Estatísticas normais para jogadores do time
-        if (!ev.player || ev.player === 'Adversário') return;
+        
+        // Estatísticas normais para jogadores do time (NUNCA para adversário)
+        if (!ev.player || ev.player === 'Adversário' || ev.player.trim() === '' || ev.team === 'away') return;
+        
         const playerName = typeof ev.player === 'string' ? ev.player : ev.player.name;
+        
+        // Garantir que é um jogador válido do time
+        if (!playerName || playerName === 'Adversário' || playerName.trim() === '') return;
+        
         allPlayers.add(playerName);
         if (!stats[playerName]) stats[playerName] = { presencas: 0, gols: 0, assist: 0, amarelo: 0, vermelho: 0, golsSofridos: 0 };
+        
         if (ev.type === 'goal') {
           if (ev.team === 'home') {
             stats[playerName].gols++;
@@ -190,11 +210,13 @@ export default function DashboardPage() {
         if (ev.type === 'red_card') stats[playerName].vermelho++;
       });
     });
+    
     // Preencher presenças no stats
     Object.keys(presencas).forEach(player => {
       if (!stats[player]) stats[player] = { presencas: 0, gols: 0, assist: 0, amarelo: 0, vermelho: 0, golsSofridos: 0 };
       stats[player].presencas = presencas[player];
     });
+    
     return { stats, allPlayers: Array.from(allPlayers), golsPro, golsContra };
   }
 
@@ -213,19 +235,25 @@ export default function DashboardPage() {
 
   // Função para copiar estatísticas
   function handleCopyStats(stats: any, allPlayers: string[]) {
-    const header = ['Jogador', '✅', '⚽', '🅰️', '��', '🟥', '🥅'];
+    const header = ['Jogador', '✅', '⚽', '🅰️', '🟨', '🟥', '🥅'];
     // Definir larguras fixas para cada coluna
     const colWidths = [12, 3, 3, 3, 3, 3, 3];
-    const pad = (str: string | number, len: number) => String(str).padEnd(len, ' ');
-    const headerLine = header.map((h, i) => pad(h, colWidths[i])).join('');
+    // Espaço fixo unicode (U+2007) para WhatsApp
+    const fixedSpace = '\u2007';
+    const pad = (str: string | number, len: number, align: 'left' | 'right' = 'left') => {
+      str = String(str ?? '');
+      // Substituir espaço normal por espaço fixo
+      let padded = align === 'left' ? str.padEnd(len, ' ') : str.padStart(len, ' ');
+      return padded.replace(/ /g, fixedSpace);
+    };
+    const headerLine = header.map((h, i) => pad(h, colWidths[i])).join(' ');
     const rows = allPlayers.filter(p => p !== 'Adversário').map(player =>
       [player, stats[player].presencas, stats[player].gols, stats[player].assist, stats[player].amarelo, stats[player].vermelho, stats[player].golsSofridos]
-        .map((v, i) => pad(v, colWidths[i])).join('')
+        .map((v, i) => pad(v, colWidths[i], i === 0 ? 'left' : 'right')).join(' ')
     );
     const text = [headerLine, ...rows].join('\n');
     navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    toast.success('Estatísticas copiadas!');
   }
 
   return (

@@ -356,15 +356,90 @@ export default function MatchModal({ isOpen, onClose, onSave, match }: MatchModa
                                 <div key={j.id} className="flex items-center gap-2 bg-white rounded px-2 py-1 border border-gray-100">
                                   <span className="w-24 text-xs font-semibold text-gray-800">{j.name}</span>
                                   <span title="Gols" className="text-green-600">⚽</span>
-                                  <input type="number" min={0} className="w-10 rounded border-gray-300 text-center" value={playerStats1[j.id]?.gols ?? 0} onChange={e => setPlayerStats1(s => ({ ...s, [j.id]: { ...s[j.id], gols: Number(e.target.value) } }))} />
+                                  <input 
+                                    type="number" 
+                                    min={0} 
+                                    className="w-10 rounded border-gray-300 text-center" 
+                                    value={playerStats1[j.id]?.gols ?? ''} 
+                                    onChange={e => {
+                                      const value = e.target.value === '' ? '' : e.target.value;
+                                      setPlayerStats1(s => ({ 
+                                        ...s, 
+                                        [j.id]: { 
+                                          ...s[j.id], 
+                                          gols: value === '' ? 0 : Number(value) 
+                                        } 
+                                      }))
+                                    }} 
+                                  />
                                   <span title="Assistências" className="text-blue-600">🅰️</span>
-                                  <input type="number" min={0} className="w-10 rounded border-gray-300 text-center" value={playerStats1[j.id]?.assist ?? 0} onChange={e => setPlayerStats1(s => ({ ...s, [j.id]: { ...s[j.id], assist: Number(e.target.value) } }))} />
+                                  <input 
+                                    type="number" 
+                                    min={0} 
+                                    className="w-10 rounded border-gray-300 text-center" 
+                                    value={playerStats1[j.id]?.assist ?? ''} 
+                                    onChange={e => {
+                                      const value = e.target.value === '' ? '' : e.target.value;
+                                      setPlayerStats1(s => ({ 
+                                        ...s, 
+                                        [j.id]: { 
+                                          ...s[j.id], 
+                                          assist: value === '' ? 0 : Number(value) 
+                                        } 
+                                      }))
+                                    }} 
+                                  />
                                   <span title="Amarelo" className="text-yellow-500">🟨</span>
-                                  <input type="number" min={0} className="w-8 rounded border-gray-300 text-center" value={playerStats1[j.id]?.amarelo ?? 0} onChange={e => setPlayerStats1(s => ({ ...s, [j.id]: { ...s[j.id], amarelo: Number(e.target.value) } }))} />
+                                  <input 
+                                    type="number" 
+                                    min={0} 
+                                    className="w-8 rounded border-gray-300 text-center" 
+                                    value={playerStats1[j.id]?.amarelo ?? ''} 
+                                    onChange={e => {
+                                      const value = e.target.value === '' ? '' : e.target.value;
+                                      setPlayerStats1(s => ({ 
+                                        ...s, 
+                                        [j.id]: { 
+                                          ...s[j.id], 
+                                          amarelo: value === '' ? 0 : Number(value) 
+                                        } 
+                                      }))
+                                    }} 
+                                  />
                                   <span title="Vermelho" className="text-red-600">🟥</span>
-                                  <input type="number" min={0} className="w-8 rounded border-gray-300 text-center" value={playerStats1[j.id]?.vermelho ?? 0} onChange={e => setPlayerStats1(s => ({ ...s, [j.id]: { ...s[j.id], vermelho: Number(e.target.value) } }))} />
+                                  <input 
+                                    type="number" 
+                                    min={0} 
+                                    className="w-8 rounded border-gray-300 text-center" 
+                                    value={playerStats1[j.id]?.vermelho ?? ''} 
+                                    onChange={e => {
+                                      const value = e.target.value === '' ? '' : e.target.value;
+                                      setPlayerStats1(s => ({ 
+                                        ...s, 
+                                        [j.id]: { 
+                                          ...s[j.id], 
+                                          vermelho: value === '' ? 0 : Number(value) 
+                                        } 
+                                      }))
+                                    }} 
+                                  />
                                   <span title="Gols sofridos (goleiro)" className="text-gray-700">🥅</span>
-                                  <input type="number" min={0} className="w-10 rounded border-gray-300 text-center" value={playerStats1[j.id]?.golsSofridos ?? 0} onChange={e => setPlayerStats1(s => ({ ...s, [j.id]: { ...s[j.id], golsSofridos: Number(e.target.value) } }))} />
+                                  <input 
+                                    type="number" 
+                                    min={0} 
+                                    className="w-10 rounded border-gray-300 text-center" 
+                                    value={playerStats1[j.id]?.golsSofridos ?? ''} 
+                                    onChange={e => {
+                                      const value = e.target.value === '' ? '' : e.target.value;
+                                      setPlayerStats1(s => ({ 
+                                        ...s, 
+                                        [j.id]: { 
+                                          ...s[j.id], 
+                                          golsSofridos: value === '' ? 0 : Number(value) 
+                                        } 
+                                      }))
+                                    }} 
+                                  />
                                 </div>
                               ))}
                             </div>
@@ -396,15 +471,90 @@ export default function MatchModal({ isOpen, onClose, onSave, match }: MatchModa
                                 <div key={j.id} className="flex items-center gap-2 bg-white rounded px-2 py-1 border border-gray-100">
                                   <span className="w-24 text-xs font-semibold text-gray-800">{j.name}</span>
                                   <span title="Gols" className="text-green-600">⚽</span>
-                                  <input type="number" min={0} className="w-10 rounded border-gray-300 text-center" value={playerStats2[j.id]?.gols ?? 0} onChange={e => setPlayerStats2(s => ({ ...s, [j.id]: { ...s[j.id], gols: Number(e.target.value) } }))} />
+                                  <input 
+                                    type="number" 
+                                    min={0} 
+                                    className="w-10 rounded border-gray-300 text-center" 
+                                    value={playerStats2[j.id]?.gols ?? ''} 
+                                    onChange={e => {
+                                      const value = e.target.value === '' ? '' : e.target.value;
+                                      setPlayerStats2(s => ({ 
+                                        ...s, 
+                                        [j.id]: { 
+                                          ...s[j.id], 
+                                          gols: value === '' ? 0 : Number(value) 
+                                        } 
+                                      }))
+                                    }} 
+                                  />
                                   <span title="Assistências" className="text-blue-600">🅰️</span>
-                                  <input type="number" min={0} className="w-10 rounded border-gray-300 text-center" value={playerStats2[j.id]?.assist ?? 0} onChange={e => setPlayerStats2(s => ({ ...s, [j.id]: { ...s[j.id], assist: Number(e.target.value) } }))} />
+                                  <input 
+                                    type="number" 
+                                    min={0} 
+                                    className="w-10 rounded border-gray-300 text-center" 
+                                    value={playerStats2[j.id]?.assist ?? ''} 
+                                    onChange={e => {
+                                      const value = e.target.value === '' ? '' : e.target.value;
+                                      setPlayerStats2(s => ({ 
+                                        ...s, 
+                                        [j.id]: { 
+                                          ...s[j.id], 
+                                          assist: value === '' ? 0 : Number(value) 
+                                        } 
+                                      }))
+                                    }} 
+                                  />
                                   <span title="Amarelo" className="text-yellow-500">🟨</span>
-                                  <input type="number" min={0} className="w-8 rounded border-gray-300 text-center" value={playerStats2[j.id]?.amarelo ?? 0} onChange={e => setPlayerStats2(s => ({ ...s, [j.id]: { ...s[j.id], amarelo: Number(e.target.value) } }))} />
+                                  <input 
+                                    type="number" 
+                                    min={0} 
+                                    className="w-8 rounded border-gray-300 text-center" 
+                                    value={playerStats2[j.id]?.amarelo ?? ''} 
+                                    onChange={e => {
+                                      const value = e.target.value === '' ? '' : e.target.value;
+                                      setPlayerStats2(s => ({ 
+                                        ...s, 
+                                        [j.id]: { 
+                                          ...s[j.id], 
+                                          amarelo: value === '' ? 0 : Number(value) 
+                                        } 
+                                      }))
+                                    }} 
+                                  />
                                   <span title="Vermelho" className="text-red-600">🟥</span>
-                                  <input type="number" min={0} className="w-8 rounded border-gray-300 text-center" value={playerStats2[j.id]?.vermelho ?? 0} onChange={e => setPlayerStats2(s => ({ ...s, [j.id]: { ...s[j.id], vermelho: Number(e.target.value) } }))} />
+                                  <input 
+                                    type="number" 
+                                    min={0} 
+                                    className="w-8 rounded border-gray-300 text-center" 
+                                    value={playerStats2[j.id]?.vermelho ?? ''} 
+                                    onChange={e => {
+                                      const value = e.target.value === '' ? '' : e.target.value;
+                                      setPlayerStats2(s => ({ 
+                                        ...s, 
+                                        [j.id]: { 
+                                          ...s[j.id], 
+                                          vermelho: value === '' ? 0 : Number(value) 
+                                        } 
+                                      }))
+                                    }} 
+                                  />
                                   <span title="Gols sofridos (goleiro)" className="text-gray-700">🥅</span>
-                                  <input type="number" min={0} className="w-10 rounded border-gray-300 text-center" value={playerStats2[j.id]?.golsSofridos ?? 0} onChange={e => setPlayerStats2(s => ({ ...s, [j.id]: { ...s[j.id], golsSofridos: Number(e.target.value) } }))} />
+                                  <input 
+                                    type="number" 
+                                    min={0} 
+                                    className="w-10 rounded border-gray-300 text-center" 
+                                    value={playerStats2[j.id]?.golsSofridos ?? ''} 
+                                    onChange={e => {
+                                      const value = e.target.value === '' ? '' : e.target.value;
+                                      setPlayerStats2(s => ({ 
+                                        ...s, 
+                                        [j.id]: { 
+                                          ...s[j.id], 
+                                          golsSofridos: value === '' ? 0 : Number(value) 
+                                        } 
+                                      }))
+                                    }} 
+                                  />
                                 </div>
                               ))}
                             </div>
