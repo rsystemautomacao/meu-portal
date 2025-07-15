@@ -93,7 +93,7 @@ export async function PUT(
     }
 
     const data = await request.json()
-    const { name, position, status, birthDate, isExempt } = data
+    const { name, position, status, birthDate, joinDate, number, photoUrl, monthlyFee, isExempt } = data
 
     if (!name || !position || !status) {
       return NextResponse.json(
@@ -156,7 +156,11 @@ export async function PUT(
         name,
         position,
         status,
-        birthDate: birthDate ? new Date(birthDate) : null
+        number: number ? Number(number) : null,
+        photoUrl: photoUrl || null,
+        birthDate: birthDate ? new Date(birthDate) : undefined,
+        joinDate: joinDate ? new Date(joinDate) : undefined,
+        monthlyFee: monthlyFee ? Number(monthlyFee) : 0
       },
       include: {
         monthlyFeeExceptions: {

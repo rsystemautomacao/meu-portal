@@ -1,7 +1,3 @@
-// Este arquivo foi desabilitado temporariamente
-// Há problemas com o Prisma Client não reconhecendo o schema atual
-// Será reativado após o deploy funcionar
-
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth/next'
@@ -30,16 +26,21 @@ export async function GET(request: NextRequest) {
 
         const team = await prisma.team.findUnique({
             where: { id: teamId },
-            // include: {
-            //     monthlyFeeConfig: true,
-            // },
         });
 
         if (!team) {
             return NextResponse.json({ error: 'Time não encontrado' }, { status: 404 });
         }
 
-        return NextResponse.json(team);
+        // Buscar configuração de mensalidade separadamente
+        const monthlyFeeConfig = await prisma.monthlyFeeConfig.findFirst({
+            where: { teamId }
+        });
+
+        return NextResponse.json({
+            ...team,
+            monthlyFees: monthlyFeeConfig ? [monthlyFeeConfig] : []
+        });
     } catch (error) {
         console.error("Erro ao buscar configurações do time:", error);
         return NextResponse.json({ error: 'Erro interno do servidor' }, { status: 500 });
@@ -60,7 +61,7 @@ export async function PATCH(request: NextRequest) {
         }
 
         const body = await request.json();
-        const { name, primaryColor, secondaryColor, logo, day, amount } = body;
+        const { name, primaryColor, secondaryColor, logo, dueDay } = body;
 
         await prisma.$transaction(async (tx) => {
             await tx.team.update({
@@ -73,14 +74,14 @@ export async function PATCH(request: NextRequest) {
                 },
             });
 
-            if (day !== undefined && amount !== undefined) {
+            if (dueDay !== undefined) {
                 await tx.monthlyFeeConfig.upsert({
                     where: { teamId },
-                    update: { day, amount },
+                    update: { day: dueDay },
                     create: {
                         teamId,
-                        day,
-                        amount,
+                        day: dueDay,
+                        amount: 0, // valor padrão
                     },
                 });
             }

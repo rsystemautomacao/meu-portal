@@ -127,7 +127,8 @@ export default function MatchSheetPage() {
   // Buscar jogadores do time
   const fetchJogadores = async () => {
     try {
-      const res = await fetch('/api/players')
+      // Buscar jogadores do time da partida
+      const res = await fetch(`/api/matches/sheet/players?shareToken=${token}`)
       if (!res.ok) throw new Error('Erro ao buscar jogadores')
       const data = await res.json()
       setJogadores(data)

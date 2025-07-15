@@ -115,17 +115,17 @@ export default function MonthlyReport() {
       {/* Cards de resumo com fallback */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 mb-6">
         <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="p-5">
+          <div className="p-4 sm:p-5">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <ChartBarIcon className="h-6 w-6 text-gray-400" />
+                <ChartBarIcon className="h-5 w-5 sm:h-6 sm:w-6 text-gray-400" />
               </div>
-              <div className="ml-5 w-0 flex-1">
+              <div className="ml-3 sm:ml-5 w-0 flex-1">
                 <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">
+                  <dt className="text-xs sm:text-sm font-medium text-gray-500 truncate">
                     Saldo do Mês
                   </dt>
-                  <dd className="text-lg font-medium text-gray-900">
+                  <dd className="text-sm sm:text-lg font-medium text-gray-900">
                     R$ {(summary.balance || 0).toFixed(2)}
                   </dd>
                 </dl>
@@ -135,17 +135,17 @@ export default function MonthlyReport() {
         </div>
 
         <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="p-5">
+          <div className="p-4 sm:p-5">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <ArrowUpIcon className="h-6 w-6 text-green-400" />
+                <ArrowUpIcon className="h-5 w-5 sm:h-6 sm:w-6 text-green-400" />
               </div>
-              <div className="ml-5 w-0 flex-1">
+              <div className="ml-3 sm:ml-5 w-0 flex-1">
                 <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">
+                  <dt className="text-xs sm:text-sm font-medium text-gray-500 truncate">
                     Total de Entradas
                   </dt>
-                  <dd className="text-lg font-medium text-green-600">
+                  <dd className="text-sm sm:text-lg font-medium text-green-600">
                     R$ {(summary.totalIncome || 0).toFixed(2)}
                   </dd>
                 </dl>
@@ -155,17 +155,17 @@ export default function MonthlyReport() {
         </div>
 
         <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="p-5">
+          <div className="p-4 sm:p-5">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <ArrowDownIcon className="h-6 w-6 text-red-400" />
+                <ArrowDownIcon className="h-5 w-5 sm:h-6 sm:w-6 text-red-400" />
               </div>
-              <div className="ml-5 w-0 flex-1">
+              <div className="ml-3 sm:ml-5 w-0 flex-1">
                 <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">
+                  <dt className="text-xs sm:text-sm font-medium text-gray-500 truncate">
                     Total de Saídas
                   </dt>
-                  <dd className="text-lg font-medium text-red-600">
+                  <dd className="text-sm sm:text-lg font-medium text-red-600">
                     R$ {(summary.totalExpense || 0).toFixed(2)}
                   </dd>
                 </dl>

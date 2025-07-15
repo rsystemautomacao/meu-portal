@@ -62,7 +62,7 @@ export default function PlayerModal({ isOpen, onClose, onSave, player }: PlayerM
         status: player.status,
         photoUrl: player.photoUrl || '',
         birthDate: player.birthDate ? new Date(player.birthDate).toISOString().split('T')[0] : '',
-        joinDate: player.joinDate ? new Date(player.joinDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+        joinDate: player.joinDate ? new Date(player.joinDate).toISOString().split('T')[0] : '',
         isExempt: player.isExempt,
         monthlyFee: player.monthlyFee?.toString() || ''
       })
