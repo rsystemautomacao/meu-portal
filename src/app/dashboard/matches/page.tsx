@@ -12,7 +12,7 @@ import StatsModal from '@/components/matches/StatsModal'
 import { useRouter } from 'next/navigation'
 import DatePicker from 'react-datepicker'
 import 'react-datepicker/dist/react-datepicker.css'
-import { toast } from 'react-toastify'
+import { toast } from 'react-hot-toast'
 
 // Desabilitar pré-renderização estática
 export const dynamic = 'force-dynamic'
@@ -303,7 +303,7 @@ export default function MatchesPage() {
                               <button
                                 type="button"
                                 onClick={() => {
-                                  const link = `${window.location.origin}/matches/sheet/${match.matchSheet.shareToken}`
+                                  const link = `${window.location.origin}/matches/sheet/${match.matchSheet?.shareToken}`
                                   navigator.clipboard.writeText(link)
                                   toast.success('Link copiado para a área de transferência!')
                                 }}
@@ -315,7 +315,7 @@ export default function MatchesPage() {
                               <button
                                 type="button"
                                 onClick={() => {
-                                  const link = `${window.location.origin}/matches/sheet/${match.matchSheet.shareToken}`
+                                  const link = `${window.location.origin}/matches/sheet/${match.matchSheet?.shareToken}`
                                   window.open(link, '_blank')
                                 }}
                                 className="inline-flex items-center text-blue-600 hover:text-blue-800 text-xs"
