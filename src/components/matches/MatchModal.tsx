@@ -33,8 +33,8 @@ export default function MatchModal({ isOpen, onClose, onSave, match }: MatchModa
     date: match?.date ? new Date(match.date) : null,
     opponent: match?.opponent || '',
     location: match?.location || '',
-    score1: '',
-    score2: '',
+    ourScore1: '',
+    ourScore2: '',
     opponentScore1: '',
     opponentScore2: '',
   })
@@ -51,8 +51,8 @@ export default function MatchModal({ isOpen, onClose, onSave, match }: MatchModa
         date: new Date(match.date),
         opponent: match.opponent,
         location: match.location || '',
-        score1: match.ourScore1.toString(),
-        score2: match.ourScore2.toString(),
+        ourScore1: match.ourScore1.toString(),
+        ourScore2: match.ourScore2.toString(),
         opponentScore1: match.opponentScore1.toString(),
         opponentScore2: match.opponentScore2.toString(),
       })
@@ -61,8 +61,8 @@ export default function MatchModal({ isOpen, onClose, onSave, match }: MatchModa
         date: null,
         opponent: '',
         location: '',
-        score1: '',
-        score2: '',
+        ourScore1: '',
+        ourScore2: '',
         opponentScore1: '',
         opponentScore2: '',
       })
@@ -104,9 +104,9 @@ export default function MatchModal({ isOpen, onClose, onSave, match }: MatchModa
   // Atualizar o handleSubmit para gerar eventos por quadro
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    const ourScore1 = parseInt(formData.score1) || 0
+    const ourScore1 = parseInt(formData.ourScore1) || 0
     const opponentScore1 = parseInt(formData.opponentScore1) || 0
-    const ourScore2 = parseInt(formData.score2) || 0
+    const ourScore2 = parseInt(formData.ourScore2) || 0
     const opponentScore2 = parseInt(formData.opponentScore2) || 0
 
     // Validação: exigir goleiro para cada gol do adversário
@@ -278,7 +278,7 @@ export default function MatchModal({ isOpen, onClose, onSave, match }: MatchModa
                                     type="number"
                                     min="0"
                                     value={formData.ourScore1}
-                                    onChange={e => setFormData(f => ({ ...f, ourScore1: Number(e.target.value) }))}
+                                    onChange={e => setFormData(f => ({ ...f, ourScore1: e.target.value }))}
                                     className="w-16 rounded-lg border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-center text-lg font-bold"
                                     required
                                   />
@@ -290,7 +290,7 @@ export default function MatchModal({ isOpen, onClose, onSave, match }: MatchModa
                                     type="number"
                                     min="0"
                                     value={formData.opponentScore1}
-                                    onChange={e => setFormData(f => ({ ...f, opponentScore1: Number(e.target.value) }))}
+                                    onChange={e => setFormData(f => ({ ...f, opponentScore1: e.target.value }))}
                                     className="w-16 rounded-lg border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-center text-lg font-bold"
                                     required
                                   />
@@ -306,7 +306,7 @@ export default function MatchModal({ isOpen, onClose, onSave, match }: MatchModa
                                     type="number"
                                     min="0"
                                     value={formData.ourScore2}
-                                    onChange={e => setFormData(f => ({ ...f, ourScore2: Number(e.target.value) }))}
+                                    onChange={e => setFormData(f => ({ ...f, ourScore2: e.target.value }))}
                                     className="w-16 rounded-lg border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-center text-lg font-bold"
                                     required
                                   />
@@ -318,7 +318,7 @@ export default function MatchModal({ isOpen, onClose, onSave, match }: MatchModa
                                     type="number"
                                     min="0"
                                     value={formData.opponentScore2}
-                                    onChange={e => setFormData(f => ({ ...f, opponentScore2: Number(e.target.value) }))}
+                                    onChange={e => setFormData(f => ({ ...f, opponentScore2: e.target.value }))}
                                     className="w-16 rounded-lg border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-center text-lg font-bold"
                                     required
                                   />
