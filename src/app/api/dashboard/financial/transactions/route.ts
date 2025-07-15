@@ -75,7 +75,7 @@ export async function POST(request: Request) {
       )
     }
 
-    if (data.type !== 'income' && data.type !== 'expense') {
+    if (data.type.toLowerCase() !== 'income' && data.type.toLowerCase() !== 'expense') {
       return NextResponse.json(
         { error: 'Tipo de transação inválido' },
         { status: 400 }
@@ -95,7 +95,7 @@ export async function POST(request: Request) {
       data: {
         description: data.description,
         amount: amount,
-        type: data.type,
+        type: data.type.toLowerCase(), // Garantir que seja minúsculo
         date: new Date(data.date),
         teamId: teamUser.teamId
       }

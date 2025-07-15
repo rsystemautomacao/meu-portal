@@ -88,12 +88,45 @@ export default function PlayerModal({ isOpen, onClose, onSave, player }: PlayerM
   const handlePhotoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (file) {
+      // Validar tipo de arquivo
+      if (!file.type.startsWith('image/')) {
+        alert('Por favor, selecione apenas arquivos de imagem')
+        return
+      }
+      
+      // Validar tamanho (máximo 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('A imagem deve ter no máximo 5MB')
+        return
+      }
+      
       const reader = new FileReader()
       reader.onloadend = () => {
         setPhotoPreview(reader.result as string)
         setFormData({ ...formData, photoUrl: reader.result as string })
       }
+      reader.onerror = () => {
+        alert('Erro ao ler o arquivo. Tente novamente.')
+      }
       reader.readAsDataURL(file)
+    }
+  }
+
+  const handlePhotoClick = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click()
+    } else {
+      // Fallback para mobile
+      const input = document.createElement('input')
+      input.type = 'file'
+      input.accept = 'image/*'
+      input.onchange = (e) => {
+        const target = e.target as HTMLInputElement
+        if (target.files?.[0]) {
+          handlePhotoChange({ target } as React.ChangeEvent<HTMLInputElement>)
+        }
+      }
+      input.click()
     }
   }
 
@@ -147,7 +180,7 @@ export default function PlayerModal({ isOpen, onClose, onSave, player }: PlayerM
                         <div className="flex justify-center">
                           <div
                             className="relative mt-2 h-24 w-24 cursor-pointer overflow-hidden rounded-lg bg-gray-100"
-                            onClick={() => fileInputRef.current?.click()}
+                            onClick={handlePhotoClick}
                           >
                             {photoPreview ? (
                               <img
@@ -289,11 +322,13 @@ export default function PlayerModal({ isOpen, onClose, onSave, player }: PlayerM
                             Data de Nascimento
                           </label>
                           <input
-                            type="date"
+                            type="text"
                             name="birthDate"
                             id="birthDate"
                             value={formData.birthDate}
                             onChange={(e) => setFormData({ ...formData, birthDate: e.target.value })}
+                            placeholder="DD/MM/AAAA"
+                            pattern="\\d{2}/\\d{2}/\\d{4}"
                             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
                           />
                         </div>
@@ -303,11 +338,13 @@ export default function PlayerModal({ isOpen, onClose, onSave, player }: PlayerM
                             Data de Entrada
                           </label>
                           <input
-                            type="date"
+                            type="text"
                             name="joinDate"
                             id="joinDate"
                             value={formData.joinDate}
                             onChange={(e) => setFormData({ ...formData, joinDate: e.target.value })}
+                            placeholder="DD/MM/AAAA"
+                            pattern="\\d{2}/\\d{2}/\\d{4}"
                             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
                           />
                         </div>

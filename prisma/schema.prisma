@@ -58,7 +58,7 @@ model Player {
   number          Int?      // Número da camisa
   photoUrl        String?   // URL da foto do jogador
   birthDate       DateTime?
-  joinDate        DateTime  @default(now())
+  joinDate        DateTime? // Removido @default(now()) para permitir data personalizada
   status          String    @default("ACTIVE") // ACTIVE, INACTIVE
   monthlyFee      Float     @default(0)
   team            Team      @relation(fields: [teamId], references: [id], onDelete: Cascade)

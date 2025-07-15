@@ -8,6 +8,7 @@ import DatePicker from 'react-datepicker'
 import 'react-datepicker/dist/react-datepicker.css'
 import { ptBR } from 'date-fns/locale'
 import { format, parse } from 'date-fns'
+import { CalendarIcon, TrophyIcon, UserGroupIcon, ChartBarIcon } from '@heroicons/react/24/outline'
 
 interface MatchModalProps {
   isOpen: boolean
@@ -198,8 +199,8 @@ export default function MatchModal({ isOpen, onClose, onSave, match }: MatchModa
           <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
         </Transition.Child>
 
-        <div className="fixed inset-0 z-10 overflow-y-auto flex items-center justify-center">
-          <div className="flex min-h-full items-center justify-center p-2 text-center sm:items-center sm:p-0 w-full">
+        <div className="fixed inset-0 z-10 overflow-y-auto">
+          <div className="flex min-h-full items-end justify-center p-2 text-center sm:items-center sm:p-0">
             <Transition.Child
               as={Fragment}
               enter="ease-out duration-300"
@@ -209,367 +210,416 @@ export default function MatchModal({ isOpen, onClose, onSave, match }: MatchModa
               leaveFrom="opacity-100 translate-y-0 sm:scale-100"
               leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
             >
-              <Dialog.Panel className="relative transform overflow-hidden rounded-2xl bg-white px-4 pb-6 pt-6 text-left shadow-2xl transition-all w-full max-w-full sm:my-8 sm:w-full sm:max-w-xl sm:p-8 mx-2 border border-primary/20">
-                <div className="absolute right-0 top-0 hidden pr-4 pt-4 sm:block">
-                  <button
-                    type="button"
-                    className="rounded-md bg-white text-gray-400 hover:text-gray-500"
-                    onClick={onClose}
-                  >
-                    <span className="sr-only">Fechar</span>
-                    <XMarkIcon className="h-6 w-6" aria-hidden="true" />
-                  </button>
-                </div>
-
-                <div className="sm:flex sm:items-start">
-                  <div className="mt-3 text-center sm:mt-0 sm:text-left w-full">
-                    <Dialog.Title as="h3" className="text-3xl font-extrabold leading-8 text-primary mb-6 text-center">
+              <Dialog.Panel className="relative transform overflow-hidden rounded-2xl bg-white px-4 pb-4 pt-5 text-left shadow-2xl transition-all w-full max-w-4xl sm:my-8 sm:w-full sm:max-w-4xl sm:p-6 mx-2">
+                <div>
+                  <div className="mt-3 sm:mt-5">
+                    <Dialog.Title as="h3" className="text-2xl font-bold leading-6 text-gray-900 text-center mb-6">
                       {match ? 'Editar Partida' : 'Nova Partida'}
                     </Dialog.Title>
-                    <div className="space-y-8">
-                      <form onSubmit={handleSubmit} className="space-y-8">
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                          <div className="bg-gray-50 rounded-lg p-4 flex flex-col items-center shadow-sm">
-                            <label htmlFor="date" className="block text-sm font-semibold text-gray-700 mb-2">Data</label>
-                            <DatePicker
-                              selected={formData.date}
-                              onChange={date => setFormData({ ...formData, date })}
-                              dateFormat="dd/MM/yyyy"
-                              locale={ptBR}
-                              placeholderText="Selecione a data"
-                              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm text-center font-bold text-lg"
-                              id="date"
-                              name="date"
-                              required
-                            />
-                          </div>
-                          <div className="bg-gray-50 rounded-lg p-4 flex flex-col items-center shadow-sm">
-                            <label htmlFor="opponent" className="block text-sm font-semibold text-gray-700 mb-2">Adversário</label>
-                            <input
-                              type="text"
-                              name="opponent"
-                              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm text-center font-bold text-lg"
-                              placeholder="Nome do adversário"
-                              value={formData.opponent}
-                              onChange={e => setFormData({ ...formData, opponent: e.target.value })}
-                              required
-                            />
-                          </div>
-                          <div className="bg-gray-50 rounded-lg p-4 flex flex-col items-center shadow-sm">
-                            <label htmlFor="location" className="block text-sm font-semibold text-gray-700 mb-2">Local</label>
-                            <select
-                              name="location"
-                              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm text-center font-bold text-lg"
-                              value={formData.location}
-                              onChange={e => setFormData({ ...formData, location: e.target.value })}
-                              required
-                            >
-                              <option value="">Selecione</option>
-                              <option value="Casa">Casa</option>
-                              <option value="Visitante">Visitante</option>
-                            </select>
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div className="bg-gray-50 rounded-xl p-4">
-                            <label className="block text-sm font-semibold text-gray-700 mb-2">Placar 1º Quadro</label>
-                            <div className="flex gap-2 items-center">
-                              <input
-                                type="number"
-                                name="score1"
-                                id="score1"
-                                min="0"
-                                required
-                                placeholder="Seu time"
-                                value={formData.score1}
-                                onChange={(e) => setFormData({ ...formData, score1: e.target.value })}
-                                className="block w-20 rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm text-center"
-                              />
-                              <span className="text-lg font-bold">x</span>
-                              <input
-                                type="number"
-                                name="opponentScore1"
-                                id="opponentScore1"
-                                min="0"
-                                required
-                                placeholder="Adversário"
-                                value={formData.opponentScore1}
-                                onChange={(e) => setFormData({ ...formData, opponentScore1: e.target.value })}
-                                className="block w-20 rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm text-center"
+                    <div className="mt-2">
+                      <form onSubmit={handleSubmit} className="space-y-6">
+                        {/* Informações básicas */}
+                        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-100">
+                          <h4 className="text-lg font-semibold text-blue-900 mb-4 flex items-center">
+                            <CalendarIcon className="h-5 w-5 mr-2" />
+                            Informações da Partida
+                          </h4>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-2">Data</label>
+                              <DatePicker
+                                selected={formData.date}
+                                onChange={date => setFormData(f => ({ ...f, date: date }))}
+                                dateFormat="dd/MM/yyyy"
+                                className="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-3"
+                                placeholderText="Selecione a data"
                               />
                             </div>
-                          </div>
-                          <div className="bg-gray-50 rounded-xl p-4">
-                            <label className="block text-sm font-semibold text-gray-700 mb-2">Placar 2º Quadro</label>
-                            <div className="flex gap-2 items-center">
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-2">Adversário</label>
                               <input
-                                type="number"
-                                name="score2"
-                                id="score2"
-                                min="0"
+                                type="text"
+                                value={formData.opponent}
+                                onChange={e => setFormData(f => ({ ...f, opponent: e.target.value }))}
+                                className="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-3"
+                                placeholder="Nome do adversário"
                                 required
-                                placeholder="Seu time"
-                                value={formData.score2}
-                                onChange={(e) => setFormData({ ...formData, score2: e.target.value })}
-                                className="block w-20 rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm text-center"
                               />
-                              <span className="text-lg font-bold">x</span>
-                              <input
-                                type="number"
-                                name="opponentScore2"
-                                id="opponentScore2"
-                                min="0"
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-2">Local</label>
+                              <select
+                                value={formData.location}
+                                onChange={e => setFormData(f => ({ ...f, location: e.target.value }))}
+                                className="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-3"
                                 required
-                                placeholder="Adversário"
-                                value={formData.opponentScore2}
-                                onChange={(e) => setFormData({ ...formData, opponentScore2: e.target.value })}
-                                className="block w-20 rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm text-center"
-                              />
+                              >
+                                <option value="">Selecione o local</option>
+                                <option value="Casa">Casa</option>
+                                <option value="Visitante">Visitante</option>
+                              </select>
                             </div>
                           </div>
                         </div>
 
-                        <div className="bg-white rounded-xl p-4 border border-gray-200">
-                          <label className="block text-sm font-semibold text-gray-700 mb-2">Jogadores presentes 1º Quadro (opcional)</label>
-                          <div className="flex flex-wrap gap-4 mb-2">
-                            {players.map(j => (
-                              <label key={j.id} className="flex items-center gap-2 text-sm cursor-pointer">
-                                <input
-                                  type="checkbox"
-                                  checked={presentes1.some(p => p.id === j.id)}
-                                  onChange={e => {
-                                    if (e.target.checked) setPresentes1(p => [...p, j])
-                                    else setPresentes1(p => p.filter(pj => pj.id !== j.id))
-                                  }}
-                                />
-                                <span>{j.name}</span>
-                              </label>
-                            ))}
-                          </div>
-                        </div>
-                        {presentes1.length > 0 && (
-                          <div className="bg-gray-50 rounded-xl p-4 mb-2">
-                            <div className="font-medium text-base mb-2 text-gray-800">Estatísticas dos jogadores 1º Quadro</div>
-                            <div className="space-y-2">
-                              {presentes1.map(j => (
-                                <div key={j.id} className="flex items-center gap-2 bg-white rounded px-2 py-1 border border-gray-100">
-                                  <span className="w-24 text-xs font-semibold text-gray-800">{j.name}</span>
-                                  <span title="Gols" className="text-green-600">⚽</span>
-                                  <input 
-                                    type="number" 
-                                    min={0} 
-                                    className="w-10 rounded border-gray-300 text-center" 
-                                    value={playerStats1[j.id]?.gols ?? ''} 
-                                    onChange={e => {
-                                      const value = e.target.value === '' ? '' : e.target.value;
-                                      setPlayerStats1(s => ({ 
-                                        ...s, 
-                                        [j.id]: { 
-                                          ...s[j.id], 
-                                          gols: value === '' ? 0 : Number(value) 
-                                        } 
-                                      }))
-                                    }} 
-                                  />
-                                  <span title="Assistências" className="text-blue-600">🅰️</span>
-                                  <input 
-                                    type="number" 
-                                    min={0} 
-                                    className="w-10 rounded border-gray-300 text-center" 
-                                    value={playerStats1[j.id]?.assist ?? ''} 
-                                    onChange={e => {
-                                      const value = e.target.value === '' ? '' : e.target.value;
-                                      setPlayerStats1(s => ({ 
-                                        ...s, 
-                                        [j.id]: { 
-                                          ...s[j.id], 
-                                          assist: value === '' ? 0 : Number(value) 
-                                        } 
-                                      }))
-                                    }} 
-                                  />
-                                  <span title="Amarelo" className="text-yellow-500">🟨</span>
-                                  <input 
-                                    type="number" 
-                                    min={0} 
-                                    className="w-8 rounded border-gray-300 text-center" 
-                                    value={playerStats1[j.id]?.amarelo ?? ''} 
-                                    onChange={e => {
-                                      const value = e.target.value === '' ? '' : e.target.value;
-                                      setPlayerStats1(s => ({ 
-                                        ...s, 
-                                        [j.id]: { 
-                                          ...s[j.id], 
-                                          amarelo: value === '' ? 0 : Number(value) 
-                                        } 
-                                      }))
-                                    }} 
-                                  />
-                                  <span title="Vermelho" className="text-red-600">🟥</span>
-                                  <input 
-                                    type="number" 
-                                    min={0} 
-                                    className="w-8 rounded border-gray-300 text-center" 
-                                    value={playerStats1[j.id]?.vermelho ?? ''} 
-                                    onChange={e => {
-                                      const value = e.target.value === '' ? '' : e.target.value;
-                                      setPlayerStats1(s => ({ 
-                                        ...s, 
-                                        [j.id]: { 
-                                          ...s[j.id], 
-                                          vermelho: value === '' ? 0 : Number(value) 
-                                        } 
-                                      }))
-                                    }} 
-                                  />
-                                  <span title="Gols sofridos (goleiro)" className="text-gray-700">🥅</span>
-                                  <input 
-                                    type="number" 
-                                    min={0} 
-                                    className="w-10 rounded border-gray-300 text-center" 
-                                    value={playerStats1[j.id]?.golsSofridos ?? ''} 
-                                    onChange={e => {
-                                      const value = e.target.value === '' ? '' : e.target.value;
-                                      setPlayerStats1(s => ({ 
-                                        ...s, 
-                                        [j.id]: { 
-                                          ...s[j.id], 
-                                          golsSofridos: value === '' ? 0 : Number(value) 
-                                        } 
-                                      }))
-                                    }} 
+                        {/* Placar */}
+                        <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-6 border border-green-100">
+                          <h4 className="text-lg font-semibold text-green-900 mb-4 flex items-center">
+                            <TrophyIcon className="h-5 w-5 mr-2" />
+                            Placar da Partida
+                          </h4>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="bg-white rounded-lg p-4 border border-green-200">
+                              <h5 className="font-semibold text-green-800 mb-3 text-center">1º Quadro</h5>
+                              <div className="flex items-center justify-center space-x-4">
+                                <div className="text-center">
+                                  <label className="block text-sm font-medium text-gray-700 mb-1">Seu Time</label>
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    value={formData.ourScore1}
+                                    onChange={e => setFormData(f => ({ ...f, ourScore1: Number(e.target.value) }))}
+                                    className="w-16 rounded-lg border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-center text-lg font-bold"
+                                    required
                                   />
                                 </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                        <div className="bg-white rounded-xl p-4 border border-gray-200">
-                          <label className="block text-sm font-semibold text-gray-700 mb-2">Jogadores presentes 2º Quadro (opcional)</label>
-                          <div className="flex flex-wrap gap-4 mb-2">
-                            {players.map(j => (
-                              <label key={j.id} className="flex items-center gap-2 text-sm cursor-pointer">
-                                <input
-                                  type="checkbox"
-                                  checked={presentes2.some(p => p.id === j.id)}
-                                  onChange={e => {
-                                    if (e.target.checked) setPresentes2(p => [...p, j])
-                                    else setPresentes2(p => p.filter(pj => pj.id !== j.id))
-                                  }}
-                                />
-                                <span>{j.name}</span>
-                              </label>
-                            ))}
-                          </div>
-                        </div>
-                        {presentes2.length > 0 && (
-                          <div className="bg-gray-50 rounded-xl p-4 mb-2">
-                            <div className="font-medium text-base mb-2 text-gray-800">Estatísticas dos jogadores 2º Quadro</div>
-                            <div className="space-y-2">
-                              {presentes2.map(j => (
-                                <div key={j.id} className="flex items-center gap-2 bg-white rounded px-2 py-1 border border-gray-100">
-                                  <span className="w-24 text-xs font-semibold text-gray-800">{j.name}</span>
-                                  <span title="Gols" className="text-green-600">⚽</span>
-                                  <input 
-                                    type="number" 
-                                    min={0} 
-                                    className="w-10 rounded border-gray-300 text-center" 
-                                    value={playerStats2[j.id]?.gols ?? ''} 
-                                    onChange={e => {
-                                      const value = e.target.value === '' ? '' : e.target.value;
-                                      setPlayerStats2(s => ({ 
-                                        ...s, 
-                                        [j.id]: { 
-                                          ...s[j.id], 
-                                          gols: value === '' ? 0 : Number(value) 
-                                        } 
-                                      }))
-                                    }} 
-                                  />
-                                  <span title="Assistências" className="text-blue-600">🅰️</span>
-                                  <input 
-                                    type="number" 
-                                    min={0} 
-                                    className="w-10 rounded border-gray-300 text-center" 
-                                    value={playerStats2[j.id]?.assist ?? ''} 
-                                    onChange={e => {
-                                      const value = e.target.value === '' ? '' : e.target.value;
-                                      setPlayerStats2(s => ({ 
-                                        ...s, 
-                                        [j.id]: { 
-                                          ...s[j.id], 
-                                          assist: value === '' ? 0 : Number(value) 
-                                        } 
-                                      }))
-                                    }} 
-                                  />
-                                  <span title="Amarelo" className="text-yellow-500">🟨</span>
-                                  <input 
-                                    type="number" 
-                                    min={0} 
-                                    className="w-8 rounded border-gray-300 text-center" 
-                                    value={playerStats2[j.id]?.amarelo ?? ''} 
-                                    onChange={e => {
-                                      const value = e.target.value === '' ? '' : e.target.value;
-                                      setPlayerStats2(s => ({ 
-                                        ...s, 
-                                        [j.id]: { 
-                                          ...s[j.id], 
-                                          amarelo: value === '' ? 0 : Number(value) 
-                                        } 
-                                      }))
-                                    }} 
-                                  />
-                                  <span title="Vermelho" className="text-red-600">🟥</span>
-                                  <input 
-                                    type="number" 
-                                    min={0} 
-                                    className="w-8 rounded border-gray-300 text-center" 
-                                    value={playerStats2[j.id]?.vermelho ?? ''} 
-                                    onChange={e => {
-                                      const value = e.target.value === '' ? '' : e.target.value;
-                                      setPlayerStats2(s => ({ 
-                                        ...s, 
-                                        [j.id]: { 
-                                          ...s[j.id], 
-                                          vermelho: value === '' ? 0 : Number(value) 
-                                        } 
-                                      }))
-                                    }} 
-                                  />
-                                  <span title="Gols sofridos (goleiro)" className="text-gray-700">🥅</span>
-                                  <input 
-                                    type="number" 
-                                    min={0} 
-                                    className="w-10 rounded border-gray-300 text-center" 
-                                    value={playerStats2[j.id]?.golsSofridos ?? ''} 
-                                    onChange={e => {
-                                      const value = e.target.value === '' ? '' : e.target.value;
-                                      setPlayerStats2(s => ({ 
-                                        ...s, 
-                                        [j.id]: { 
-                                          ...s[j.id], 
-                                          golsSofridos: value === '' ? 0 : Number(value) 
-                                        } 
-                                      }))
-                                    }} 
+                                <span className="text-2xl font-bold text-gray-400">×</span>
+                                <div className="text-center">
+                                  <label className="block text-sm font-medium text-gray-700 mb-1">Adversário</label>
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    value={formData.opponentScore1}
+                                    onChange={e => setFormData(f => ({ ...f, opponentScore1: Number(e.target.value) }))}
+                                    className="w-16 rounded-lg border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-center text-lg font-bold"
+                                    required
                                   />
                                 </div>
-                              ))}
+                              </div>
+                            </div>
+                            <div className="bg-white rounded-lg p-4 border border-green-200">
+                              <h5 className="font-semibold text-green-800 mb-3 text-center">2º Quadro</h5>
+                              <div className="flex items-center justify-center space-x-4">
+                                <div className="text-center">
+                                  <label className="block text-sm font-medium text-gray-700 mb-1">Seu Time</label>
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    value={formData.ourScore2}
+                                    onChange={e => setFormData(f => ({ ...f, ourScore2: Number(e.target.value) }))}
+                                    className="w-16 rounded-lg border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-center text-lg font-bold"
+                                    required
+                                  />
+                                </div>
+                                <span className="text-2xl font-bold text-gray-400">×</span>
+                                <div className="text-center">
+                                  <label className="block text-sm font-medium text-gray-700 mb-1">Adversário</label>
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    value={formData.opponentScore2}
+                                    onChange={e => setFormData(f => ({ ...f, opponentScore2: Number(e.target.value) }))}
+                                    className="w-16 rounded-lg border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-center text-lg font-bold"
+                                    required
+                                  />
+                                </div>
+                              </div>
                             </div>
                           </div>
-                        )}
-                        <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8">
+                        </div>
+
+                        {/* Jogadores e Estatísticas */}
+                        <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-6 border border-purple-100">
+                          <h4 className="text-lg font-semibold text-purple-900 mb-4 flex items-center">
+                            <UserGroupIcon className="h-5 w-5 mr-2" />
+                            Jogadores e Estatísticas
+                          </h4>
+                          
+                          {/* 1º Quadro */}
+                          <div className="bg-white rounded-lg p-4 border border-purple-200 mb-4">
+                            <h5 className="font-semibold text-purple-800 mb-3 flex items-center">
+                              <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded-full text-xs font-bold mr-2">1º</span>
+                              Jogadores presentes 1º Quadro
+                            </h5>
+                            <div className="flex flex-wrap gap-3 mb-4">
+                              {players.map(j => (
+                                <label key={j.id} className="flex items-center gap-2 text-sm cursor-pointer bg-gray-50 hover:bg-gray-100 px-3 py-2 rounded-lg transition-colors">
+                                  <input
+                                    type="checkbox"
+                                    checked={presentes1.some(p => p.id === j.id)}
+                                    onChange={e => {
+                                      if (e.target.checked) setPresentes1(p => [...p, j])
+                                      else setPresentes1(p => p.filter(pj => pj.id !== j.id))
+                                    }}
+                                    className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                                  />
+                                  <span className="font-medium">{j.name}</span>
+                                </label>
+                              ))}
+                            </div>
+                            
+                            {presentes1.length > 0 && (
+                              <div className="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg p-4 border border-blue-200">
+                                <h6 className="font-semibold text-blue-900 mb-3 flex items-center">
+                                  <ChartBarIcon className="h-4 w-4 mr-2" />
+                                  Estatísticas dos jogadores 1º Quadro
+                                </h6>
+                                <div className="space-y-3">
+                                  {presentes1.map(j => (
+                                    <div key={j.id} className="flex items-center gap-3 bg-white rounded-lg px-4 py-3 border border-blue-200 shadow-sm">
+                                      <span className="w-24 text-sm font-semibold text-gray-800">{j.name}</span>
+                                      <div className="flex items-center gap-2">
+                                        <span title="Gols" className="text-green-600 text-lg">⚽</span>
+                                        <input 
+                                          type="text" 
+                                          inputMode="numeric"
+                                          pattern="[0-9]*"
+                                          className="w-12 rounded border-gray-300 text-center text-sm" 
+                                          value={playerStats1[j.id]?.gols === 0 ? '' : playerStats1[j.id]?.gols || ''} 
+                                          onChange={e => {
+                                            const value = e.target.value;
+                                            setPlayerStats1(s => ({ 
+                                              ...s, 
+                                              [j.id]: { 
+                                                ...s[j.id], 
+                                                gols: value === '' ? 0 : Number(value) || 0
+                                              } 
+                                            }))
+                                          }} 
+                                          placeholder="0"
+                                        />
+                                        <span title="Assistências" className="text-blue-600 text-lg">🅰️</span>
+                                        <input 
+                                          type="text" 
+                                          inputMode="numeric"
+                                          pattern="[0-9]*"
+                                          className="w-12 rounded border-gray-300 text-center text-sm" 
+                                          value={playerStats1[j.id]?.assist === 0 ? '' : playerStats1[j.id]?.assist || ''} 
+                                          onChange={e => {
+                                            const value = e.target.value;
+                                            setPlayerStats1(s => ({ 
+                                              ...s, 
+                                              [j.id]: { 
+                                                ...s[j.id], 
+                                                assist: value === '' ? 0 : Number(value) || 0
+                                              } 
+                                            }))
+                                          }} 
+                                          placeholder="0"
+                                        />
+                                        <span title="Amarelo" className="text-yellow-500 text-lg">🟨</span>
+                                        <input 
+                                          type="text" 
+                                          inputMode="numeric"
+                                          pattern="[0-9]*"
+                                          className="w-10 rounded border-gray-300 text-center text-sm" 
+                                          value={playerStats1[j.id]?.amarelo === 0 ? '' : playerStats1[j.id]?.amarelo || ''} 
+                                          onChange={e => {
+                                            const value = e.target.value;
+                                            setPlayerStats1(s => ({ 
+                                              ...s, 
+                                              [j.id]: { 
+                                                ...s[j.id], 
+                                                amarelo: value === '' ? 0 : Number(value) || 0
+                                              } 
+                                            }))
+                                          }} 
+                                          placeholder="0"
+                                        />
+                                        <span title="Vermelho" className="text-red-600 text-lg">🟥</span>
+                                        <input 
+                                          type="text" 
+                                          inputMode="numeric"
+                                          pattern="[0-9]*"
+                                          className="w-10 rounded border-gray-300 text-center text-sm" 
+                                          value={playerStats1[j.id]?.vermelho === 0 ? '' : playerStats1[j.id]?.vermelho || ''} 
+                                          onChange={e => {
+                                            const value = e.target.value;
+                                            setPlayerStats1(s => ({ 
+                                              ...s, 
+                                              [j.id]: { 
+                                                ...s[j.id], 
+                                                vermelho: value === '' ? 0 : Number(value) || 0
+                                              } 
+                                            }))
+                                          }} 
+                                          placeholder="0"
+                                        />
+                                        <span title="Gols sofridos (goleiro)" className="text-gray-700 text-lg">🥅</span>
+                                        <input 
+                                          type="text" 
+                                          inputMode="numeric"
+                                          pattern="[0-9]*"
+                                          className="w-12 rounded border-gray-300 text-center text-sm" 
+                                          value={playerStats1[j.id]?.golsSofridos === 0 ? '' : playerStats1[j.id]?.golsSofridos || ''} 
+                                          onChange={e => {
+                                            const value = e.target.value;
+                                            setPlayerStats1(s => ({ 
+                                              ...s, 
+                                              [j.id]: { 
+                                                ...s[j.id], 
+                                                golsSofridos: value === '' ? 0 : Number(value) || 0
+                                              } 
+                                            }))
+                                          }} 
+                                          placeholder="0"
+                                        />
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* 2º Quadro */}
+                          <div className="bg-white rounded-lg p-4 border border-purple-200">
+                            <h5 className="font-semibold text-purple-800 mb-3 flex items-center">
+                              <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded-full text-xs font-bold mr-2">2º</span>
+                              Jogadores presentes 2º Quadro
+                            </h5>
+                            <div className="flex flex-wrap gap-3 mb-4">
+                              {players.map(j => (
+                                <label key={j.id} className="flex items-center gap-2 text-sm cursor-pointer bg-gray-50 hover:bg-gray-100 px-3 py-2 rounded-lg transition-colors">
+                                  <input
+                                    type="checkbox"
+                                    checked={presentes2.some(p => p.id === j.id)}
+                                    onChange={e => {
+                                      if (e.target.checked) setPresentes2(p => [...p, j])
+                                      else setPresentes2(p => p.filter(pj => pj.id !== j.id))
+                                    }}
+                                    className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                                  />
+                                  <span className="font-medium">{j.name}</span>
+                                </label>
+                              ))}
+                            </div>
+                            
+                            {presentes2.length > 0 && (
+                              <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-4 border border-green-200">
+                                <h6 className="font-semibold text-green-900 mb-3 flex items-center">
+                                  <ChartBarIcon className="h-4 w-4 mr-2" />
+                                  Estatísticas dos jogadores 2º Quadro
+                                </h6>
+                                <div className="space-y-3">
+                                  {presentes2.map(j => (
+                                    <div key={j.id} className="flex items-center gap-3 bg-white rounded-lg px-4 py-3 border border-green-200 shadow-sm">
+                                      <span className="w-24 text-sm font-semibold text-gray-800">{j.name}</span>
+                                      <div className="flex items-center gap-2">
+                                        <span title="Gols" className="text-green-600 text-lg">⚽</span>
+                                        <input 
+                                          type="text" 
+                                          inputMode="numeric"
+                                          pattern="[0-9]*"
+                                          className="w-12 rounded border-gray-300 text-center text-sm" 
+                                          value={playerStats2[j.id]?.gols === 0 ? '' : playerStats2[j.id]?.gols || ''} 
+                                          onChange={e => {
+                                            const value = e.target.value;
+                                            setPlayerStats2(s => ({ 
+                                              ...s, 
+                                              [j.id]: { 
+                                                ...s[j.id], 
+                                                gols: value === '' ? 0 : Number(value) || 0
+                                              } 
+                                            }))
+                                          }} 
+                                          placeholder="0"
+                                        />
+                                        <span title="Assistências" className="text-blue-600 text-lg">🅰️</span>
+                                        <input 
+                                          type="text" 
+                                          inputMode="numeric"
+                                          pattern="[0-9]*"
+                                          className="w-12 rounded border-gray-300 text-center text-sm" 
+                                          value={playerStats2[j.id]?.assist === 0 ? '' : playerStats2[j.id]?.assist || ''} 
+                                          onChange={e => {
+                                            const value = e.target.value;
+                                            setPlayerStats2(s => ({ 
+                                              ...s, 
+                                              [j.id]: { 
+                                                ...s[j.id], 
+                                                assist: value === '' ? 0 : Number(value) || 0
+                                              } 
+                                            }))
+                                          }} 
+                                          placeholder="0"
+                                        />
+                                        <span title="Amarelo" className="text-yellow-500 text-lg">🟨</span>
+                                        <input 
+                                          type="text" 
+                                          inputMode="numeric"
+                                          pattern="[0-9]*"
+                                          className="w-10 rounded border-gray-300 text-center text-sm" 
+                                          value={playerStats2[j.id]?.amarelo === 0 ? '' : playerStats2[j.id]?.amarelo || ''} 
+                                          onChange={e => {
+                                            const value = e.target.value;
+                                            setPlayerStats2(s => ({ 
+                                              ...s, 
+                                              [j.id]: { 
+                                                ...s[j.id], 
+                                                amarelo: value === '' ? 0 : Number(value) || 0
+                                              } 
+                                            }))
+                                          }} 
+                                          placeholder="0"
+                                        />
+                                        <span title="Vermelho" className="text-red-600 text-lg">🟥</span>
+                                        <input 
+                                          type="text" 
+                                          inputMode="numeric"
+                                          pattern="[0-9]*"
+                                          className="w-10 rounded border-gray-300 text-center text-sm" 
+                                          value={playerStats2[j.id]?.vermelho === 0 ? '' : playerStats2[j.id]?.vermelho || ''} 
+                                          onChange={e => {
+                                            const value = e.target.value;
+                                            setPlayerStats2(s => ({ 
+                                              ...s, 
+                                              [j.id]: { 
+                                                ...s[j.id], 
+                                                vermelho: value === '' ? 0 : Number(value) || 0
+                                              } 
+                                            }))
+                                          }} 
+                                          placeholder="0"
+                                        />
+                                        <span title="Gols sofridos (goleiro)" className="text-gray-700 text-lg">🥅</span>
+                                        <input 
+                                          type="text" 
+                                          inputMode="numeric"
+                                          pattern="[0-9]*"
+                                          className="w-12 rounded border-gray-300 text-center text-sm" 
+                                          value={playerStats2[j.id]?.golsSofridos === 0 ? '' : playerStats2[j.id]?.golsSofridos || ''} 
+                                          onChange={e => {
+                                            const value = e.target.value;
+                                            setPlayerStats2(s => ({ 
+                                              ...s, 
+                                              [j.id]: { 
+                                                ...s[j.id], 
+                                                golsSofridos: value === '' ? 0 : Number(value) || 0
+                                              } 
+                                            }))
+                                          }} 
+                                          placeholder="0"
+                                        />
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="mt-8 sm:mt-10 sm:grid sm:grid-flow-row-dense sm:grid-cols-2 sm:gap-3">
                           <button
                             type="submit"
-                            className="w-full sm:w-auto bg-primary text-white font-bold py-3 px-8 rounded-lg shadow-lg hover:bg-opacity-90 transition text-lg"
+                            className="inline-flex w-full justify-center rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-3 text-base font-semibold text-white shadow-sm hover:from-blue-700 hover:to-indigo-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 sm:col-start-2 transition-all duration-200"
                           >
-                            {match ? 'Salvar Alterações' : 'Criar Partida'}
+                            Salvar Partida
                           </button>
                           <button
                             type="button"
-                            className="w-full sm:w-auto bg-gray-100 text-gray-700 font-bold py-3 px-8 rounded-lg shadow hover:bg-gray-200 transition text-lg"
+                            className="mt-3 inline-flex w-full justify-center rounded-xl bg-white px-4 py-3 text-base font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:col-start-1 sm:mt-0 transition-all duration-200"
                             onClick={onClose}
                           >
                             Cancelar

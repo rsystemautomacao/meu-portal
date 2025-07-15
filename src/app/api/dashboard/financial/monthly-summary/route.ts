@@ -27,22 +27,25 @@ export async function GET(req: Request) {
     let targetMonth: Date
     if (monthParam) {
       const [year, month] = monthParam.split('-').map(Number)
-      // Corrigir: usar month diretamente (não subtrair 1) para o Date
+      // Criar data no primeiro dia do mês selecionado
       targetMonth = new Date(year, month - 1, 1) // month - 1 porque Date usa 0-11
     } else {
       targetMonth = new Date()
     }
 
+    // Extrair mês e ano da data calculada
     const month = targetMonth.getMonth() + 1 // Converter de volta para 1-12
     const year = targetMonth.getFullYear()
+
+    console.log('Mês selecionado:', monthParam, 'Mês calculado:', month, 'Ano:', year)
 
     // Buscar transações do mês
     const transactions = await prisma.transaction.findMany({
       where: {
         teamId: teamUser.teamId,
         date: {
-          gte: new Date(year, month - 1, 1), // month - 1 para Date (0-11)
-          lt: new Date(year, month, 1) // Próximo mês
+          gte: new Date(year, month - 1, 1), // Primeiro dia do mês
+          lt: new Date(year, month, 1) // Primeiro dia do próximo mês
         }
       }
     })
