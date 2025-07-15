@@ -113,7 +113,49 @@ export async function GET(req: Request) {
       }
     })
 
-    return NextResponse.json(playersWithStatus)
+    // Calcular jogadores com mensalidades em aberto há mais de um mês
+    const playersWithOverdueFees = players
+      .filter(player => {
+        const playerJoinDate = new Date(player.joinDate)
+        const joinYear = playerJoinDate.getFullYear()
+        const joinMonth = playerJoinDate.getMonth() + 1
+        
+        // Se o jogador entrou neste mês, não tem mensalidades em aberto
+        if (joinYear === today.getFullYear() && joinMonth === today.getMonth() + 1) {
+          return false
+        }
+
+        // Verificar se tem pagamento para o mês atual
+        const currentPayment = player.payments.find(
+          (p: any) => p.year === today.getFullYear() && p.month === today.getMonth() + 1
+        )
+
+        // Se não tem pagamento para o mês atual, verificar se deveria ter
+        if (!currentPayment) {
+          const dueDateForThisMonth = new Date(today.getFullYear(), today.getMonth(), dueDay)
+          return today > dueDateForThisMonth
+        }
+
+        return false
+      })
+      .map(player => {
+        const dueDateForThisMonth = new Date(today.getFullYear(), today.getMonth(), dueDay)
+        const daysLate = Math.floor((today.getTime() - dueDateForThisMonth.getTime()) / (1000 * 60 * 60 * 24))
+        const monthsOverdue = Math.ceil(daysLate / 30)
+
+        return {
+          id: player.id,
+          name: player.name,
+          monthlyFee: player.monthlyFee,
+          monthsOverdue: Math.max(1, monthsOverdue), // Mínimo 1 mês
+          daysLate
+        }
+      })
+
+    return NextResponse.json({
+      players: playersWithStatus,
+      playersWithOverdueFees
+    })
   } catch (error) {
     console.error('Erro ao buscar status dos jogadores:', error)
     return NextResponse.json(

@@ -113,21 +113,43 @@ export default function PlayerModal({ isOpen, onClose, onSave, player }: PlayerM
   }
 
   const handlePhotoClick = () => {
-    if (fileInputRef.current) {
-      fileInputRef.current.click()
-    } else {
-      // Fallback para mobile
-      const input = document.createElement('input')
-      input.type = 'file'
-      input.accept = 'image/*'
-      input.onchange = (e) => {
-        const target = e.target as HTMLInputElement
-        if (target.files?.[0]) {
-          handlePhotoChange({ target } as React.ChangeEvent<HTMLInputElement>)
+    // Criar input temporário para mobile
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.accept = 'image/*'
+    input.capture = 'environment' // Permitir câmera no mobile
+    
+    input.onchange = (e) => {
+      const target = e.target as HTMLInputElement
+      if (target.files?.[0]) {
+        const file = target.files[0]
+        
+        // Validar tipo de arquivo
+        if (!file.type.startsWith('image/')) {
+          alert('Por favor, selecione apenas arquivos de imagem')
+          return
         }
+        
+        // Validar tamanho (máximo 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+          alert('A imagem deve ter no máximo 5MB')
+          return
+        }
+        
+        const reader = new FileReader()
+        reader.onloadend = () => {
+          setPhotoPreview(reader.result as string)
+          setFormData({ ...formData, photoUrl: reader.result as string })
+        }
+        reader.onerror = () => {
+          alert('Erro ao ler o arquivo. Tente novamente.')
+        }
+        reader.readAsDataURL(file)
       }
-      input.click()
     }
+    
+    // Trigger do input
+    input.click()
   }
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -169,27 +191,31 @@ export default function PlayerModal({ isOpen, onClose, onSave, player }: PlayerM
               leaveFrom="opacity-100 translate-y-0 sm:scale-100"
               leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
             >
-              <Dialog.Panel className="relative transform overflow-hidden rounded-lg bg-white px-2 pb-4 pt-5 text-left shadow-xl transition-all w-full max-w-full sm:my-8 sm:w-full sm:max-w-lg sm:p-6 mx-2">
+              <Dialog.Panel className="relative transform overflow-hidden rounded-2xl bg-white px-2 pb-4 pt-5 text-left shadow-xl transition-all w-full max-w-full sm:my-8 sm:w-full sm:max-w-lg sm:p-6 mx-2">
                 <div>
                   <div className="mt-3 sm:mt-5">
-                    <Dialog.Title as="h3" className="text-base font-semibold leading-6 text-gray-900">
-                      {player ? 'Editar Jogador' : 'Novo Jogador'}
+                    <Dialog.Title as="h3" className="text-xl font-bold leading-6 text-gray-900 mb-4 text-center">
+                      {player ? '✏️ Editar Jogador' : '👤 Novo Jogador'}
                     </Dialog.Title>
                     <div className="mt-2">
-                      <form onSubmit={handleSubmit} className="space-y-4">
+                      <form onSubmit={handleSubmit} className="space-y-6">
+                        {/* Upload de Foto */}
                         <div className="flex justify-center">
                           <div
-                            className="relative mt-2 h-24 w-24 cursor-pointer overflow-hidden rounded-lg bg-gray-100"
+                            className="relative mt-2 h-32 w-32 cursor-pointer overflow-hidden rounded-xl bg-gradient-to-br from-gray-100 to-gray-200 border-2 border-dashed border-gray-300 hover:border-blue-400 transition-colors flex items-center justify-center"
                             onClick={handlePhotoClick}
                           >
                             {photoPreview ? (
                               <img
                                 src={photoPreview}
                                 alt="Preview"
-                                className="h-24 w-24 rounded-lg object-cover"
+                                className="h-32 w-32 rounded-xl object-cover"
                               />
                             ) : (
-                              <PhotoIcon className="h-12 w-12 text-gray-300" aria-hidden="true" />
+                              <div className="text-center">
+                                <PhotoIcon className="h-12 w-12 text-gray-400 mx-auto mb-2" aria-hidden="true" />
+                                <p className="text-xs text-gray-500">Clique para adicionar foto</p>
+                              </div>
                             )}
                             <input
                               type="file"

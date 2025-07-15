@@ -368,13 +368,13 @@ export default function MatchModal({ isOpen, onClose, onSave, match }: MatchModa
                                   {presentes1.map(j => (
                                     <div key={j.id} className="flex items-center gap-3 bg-white rounded-lg px-4 py-3 border border-blue-200 shadow-sm">
                                       <span className="w-24 text-sm font-semibold text-gray-800">{j.name}</span>
-                                      <div className="flex items-center gap-2">
-                                        <span title="Gols" className="text-green-600 text-lg">⚽</span>
+                                      <div className="flex items-center gap-2 flex-wrap">
+                                        <span title="Gols" className="text-green-600 text-base sm:text-lg">⚽</span>
                                         <input 
                                           type="text" 
                                           inputMode="numeric"
                                           pattern="[0-9]*"
-                                          className="w-12 rounded border-gray-300 text-center text-sm" 
+                                          className="w-8 sm:w-12 rounded border-gray-300 text-center text-sm" 
                                           value={playerStats1[j.id]?.gols === 0 ? '' : playerStats1[j.id]?.gols || ''} 
                                           onChange={e => {
                                             const value = e.target.value;
@@ -388,12 +388,12 @@ export default function MatchModal({ isOpen, onClose, onSave, match }: MatchModa
                                           }} 
                                           placeholder="0"
                                         />
-                                        <span title="Assistências" className="text-blue-600 text-lg">🅰️</span>
+                                        <span title="Assistências" className="text-blue-600 text-base sm:text-lg">🅰️</span>
                                         <input 
                                           type="text" 
                                           inputMode="numeric"
                                           pattern="[0-9]*"
-                                          className="w-12 rounded border-gray-300 text-center text-sm" 
+                                          className="w-8 sm:w-12 rounded border-gray-300 text-center text-sm" 
                                           value={playerStats1[j.id]?.assist === 0 ? '' : playerStats1[j.id]?.assist || ''} 
                                           onChange={e => {
                                             const value = e.target.value;
@@ -407,12 +407,12 @@ export default function MatchModal({ isOpen, onClose, onSave, match }: MatchModa
                                           }} 
                                           placeholder="0"
                                         />
-                                        <span title="Amarelo" className="text-yellow-500 text-lg">🟨</span>
+                                        <span title="Amarelo" className="text-yellow-500 text-base sm:text-lg">🟨</span>
                                         <input 
                                           type="text" 
                                           inputMode="numeric"
                                           pattern="[0-9]*"
-                                          className="w-10 rounded border-gray-300 text-center text-sm" 
+                                          className="w-6 sm:w-10 rounded border-gray-300 text-center text-sm" 
                                           value={playerStats1[j.id]?.amarelo === 0 ? '' : playerStats1[j.id]?.amarelo || ''} 
                                           onChange={e => {
                                             const value = e.target.value;
@@ -426,12 +426,12 @@ export default function MatchModal({ isOpen, onClose, onSave, match }: MatchModa
                                           }} 
                                           placeholder="0"
                                         />
-                                        <span title="Vermelho" className="text-red-600 text-lg">🟥</span>
+                                        <span title="Vermelho" className="text-red-600 text-base sm:text-lg">🟥</span>
                                         <input 
                                           type="text" 
                                           inputMode="numeric"
                                           pattern="[0-9]*"
-                                          className="w-10 rounded border-gray-300 text-center text-sm" 
+                                          className="w-6 sm:w-10 rounded border-gray-300 text-center text-sm" 
                                           value={playerStats1[j.id]?.vermelho === 0 ? '' : playerStats1[j.id]?.vermelho || ''} 
                                           onChange={e => {
                                             const value = e.target.value;
@@ -445,12 +445,12 @@ export default function MatchModal({ isOpen, onClose, onSave, match }: MatchModa
                                           }} 
                                           placeholder="0"
                                         />
-                                        <span title="Gols sofridos (goleiro)" className="text-gray-700 text-lg">🥅</span>
+                                        <span title="Gols sofridos (goleiro)" className="text-gray-700 text-base sm:text-lg">🥅</span>
                                         <input 
                                           type="text" 
                                           inputMode="numeric"
                                           pattern="[0-9]*"
-                                          className="w-12 rounded border-gray-300 text-center text-sm" 
+                                          className="w-8 sm:w-12 rounded border-gray-300 text-center text-sm" 
                                           value={playerStats1[j.id]?.golsSofridos === 0 ? '' : playerStats1[j.id]?.golsSofridos || ''} 
                                           onChange={e => {
                                             const value = e.target.value;
@@ -505,13 +505,13 @@ export default function MatchModal({ isOpen, onClose, onSave, match }: MatchModa
                                   {presentes2.map(j => (
                                     <div key={j.id} className="flex items-center gap-3 bg-white rounded-lg px-4 py-3 border border-green-200 shadow-sm">
                                       <span className="w-24 text-sm font-semibold text-gray-800">{j.name}</span>
-                                      <div className="flex items-center gap-2">
-                                        <span title="Gols" className="text-green-600 text-lg">⚽</span>
+                                      <div className="flex items-center gap-2 flex-wrap">
+                                        <span title="Gols" className="text-green-600 text-base sm:text-lg">⚽</span>
                                         <input 
                                           type="text" 
                                           inputMode="numeric"
                                           pattern="[0-9]*"
-                                          className="w-12 rounded border-gray-300 text-center text-sm" 
+                                          className="w-8 sm:w-12 rounded border-gray-300 text-center text-sm" 
                                           value={playerStats2[j.id]?.gols === 0 ? '' : playerStats2[j.id]?.gols || ''} 
                                           onChange={e => {
                                             const value = e.target.value;
@@ -525,12 +525,12 @@ export default function MatchModal({ isOpen, onClose, onSave, match }: MatchModa
                                           }} 
                                           placeholder="0"
                                         />
-                                        <span title="Assistências" className="text-blue-600 text-lg">🅰️</span>
+                                        <span title="Assistências" className="text-blue-600 text-base sm:text-lg">🅰️</span>
                                         <input 
                                           type="text" 
                                           inputMode="numeric"
                                           pattern="[0-9]*"
-                                          className="w-12 rounded border-gray-300 text-center text-sm" 
+                                          className="w-8 sm:w-12 rounded border-gray-300 text-center text-sm" 
                                           value={playerStats2[j.id]?.assist === 0 ? '' : playerStats2[j.id]?.assist || ''} 
                                           onChange={e => {
                                             const value = e.target.value;
@@ -544,12 +544,12 @@ export default function MatchModal({ isOpen, onClose, onSave, match }: MatchModa
                                           }} 
                                           placeholder="0"
                                         />
-                                        <span title="Amarelo" className="text-yellow-500 text-lg">🟨</span>
+                                        <span title="Amarelo" className="text-yellow-500 text-base sm:text-lg">🟨</span>
                                         <input 
                                           type="text" 
                                           inputMode="numeric"
                                           pattern="[0-9]*"
-                                          className="w-10 rounded border-gray-300 text-center text-sm" 
+                                          className="w-6 sm:w-10 rounded border-gray-300 text-center text-sm" 
                                           value={playerStats2[j.id]?.amarelo === 0 ? '' : playerStats2[j.id]?.amarelo || ''} 
                                           onChange={e => {
                                             const value = e.target.value;
@@ -563,12 +563,12 @@ export default function MatchModal({ isOpen, onClose, onSave, match }: MatchModa
                                           }} 
                                           placeholder="0"
                                         />
-                                        <span title="Vermelho" className="text-red-600 text-lg">🟥</span>
+                                        <span title="Vermelho" className="text-red-600 text-base sm:text-lg">🟥</span>
                                         <input 
                                           type="text" 
                                           inputMode="numeric"
                                           pattern="[0-9]*"
-                                          className="w-10 rounded border-gray-300 text-center text-sm" 
+                                          className="w-6 sm:w-10 rounded border-gray-300 text-center text-sm" 
                                           value={playerStats2[j.id]?.vermelho === 0 ? '' : playerStats2[j.id]?.vermelho || ''} 
                                           onChange={e => {
                                             const value = e.target.value;
@@ -582,12 +582,12 @@ export default function MatchModal({ isOpen, onClose, onSave, match }: MatchModa
                                           }} 
                                           placeholder="0"
                                         />
-                                        <span title="Gols sofridos (goleiro)" className="text-gray-700 text-lg">🥅</span>
+                                        <span title="Gols sofridos (goleiro)" className="text-gray-700 text-base sm:text-lg">🥅</span>
                                         <input 
                                           type="text" 
                                           inputMode="numeric"
                                           pattern="[0-9]*"
-                                          className="w-12 rounded border-gray-300 text-center text-sm" 
+                                          className="w-8 sm:w-12 rounded border-gray-300 text-center text-sm" 
                                           value={playerStats2[j.id]?.golsSofridos === 0 ? '' : playerStats2[j.id]?.golsSofridos || ''} 
                                           onChange={e => {
                                             const value = e.target.value;

@@ -2,7 +2,7 @@ import '@/styles/globals.css'
 import { Inter } from 'next/font/google'
 import type { Metadata } from 'next'
 import { Providers } from '@/components/providers'
-import { PWAInstallPrompt } from '@/components/PWAInstallPrompt'
+import PWAInstallPrompt from '@/components/PWAInstallPrompt'
 import { OfflineIndicator } from '@/components/OfflineIndicator'
 
 const inter = Inter({ 

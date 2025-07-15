@@ -145,6 +145,7 @@ export default function TransactionForm({ onTransactionCreated }: TransactionFor
 
     try {
       setLoading(true)
+      toast.loading('Registrando transação...')
       console.log('Enviando dados:', formData)
 
       const requestData = {
@@ -170,10 +171,12 @@ export default function TransactionForm({ onTransactionCreated }: TransactionFor
       console.log('Resposta da API:', responseData)
 
       if (!response.ok) {
+        toast.dismiss()
         throw new Error(responseData.error || responseData.message || 'Erro ao criar transação')
       }
 
-      toast.success('Transação registrada com sucesso!')
+      toast.dismiss()
+      toast.success('✅ Transação registrada com sucesso!')
       onTransactionCreated?.()
       
       // Limpar o formulário
@@ -188,8 +191,9 @@ export default function TransactionForm({ onTransactionCreated }: TransactionFor
       setSelectedPlayers([])
     } catch (error) {
       console.error('Erro ao criar transação:', error)
+      toast.dismiss()
       const errorMessage = error instanceof Error ? error.message : 'Erro ao registrar transação'
-      toast.error(`Erro: ${errorMessage}`)
+      toast.error(`❌ Erro: ${errorMessage}`)
     } finally {
       setLoading(false)
     }

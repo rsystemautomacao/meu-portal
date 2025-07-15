@@ -322,40 +322,85 @@ export default function MatchSheetPage() {
   const sumulaCompleta = quadrosPreenchidos[1] && quadrosPreenchidos[2]
 
   if (!restaurado) return <div className="p-6 text-center">Carregando...</div>
-  if (loading) return <div className="p-6 text-center">Carregando...</div>
-  if (error) return <div className="p-6 text-center text-red-500">{error}</div>
-  if (!match) return null
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Carregando súmula...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-pink-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="bg-red-100 rounded-full h-12 w-12 flex items-center justify-center mx-auto mb-4">
+            <span className="text-red-600 text-xl">⚠️</span>
+          </div>
+          <p className="text-red-600 font-semibold">{error}</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!match) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="bg-gray-100 rounded-full h-12 w-12 flex items-center justify-center mx-auto mb-4">
+            <span className="text-gray-600 text-xl">❌</span>
+          </div>
+          <p className="text-gray-600">Súmula não encontrada</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex flex-col items-center px-2 py-6">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex flex-col items-center px-4 py-6">
       {/* NOVO: Seleção inicial do quadro, desabilitando quadros já preenchidos */}
       {quadroSelecionado === null && !sumulaCompleta && !finalizado && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-xs w-full text-center border border-primary/20">
-            <div className="font-bold text-xl mb-4 text-primary">Qual quadro deseja preencher?</div>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full text-center border border-blue-200">
+            <div className="font-bold text-2xl mb-6 text-blue-900 flex items-center justify-center">
+              <span className="mr-2">⚽</span>
+              Qual quadro deseja preencher?
+            </div>
             <div className="flex gap-4 justify-center">
               <button
-                className={`bg-blue-600 text-white rounded-lg px-6 py-3 font-bold text-lg shadow hover:bg-blue-700 transition ${quadrosPreenchidos[1] ? 'opacity-50 cursor-not-allowed' : ''}`}
+                className={`bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl px-8 py-4 font-bold text-lg shadow-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 ${quadrosPreenchidos[1] ? 'opacity-50 cursor-not-allowed' : 'transform hover:scale-105'}`}
                 onClick={() => !quadrosPreenchidos[1] && setQuadroSelecionado(1)}
                 disabled={quadrosPreenchidos[1]}
-              >1º Quadro</button>
+              >
+                <div className="text-sm mb-1">1º</div>
+                <div>Quadro</div>
+              </button>
               <button
-                className={`bg-blue-600 text-white rounded-lg px-6 py-3 font-bold text-lg shadow hover:bg-blue-700 transition ${quadrosPreenchidos[2] ? 'opacity-50 cursor-not-allowed' : ''}`}
+                className={`bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl px-8 py-4 font-bold text-lg shadow-lg hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 ${quadrosPreenchidos[2] ? 'opacity-50 cursor-not-allowed' : 'transform hover:scale-105'}`}
                 onClick={() => !quadrosPreenchidos[2] && setQuadroSelecionado(2)}
                 disabled={quadrosPreenchidos[2]}
-              >2º Quadro</button>
+              >
+                <div className="text-sm mb-1">2º</div>
+                <div>Quadro</div>
+              </button>
             </div>
           </div>
         </div>
       )}
       {/* Modal de seleção de jogadores presentes */}
       {selecionandoPresentes && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-xs w-full text-center border border-primary/20">
-            <div className="font-bold text-xl mb-4 text-primary">Selecione os jogadores presentes</div>
-            <div className="max-h-60 overflow-y-auto mb-4 text-left">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full text-center border border-green-200">
+            <div className="font-bold text-2xl mb-6 text-green-900 flex items-center justify-center">
+              <span className="mr-2">👥</span>
+              Jogadores Presentes
+            </div>
+            <div className="max-h-60 overflow-y-auto mb-6 text-left bg-gray-50 rounded-lg p-4">
               {jogadores.map((j: any) => (
-                <label key={j.id} className="flex items-center gap-2 py-1 cursor-pointer">
+                <label key={j.id} className="flex items-center gap-3 py-2 cursor-pointer hover:bg-gray-100 rounded px-2 transition-colors">
                   <input
                     type="checkbox"
                     checked={presentes.some(p => p.id === j.id)}
@@ -363,70 +408,74 @@ export default function MatchSheetPage() {
                       if (e.target.checked) setPresentes(p => [...p, j])
                       else setPresentes(p => p.filter(pj => pj.id !== j.id))
                     }}
+                    className="rounded border-gray-300 text-green-600 focus:ring-green-500"
                   />
-                  <span>{j.name}</span>
+                  <span className="font-medium">{j.name}</span>
                 </label>
               ))}
             </div>
             <button
-              className="bg-primary text-white rounded-lg px-6 py-2 font-bold mt-2 shadow hover:bg-primary/90 transition"
+              className="bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl px-8 py-3 font-bold text-lg shadow-lg hover:from-green-700 hover:to-emerald-700 transition-all duration-200 transform hover:scale-105"
               disabled={presentes.length === 0}
               onClick={() => setSelecionandoPresentes(false)}
             >
-              Confirmar
+              Confirmar ({presentes.length} jogadores)
             </button>
           </div>
         </div>
       )}
       {/* Cabeçalho da súmula */}
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-6 mb-6 border border-primary/10">
-        <div className="text-center mb-2">
-          <div className="text-xs text-gray-400">Súmula Online</div>
-          <div className="font-bold text-2xl text-primary mb-1">{match.team?.name} vs {match.opponent}</div>
-          <div className="text-sm text-gray-500">{format(new Date(match.date), "d 'de' MMMM 'de' yyyy", { locale: ptBR })}</div>
-          <div className="mt-2">
-            <label className="block text-sm font-medium text-gray-700">Local</label>
+      <div className="w-full max-w-lg bg-gradient-to-r from-white to-blue-50 rounded-2xl shadow-xl p-8 mb-6 border border-blue-200">
+        <div className="text-center mb-6">
+          <div className="text-sm text-blue-600 font-semibold mb-2">⚽ Súmula Online</div>
+          <div className="font-bold text-3xl text-gray-900 mb-2">{match.team?.name} vs {match.opponent}</div>
+          <div className="text-lg text-gray-600">{format(new Date(match.date), "d 'de' MMMM 'de' yyyy", { locale: ptBR })}</div>
+          <div className="mt-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Local</label>
             <select
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm bg-gray-50 text-center"
+              className="block w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-lg bg-white text-center font-semibold"
               value={match.location || ''}
               disabled
             >
               <option value="">Selecione</option>
-              <option value="Casa">Casa</option>
-              <option value="Visitante">Visitante</option>
+              <option value="Casa">🏠 Casa</option>
+              <option value="Visitante">🚌 Visitante</option>
             </select>
           </div>
         </div>
-        <div className="flex justify-between my-2">
-          <div className="flex-1 text-center">
-            <div className="text-xs text-gray-500">1º Quadro</div>
-            <div className="text-2xl font-bold">
-              {placarQuadro(1).nosso} <span className="text-gray-400">x</span> {placarQuadro(1).adv}
+        <div className="flex justify-between my-6">
+          <div className="flex-1 text-center bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-4 mx-2">
+            <div className="text-sm text-green-700 font-semibold mb-2">1º Quadro</div>
+            <div className="text-3xl font-bold text-green-900">
+              {placarQuadro(1).nosso} <span className="text-gray-400">×</span> {placarQuadro(1).adv}
             </div>
           </div>
-          <div className="flex-1 text-center">
-            <div className="text-xs text-gray-500">2º Quadro</div>
-            <div className="text-2xl font-bold">
-              {placarQuadro(2).nosso} <span className="text-gray-400">x</span> {placarQuadro(2).adv}
+          <div className="flex-1 text-center bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-4 mx-2">
+            <div className="text-sm text-blue-700 font-semibold mb-2">2º Quadro</div>
+            <div className="text-3xl font-bold text-blue-900">
+              {placarQuadro(2).nosso} <span className="text-gray-400">×</span> {placarQuadro(2).adv}
             </div>
           </div>
         </div>
       </div>
       {/* Formulário de eventos */}
       {podeAdicionarEvento && (
-        <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-6 mb-6 border border-primary/10">
-          <div className="mb-4 font-semibold text-center text-lg text-primary">Adicionar Evento</div>
-          <div className="flex flex-col gap-3">
+        <div className="w-full max-w-lg bg-gradient-to-r from-white to-purple-50 rounded-2xl shadow-xl p-8 mb-6 border border-purple-200">
+          <div className="mb-6 font-bold text-center text-2xl text-purple-900 flex items-center justify-center">
+            <span className="mr-2">➕</span>
+            Adicionar Evento
+          </div>
+          <div className="flex flex-col gap-4">
             <select
-              className="rounded border-gray-300 p-3 text-lg bg-gray-50"
+              className="rounded-xl border-gray-300 p-4 text-lg bg-white shadow-sm focus:border-purple-500 focus:ring-purple-500"
               value={form.team}
               onChange={e => setForm(f => ({ ...f, team: e.target.value }))}
             >
-              <option value="home">Meu time</option>
-              <option value="away">Adversário</option>
+              <option value="home">🏠 Meu time</option>
+              <option value="away">⚔️ Adversário</option>
             </select>
             <select
-              className="rounded border-gray-300 p-3 text-lg bg-gray-50"
+              className="rounded-xl border-gray-300 p-4 text-lg bg-white shadow-sm focus:border-purple-500 focus:ring-purple-500"
               value={form.type}
               onChange={e => setForm(f => ({ ...f, type: e.target.value }))}
             >
@@ -436,19 +485,19 @@ export default function MatchSheetPage() {
             </select>
             {form.team === 'home' ? (
               <select
-                className="rounded border-gray-300 p-3 text-lg bg-gray-50"
+                className="rounded-xl border-gray-300 p-4 text-lg bg-white shadow-sm focus:border-purple-500 focus:ring-purple-500"
                 value={form.player}
                 onChange={e => setForm(f => ({ ...f, player: e.target.value }))}
               >
-                <option value="">Selecione o jogador</option>
+                <option value="">👤 Selecione o jogador</option>
                 {presentes.map((j: any) => (
                   <option key={j.id} value={j.name}>{j.name}</option>
                 ))}
               </select>
             ) : (
               <input
-                className="rounded border-gray-300 p-3 text-lg bg-gray-50"
-                placeholder="Nome do jogador"
+                className="rounded-xl border-gray-300 p-4 text-lg bg-white shadow-sm focus:border-purple-500 focus:ring-purple-500"
+                placeholder="👤 Nome do jogador"
                 value={form.player}
                 onChange={e => setForm(f => ({ ...f, player: e.target.value }))}
               />
@@ -456,21 +505,20 @@ export default function MatchSheetPage() {
             {/* NOVO: campo de assistência se for gol do próprio time */}
             {form.type === 'goal' && form.team === 'home' && (
               <select
-                className="rounded border-gray-300 p-3 text-lg bg-gray-50"
+                className="rounded-xl border-gray-300 p-4 text-lg bg-white shadow-sm focus:border-purple-500 focus:ring-purple-500"
                 value={form.assist}
                 onChange={e => setForm(f => ({ ...f, assist: e.target.value }))}
               >
-                <option value="">Assistência (opcional)</option>
+                <option value="">🅰️ Assistência (opcional)</option>
                 {presentes.filter(j => j.name !== form.player).map((j: any) => (
                   <option key={j.id} value={j.name}>{j.name}</option>
                 ))}
-                <option value="">Nenhuma</option>
               </select>
             )}
             {/* NOVO: campo de goleiro se for gol do adversário */}
             {form.type === 'goal' && form.team === 'away' && (
               <select
-                className="rounded border-gray-300 p-3 text-lg bg-gray-50"
+                className="rounded-xl border-gray-300 p-4 text-lg bg-white shadow-sm focus:border-purple-500 focus:ring-purple-500"
                 value={form.goleiro}
                 onChange={e => setForm(f => ({ ...f, goleiro: e.target.value }))}
               >
@@ -481,12 +529,15 @@ export default function MatchSheetPage() {
               </select>
             )}
             {/* Timer do quadro */}
-            <div className="w-full bg-gray-50 rounded-lg p-3 flex flex-col items-center mt-2">
-              <div className="mb-2 font-semibold text-center text-primary">Tempo do {quadroSelecionado}º Quadro</div>
-              <div className="flex items-center gap-4 mb-2">
-                <span className="text-3xl font-mono">{formatTimer(timer[quadroSelecionado as 1|2])}</span>
+            <div className="w-full bg-gradient-to-r from-yellow-50 to-orange-50 rounded-xl p-6 flex flex-col items-center mt-4 border border-yellow-200">
+              <div className="mb-4 font-bold text-center text-xl text-yellow-900 flex items-center">
+                <span className="mr-2">⏱️</span>
+                Tempo do {quadroSelecionado}º Quadro
+              </div>
+              <div className="flex items-center gap-4 mb-4">
+                <span className="text-4xl font-mono bg-white px-4 py-2 rounded-lg shadow-sm border border-yellow-200">{formatTimer(timer[quadroSelecionado as 1|2])}</span>
                 <button
-                  className={`px-3 py-1 rounded-lg ${timerRunning[quadroSelecionado as 1|2] ? 'bg-yellow-500 text-white' : 'bg-green-600 text-white'} font-bold shadow`}
+                  className={`px-6 py-3 rounded-xl font-bold shadow-lg transition-all duration-200 ${timerRunning[quadroSelecionado as 1|2] ? 'bg-yellow-500 text-white hover:bg-yellow-600' : 'bg-green-600 text-white hover:bg-green-700'} transform hover:scale-105`}
                   onClick={() => {
                     if (!timerRunning[quadroSelecionado as 1|2]) {
                       if (timer[quadroSelecionado as 1|2] === 0) {
@@ -497,71 +548,90 @@ export default function MatchSheetPage() {
                   }}
                   type="button"
                 >
-                  {timerRunning[quadroSelecionado as 1|2] ? 'Pausar' : 'Iniciar'}
+                  {timerRunning[quadroSelecionado as 1|2] ? '⏸️ Pausar' : '▶️ Iniciar'}
                 </button>
                 <button
-                  className="px-3 py-1 rounded-lg bg-gray-300 text-gray-700 font-bold shadow"
+                  className="px-6 py-3 rounded-xl bg-gray-300 text-gray-700 font-bold shadow-lg hover:bg-gray-400 transition-all duration-200 transform hover:scale-105"
                   onClick={() => setTimer(t => ({ ...t, [quadroSelecionado as 1|2]: timerInitial[quadroSelecionado as 1|2] * 60 }))}
                   type="button"
                 >
-                  Zerar
+                  🔄 Zerar
                 </button>
-                <input
-                  type="number"
-                  min={1}
-                  className="w-16 ml-2 rounded border-gray-300 p-1 text-center bg-white"
-                  value={timerInitial[quadroSelecionado as 1|2]}
-                  onChange={e => {
-                    const min = Math.max(1, Number(e.target.value))
-                    setTimerInitial(ti => ({ ...ti, [quadroSelecionado as 1|2]: min }))
-                    setTimer(t => ({ ...t, [quadroSelecionado as 1|2]: min * 60 }))
-                  }}
-                  disabled={timerRunning[quadroSelecionado as 1|2]}
-                  title="Editar minutos antes de iniciar"
-                />
-                <span className="text-xs text-gray-500">min</span>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    min={1}
+                    className="w-20 rounded-lg border-gray-300 p-2 text-center bg-white shadow-sm"
+                    value={timerInitial[quadroSelecionado as 1|2]}
+                    onChange={e => {
+                      const min = Math.max(1, Number(e.target.value))
+                      setTimerInitial(ti => ({ ...ti, [quadroSelecionado as 1|2]: min }))
+                      setTimer(t => ({ ...t, [quadroSelecionado as 1|2]: min * 60 }))
+                    }}
+                    disabled={timerRunning[quadroSelecionado as 1|2]}
+                    title="Editar minutos antes de iniciar"
+                  />
+                  <span className="text-sm text-gray-600 font-semibold">min</span>
+                </div>
               </div>
             </div>
             {/* Campo minuto preenchido automaticamente ao adicionar evento */}
             <input
-              className="rounded border-gray-300 p-3 text-lg bg-gray-50 text-center"
-              placeholder="Minuto"
+              className="rounded-xl border-gray-300 p-4 text-lg bg-white shadow-sm focus:border-purple-500 focus:ring-purple-500 text-center"
+              placeholder="⏰ Minuto"
               type="number"
               value={form.minute}
               onChange={e => setForm(f => ({ ...f, minute: e.target.value }))}
             />
             {/* Campo quadro fixo, não editável */}
-            <div className="rounded border border-gray-300 p-3 bg-gray-100 text-center text-gray-700 font-bold">
+            <div className="rounded-xl border border-purple-300 p-4 bg-gradient-to-r from-purple-50 to-pink-50 text-center text-purple-900 font-bold text-lg">
               {quadroSelecionado}º Quadro
             </div>
             <button
-              className="bg-primary text-white rounded-lg py-3 font-bold mt-2 shadow hover:bg-primary/90 transition text-lg"
+              className="bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl py-4 font-bold text-xl shadow-lg mt-4 hover:from-purple-700 hover:to-pink-700 transition-all duration-200 transform hover:scale-105"
               onClick={() => {
                 setForm(f => ({ ...f, minute: String(Math.ceil(timer[quadroSelecionado as 1|2]/60)) }));
                 handleAddEvent();
               }}
               type="button"
             >
-              Adicionar Evento
+              ➕ Adicionar Evento
             </button>
           </div>
         </div>
       )}
       {/* Lista de eventos */}
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-6 mb-6 border border-primary/10">
-        <div className="mb-2 font-semibold text-center text-lg text-primary">Eventos</div>
-        {events.length === 0 && <div className="text-center text-gray-400">Nenhum evento registrado.</div>}
-        <ul className="divide-y divide-gray-100">
+      <div className="w-full max-w-lg bg-gradient-to-r from-white to-gray-50 rounded-2xl shadow-xl p-8 mb-6 border border-gray-200">
+        <div className="mb-6 font-bold text-center text-2xl text-gray-900 flex items-center justify-center">
+          <span className="mr-2">📋</span>
+          Eventos Registrados
+        </div>
+        {events.length === 0 && (
+          <div className="text-center text-gray-500 py-8">
+            <div className="text-4xl mb-2">📝</div>
+            <div className="font-semibold">Nenhum evento registrado ainda.</div>
+            <div className="text-sm">Adicione eventos usando o formulário acima.</div>
+          </div>
+        )}
+        <ul className="space-y-3">
           {events.map((ev, i) => (
-            <li key={i} className="flex items-center justify-between py-2 text-sm">
-              <span className={`px-2 py-1 rounded-lg ${EVENT_TYPES.find(t => t.type === ev.type)?.color || 'bg-gray-200'}`}>{EVENT_TYPES.find(t => t.type === ev.type)?.label || ev.type}</span>
-              <span>{ev.player}</span>
-              <span>{ev.minute}'</span>
-              <span>{ev.quadro}ºQ</span>
-              <span>{ev.team === 'home' ? 'Meu time' : 'Adversário'}</span>
-              {ev.type === 'goal' && ev.team === 'home' && ev.assist && (
-                <span className="ml-2 text-xs text-blue-600">Assist: {ev.assist}</span>
-              )}
+            <li key={i} className="flex items-center justify-between py-4 px-6 bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+              <div className="flex items-center gap-3">
+                <span className={`px-3 py-2 rounded-lg text-white font-semibold text-sm ${EVENT_TYPES.find(t => t.type === ev.type)?.color || 'bg-gray-500'}`}>
+                  {EVENT_TYPES.find(t => t.type === ev.type)?.label || ev.type}
+                </span>
+                <div className="flex flex-col">
+                  <span className="font-semibold text-gray-900">{ev.player}</span>
+                  <span className="text-xs text-gray-500">{ev.team === 'home' ? '🏠 Meu time' : '⚔️ Adversário'}</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="text-lg font-bold text-gray-700">{ev.minute}'</span>
+                <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-lg text-sm font-semibold">{ev.quadro}ºQ</span>
+                {ev.type === 'goal' && ev.team === 'home' && ev.assist && (
+                  <span className="px-2 py-1 bg-blue-50 text-blue-700 rounded-lg text-xs">🅰️ {ev.assist}</span>
+                )}
+              </div>
             </li>
           ))}
         </ul>
@@ -569,29 +639,29 @@ export default function MatchSheetPage() {
       {/* Botão de finalizar quadro ou sumula */}
       {quadroSelecionado !== null && !finalizado && (
         <button
-          className="w-full max-w-md bg-green-600 text-white rounded-2xl py-4 font-bold text-lg shadow-lg mb-6 hover:bg-green-700 transition"
+          className="w-full max-w-lg bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-2xl py-6 font-bold text-xl shadow-xl mb-6 hover:from-green-700 hover:to-emerald-700 transition-all duration-200 transform hover:scale-105"
           onClick={handleFinalizarQuadro}
           disabled={saving}
         >
-          {saving ? 'Salvando...' : 'Finalizar e Salvar Quadro'}
+          {saving ? '💾 Salvando...' : '✅ Finalizar e Salvar Quadro'}
         </button>
       )}
       {finalizado && (
         <button
-          className="w-full max-w-md bg-green-700 text-white rounded-2xl py-4 font-bold text-lg shadow-lg mb-6 hover:bg-green-800 transition"
+          className="w-full max-w-lg bg-gradient-to-r from-green-700 to-emerald-700 text-white rounded-2xl py-6 font-bold text-xl shadow-xl mb-6"
           onClick={() => {
             setFinalizado(true)
             router.push('/dashboard/matches')
           }}
         >
-          Súmula finalizada e salva!
+          🎉 Súmula finalizada e salva!
         </button>
       )}
       <button
-        className="w-full max-w-md bg-gray-200 text-gray-700 rounded-2xl py-3 text-center font-bold shadow mb-2 hover:bg-gray-300 transition"
+        className="w-full max-w-lg bg-gradient-to-r from-gray-200 to-gray-300 text-gray-700 rounded-2xl py-4 text-center font-bold shadow-lg mb-2 hover:from-gray-300 hover:to-gray-400 transition-all duration-200 transform hover:scale-105"
         onClick={() => router.push('/dashboard/matches')}
       >
-        Voltar
+        ← Voltar
       </button>
     </div>
   )

@@ -301,7 +301,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div className="bg-white overflow-hidden shadow rounded-lg">
+        <div className="bg-white overflow-hidden shadow rounded-lg cursor-pointer hover:shadow-lg transition-shadow" onClick={() => router.push('/dashboard/financial')}>
           <div className="p-5">
             <div className="flex items-center">
               <div className="flex-shrink-0">
@@ -323,7 +323,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div className="bg-white overflow-hidden shadow rounded-lg">
+        <div className="bg-white overflow-hidden shadow rounded-lg cursor-pointer hover:shadow-lg transition-shadow" onClick={() => router.push('/dashboard/financial')}>
           <div className="p-5">
             <div className="flex items-center">
               <div className="flex-shrink-0">
@@ -345,7 +345,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div className="bg-white overflow-hidden shadow rounded-lg">
+        <div className="bg-white overflow-hidden shadow rounded-lg cursor-pointer hover:shadow-lg transition-shadow" onClick={() => router.push('/dashboard/players')}>
           <div className="p-5">
             <div className="flex items-center">
               <div className="flex-shrink-0">
@@ -370,12 +370,20 @@ export default function DashboardPage() {
 
       {/* Seção de últimas partidas */}
       <div className="mt-8 overflow-x-auto w-full">
-        <h2 className="text-lg font-medium text-gray-900 mb-4">Últimas Partidas</h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-medium text-gray-900">Últimas Partidas</h2>
+          <button 
+            onClick={() => router.push('/dashboard/matches')}
+            className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+          >
+            Ver todas →
+          </button>
+        </div>
         <div className="bg-white shadow overflow-hidden sm:rounded-md">
           {dashboardData?.recentMatches && dashboardData.recentMatches.length > 0 ? (
             <>
               <ul role="list" className="divide-y divide-gray-200">
-                {dashboardData.recentMatches.map((match) => {
+                {dashboardData.recentMatches.slice(0, 3).map((match) => {
                   return (
                     <li key={match.id}>
                       <button className="w-full text-left px-4 py-4 sm:px-6 hover:bg-gray-50 focus:outline-none" onClick={() => setSelectedMatch(match)}>
@@ -476,11 +484,19 @@ export default function DashboardPage() {
 
       {/* Seção financeira */}
       <div className="mt-8">
-        <h2 className="text-lg font-medium text-gray-900 mb-4">Últimas Movimentações</h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-medium text-gray-900">Últimas Movimentações</h2>
+          <button 
+            onClick={() => router.push('/dashboard/financial')}
+            className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+          >
+            Ver todas →
+          </button>
+        </div>
         <div className="bg-white shadow overflow-hidden sm:rounded-md">
           {dashboardData && dashboardData.recentTransactions && dashboardData.recentTransactions.length > 0 ? (
           <ul role="list" className="divide-y divide-gray-200">
-              {dashboardData.recentTransactions.map((transaction) => (
+              {dashboardData.recentTransactions.slice(0, 5).map((transaction) => (
               <li key={transaction.id}>
                 <div className="px-4 py-4 sm:px-6">
                   <div className="flex items-center justify-between">

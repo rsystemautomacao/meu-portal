@@ -99,15 +99,15 @@ export default function StatsModal({ isOpen, onClose, events }: StatsModalProps)
                     {events.length === 0 && <div className="text-gray-400 text-sm mb-2">Nenhum evento registrado.</div>}
                     <ul className="space-y-1">
                       {events.map(ev => (
-                        <li key={ev.id} className="flex items-center gap-2 text-base">
-                          {ICONS[ev.type as keyof typeof ICONS] || <UserIcon className="h-4 w-4 text-gray-400" />}
-                          <span className={`font-bold ${getColor(ev.type)}`}>{getLabel(ev.type)}</span>
-                          <span className="font-medium text-gray-800">{ev.player}</span>
+                        <li key={ev.id} className="flex items-center gap-1 text-sm">
+                          {ICONS[ev.type as keyof typeof ICONS] || <UserIcon className="h-3 w-3 text-gray-400" />}
+                          <span className={`font-semibold ${getColor(ev.type)} text-xs`}>{getLabel(ev.type)}</span>
+                          <span className="font-medium text-gray-800 text-xs">{ev.player}</span>
                           {ev.type === 'goal' && ev.assist && (
-                            <span className="text-xs text-blue-600 ml-2">Assist: {ev.assist}</span>
+                            <span className="text-xs text-blue-600">🅰️{ev.assist}</span>
                           )}
                           <span className="text-xs text-gray-500">{ev.minute}'</span>
-                          <span className="text-xs text-gray-400 ml-2">({ev.team === 'home' ? 'Meu time' : 'Adversário'})</span>
+                          <span className="text-xs text-gray-400">({ev.team === 'home' ? '🏠' : '⚔️'})</span>
                         </li>
                       ))}
                     </ul>
