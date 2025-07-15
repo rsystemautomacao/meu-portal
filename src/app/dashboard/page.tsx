@@ -9,9 +9,13 @@ import {
   ArrowTrendingUpIcon,
   ArrowTrendingDownIcon,
   ScaleIcon,
+  ClipboardIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
 } from '@heroicons/react/24/outline'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import StatsModal from '@/components/matches/StatsModal'
 
 // Desabilitar pré-renderização estática
 export const dynamic = 'force-dynamic'
@@ -27,6 +31,11 @@ interface Match {
     yellowCards: number;
     redCards: number;
   };
+  ourScore1?: number;
+  opponentScore1?: number;
+  ourScore2?: number;
+  opponentScore2?: number;
+  events?: any[]; // Adicionado para armazenar os eventos de cada partida
 }
 
 interface Transaction {
@@ -51,6 +60,12 @@ export default function DashboardPage() {
   const router = useRouter()
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState(true)
+  const [selectedMatch, setSelectedMatch] = useState<Match | null>(null)
+
+  // Estado para ordenação
+  const [sortField, setSortField] = useState<'presencas' | 'gols' | 'assist' | 'amarelo' | 'vermelho' | 'golsSofridos' | null>('gols');
+  const [sortOrder, setSortOrder] = useState<'desc' | 'asc' | null>('desc');
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (status === 'loading') return
@@ -73,6 +88,7 @@ export default function DashboardPage() {
           const data = await res.json()
           setDashboardData(data)
         } else {
+          console.error('Erro ao buscar dados do dashboard:', res.status)
           setDashboardData(null)
         }
       } catch (error) {
@@ -113,6 +129,106 @@ export default function DashboardPage() {
     }
   }
 
+  // Função para resultado por quadro
+  function getQuadroResult(ourScore: number, opponentScore: number) {
+    if (ourScore > opponentScore) return { text: 'Vitória', color: 'text-green-700' };
+    if (ourScore < opponentScore) return { text: 'Derrota', color: 'text-red-700' };
+    return { text: 'Empate', color: 'text-blue-700' };
+  }
+
+  function getStatsFromEvents(events?: any[]) {
+    if (!Array.isArray(events)) return { goals: 0, yellowCards: 0, redCards: 0 };
+    return {
+      goals: events.filter(ev => ev.type === 'goal').length,
+      yellowCards: events.filter(ev => ev.type === 'yellow_card').length,
+      redCards: events.filter(ev => ev.type === 'red_card').length,
+    };
+  }
+
+  // Função utilitária para agrupar estatísticas por jogador
+  function getPlayerStats(matches: Match[]) {
+    const stats: Record<string, any> = {};
+    let allPlayers = new Set<string>();
+    let golsPro = 0;
+    let golsContra = 0;
+    let presencas: Record<string, number> = {};
+    matches.forEach(match => {
+      if (!Array.isArray(match.events)) return;
+      // Presenças: para cada quadro, se o jogador tem evento 'home' naquele quadro, conta presença
+      [1, 2].forEach(quadro => {
+        const presentesQuadro = new Set(
+          (match.events || []).filter(ev => ev.team === 'home' && ev.quadro === quadro && ev.player && typeof ev.player === 'string' && ev.player !== 'Adversário').map(ev => ev.player)
+        );
+        presentesQuadro.forEach(playerName => {
+          allPlayers.add(playerName);
+          if (!presencas[playerName]) presencas[playerName] = 0;
+          presencas[playerName]++;
+        });
+      });
+      (match.events || []).forEach(ev => {
+        // Gols sofridos por goleiro: contabilizar SEMPRE que houver campo goleiro
+        if (ev.goleiro && typeof ev.goleiro === 'string' && ev.type === 'goal' && ev.team === 'away') {
+          allPlayers.add(ev.goleiro);
+          if (!stats[ev.goleiro]) stats[ev.goleiro] = { presencas: 0, gols: 0, assist: 0, amarelo: 0, vermelho: 0, golsSofridos: 0 };
+          stats[ev.goleiro].golsSofridos++;
+        }
+        // Estatísticas normais para jogadores do time
+        if (!ev.player || ev.player === 'Adversário') return;
+        const playerName = typeof ev.player === 'string' ? ev.player : ev.player.name;
+        allPlayers.add(playerName);
+        if (!stats[playerName]) stats[playerName] = { presencas: 0, gols: 0, assist: 0, amarelo: 0, vermelho: 0, golsSofridos: 0 };
+        if (ev.type === 'goal') {
+          if (ev.team === 'home') {
+            stats[playerName].gols++;
+            golsPro++;
+          } else if (ev.team === 'away') {
+            golsContra++;
+          }
+        }
+        if (ev.type === 'assist') stats[playerName].assist++;
+        if (ev.type === 'yellow_card') stats[playerName].amarelo++;
+        if (ev.type === 'red_card') stats[playerName].vermelho++;
+      });
+    });
+    // Preencher presenças no stats
+    Object.keys(presencas).forEach(player => {
+      if (!stats[player]) stats[player] = { presencas: 0, gols: 0, assist: 0, amarelo: 0, vermelho: 0, golsSofridos: 0 };
+      stats[player].presencas = presencas[player];
+    });
+    return { stats, allPlayers: Array.from(allPlayers), golsPro, golsContra };
+  }
+
+  // Função para lidar com clique no ícone
+  function handleSort(field: 'presencas' | 'gols' | 'assist' | 'amarelo' | 'vermelho' | 'golsSofridos') {
+    if (sortField !== field) {
+      setSortField(field);
+      setSortOrder('desc');
+    } else if (sortOrder === 'desc') {
+      setSortOrder('asc');
+    } else if (sortOrder === 'asc') {
+      setSortField('gols');
+      setSortOrder('desc');
+    }
+  }
+
+  // Função para copiar estatísticas
+  function handleCopyStats(stats: any, allPlayers: string[]) {
+    const header = ['Jogador', '✅', '⚽', '🅰️', '🟨', '🟥', '🥅'];
+    const rows = allPlayers.filter(p => p !== 'Adversário').map(player => [
+      player,
+      stats[player].presencas,
+      stats[player].gols,
+      stats[player].assist,
+      stats[player].amarelo,
+      stats[player].vermelho,
+      stats[player].golsSofridos
+    ]);
+    const text = [header.join('\t'), ...rows.map(r => r.join('\t'))].join('\n');
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       {/* Header */}
@@ -138,10 +254,19 @@ export default function DashboardPage() {
                   <dt className="text-sm font-medium text-gray-500 truncate">
                     Último Jogo
                   </dt>
-                  <dd className="flex items-baseline">
-                    <div className="text-2xl font-semibold text-gray-900">
-                      {getResultText(dashboardData?.lastMatchResult ?? null)}
-                    </div>
+                  <dd className="flex flex-col items-start mt-2 space-y-1">
+                    {dashboardData?.recentMatches && dashboardData.recentMatches.length > 0 &&
+                      typeof dashboardData.recentMatches[0]?.ourScore1 === 'number' && typeof dashboardData.recentMatches[0]?.opponentScore1 === 'number' && (
+                        <>
+                          <div className={`text-sm font-medium ${getQuadroResult((dashboardData.recentMatches[0]?.ourScore1 ?? 0), (dashboardData.recentMatches[0]?.opponentScore1 ?? 0)).color}`}>
+                            1º Quadro: {getQuadroResult((dashboardData.recentMatches[0]?.ourScore1 ?? 0), (dashboardData.recentMatches[0]?.opponentScore1 ?? 0)).text}
+                          </div>
+                          <div className={`text-sm font-medium ${getQuadroResult((dashboardData.recentMatches[0]?.ourScore2 ?? 0), (dashboardData.recentMatches[0]?.opponentScore2 ?? 0)).color}`}>
+                            2º Quadro: {getQuadroResult((dashboardData.recentMatches[0]?.ourScore2 ?? 0), (dashboardData.recentMatches[0]?.opponentScore2 ?? 0)).text}
+                          </div>
+                        </>
+                      )
+                    }
                   </dd>
                 </dl>
               </div>
@@ -220,31 +345,42 @@ export default function DashboardPage() {
       <div className="mt-8">
         <h2 className="text-lg font-medium text-gray-900 mb-4">Últimas Partidas</h2>
         <div className="bg-white shadow overflow-hidden sm:rounded-md">
-          {dashboardData && dashboardData.recentMatches.length > 0 ? (
-            <ul role="list" className="divide-y divide-gray-200">
-              {dashboardData.recentMatches.map((match) => (
-                <li key={match.id}>
-                  <div className="px-4 py-4 sm:px-6">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center">
-                        <p className="text-sm font-medium text-gray-900">
-                          vs {match.opponent}
-                        </p>
-                        <p className={`ml-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getResultColor(match.result)}`}>
-                          {match.score}
-                        </p>
-                      </div>
-                      <div className="flex items-center space-x-4 text-sm text-gray-500">
-                        <span>⚽ {match.stats.goals}</span>
-                        <span>🟨 {match.stats.yellowCards}</span>
-                        <span>🟥 {match.stats.redCards}</span>
-                        <span>{new Date(match.date).toLocaleDateString()}</span>
-                      </div>
-                    </div>
-                  </div>
-                </li>
-              ))}
-            </ul>
+          {dashboardData?.recentMatches && dashboardData.recentMatches.length > 0 ? (
+            <>
+              <ul role="list" className="divide-y divide-gray-200">
+                {dashboardData.recentMatches.map((match) => {
+                  return (
+                    <li key={match.id}>
+                      <button className="w-full text-left px-4 py-4 sm:px-6 hover:bg-gray-50 focus:outline-none" onClick={() => setSelectedMatch(match)}>
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm font-medium text-gray-900">
+                              vs {match.opponent}
+                            </p>
+                            <span className="text-xs text-gray-500">{new Date(match.date).toLocaleDateString()}</span>
+                          </div>
+                          <div className="flex flex-col sm:flex-row gap-2 items-center">
+                            {typeof match.ourScore1 === 'number' && typeof match.opponentScore1 === 'number' && (
+                              <span className={`px-2 py-1 rounded text-sm font-bold ${getQuadroResult((match?.ourScore1 ?? 0), (match?.opponentScore1 ?? 0)).color}`}>1ºQ: {match?.ourScore1 ?? 0}×{match?.opponentScore1 ?? 0}</span>
+                            )}
+                            {typeof match.ourScore2 === 'number' && typeof match.opponentScore2 === 'number' && (
+                              <span className={`px-2 py-1 rounded text-sm font-bold ${getQuadroResult((match?.ourScore2 ?? 0), (match?.opponentScore2 ?? 0)).color}`}>2ºQ: {match?.ourScore2 ?? 0}×{match?.opponentScore2 ?? 0}</span>
+                            )}
+                          </div>
+                        </div>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+              {selectedMatch && selectedMatch.events && selectedMatch.events.length > 0 && (
+                <StatsModal
+                  isOpen={!!selectedMatch}
+                  onClose={() => setSelectedMatch(null)}
+                  events={selectedMatch.events}
+                />
+              )}
+            </>
           ) : (
             <div className="text-center py-8 text-gray-500">
               Nenhuma partida registrada ainda.
@@ -253,28 +389,86 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      {/* Seção de estatísticas */}
+      <div className="mt-8">
+        <h2 className="text-lg font-medium text-gray-900 mb-4">Estatísticas</h2>
+        <div className="bg-white shadow overflow-hidden sm:rounded-md p-4">
+          {dashboardData?.recentMatches && dashboardData.recentMatches.length > 0 ? (() => {
+            const { stats, allPlayers, golsPro, golsContra } = getPlayerStats(dashboardData.recentMatches);
+            return (
+              <>
+                <div className="flex justify-between items-center mb-2">
+                  <div className="text-sm text-gray-700">
+                    Gols Pró: <span className="font-bold">{golsPro}</span> &nbsp; | &nbsp; Gols Contra: <span className="font-bold">{golsContra}</span> &nbsp; | &nbsp; Saldo: <span className="font-bold">{golsPro - golsContra}</span>
+                  </div>
+                  <button
+                    className="flex items-center gap-1 text-xs text-primary hover:underline focus:outline-none"
+                    onClick={() => handleCopyStats(stats, allPlayers)}
+                    title="Copiar estatísticas para área de transferência"
+                  >
+                    <ClipboardIcon className="h-4 w-4" />
+                    {copied ? 'Copiado!' : 'Copiar estatísticas'}
+                  </button>
+                </div>
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead>
+                    <tr>
+                      <th className="px-2 py-1 text-left text-xs font-semibold text-gray-700">Jogador</th>
+                      <th className="px-2 py-1 text-center text-xs font-semibold text-gray-700 cursor-pointer select-none" title="Presenças" onClick={() => handleSort('presencas')}>✅{sortField === 'presencas' && (sortOrder === 'desc' ? <ChevronDownIcon className="inline h-3 w-3" /> : <ChevronUpIcon className="inline h-3 w-3" />)}</th>
+                      <th className="px-2 py-1 text-center text-xs font-semibold text-gray-700 cursor-pointer select-none" title="Gols" onClick={() => handleSort('gols')}>⚽{sortField === 'gols' && (sortOrder === 'desc' ? <ChevronDownIcon className="inline h-3 w-3" /> : <ChevronUpIcon className="inline h-3 w-3" />)}</th>
+                      <th className="px-2 py-1 text-center text-xs font-semibold text-gray-700 cursor-pointer select-none" title="Assistências" onClick={() => handleSort('assist')}>🅰️{sortField === 'assist' && (sortOrder === 'desc' ? <ChevronDownIcon className="inline h-3 w-3" /> : <ChevronUpIcon className="inline h-3 w-3" />)}</th>
+                      <th className="px-2 py-1 text-center text-xs font-semibold text-gray-700 cursor-pointer select-none" title="Amarelo" onClick={() => handleSort('amarelo')}>🟨{sortField === 'amarelo' && (sortOrder === 'desc' ? <ChevronDownIcon className="inline h-3 w-3" /> : <ChevronUpIcon className="inline h-3 w-3" />)}</th>
+                      <th className="px-2 py-1 text-center text-xs font-semibold text-gray-700 cursor-pointer select-none" title="Vermelho" onClick={() => handleSort('vermelho')}>🟥{sortField === 'vermelho' && (sortOrder === 'desc' ? <ChevronDownIcon className="inline h-3 w-3" /> : <ChevronUpIcon className="inline h-3 w-3" />)}</th>
+                      <th className="px-2 py-1 text-center text-xs font-semibold text-gray-700 cursor-pointer select-none" title="Gols Sofridos (Goleiro)" onClick={() => handleSort('golsSofridos')}>🥅{sortField === 'golsSofridos' && (sortOrder === 'desc' ? <ChevronDownIcon className="inline h-3 w-3" /> : <ChevronUpIcon className="inline h-3 w-3" />)}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {/* Ordenar os jogadores conforme o sortField e sortOrder */}
+                    {allPlayers.filter(player => player !== 'Adversário').sort((a, b) => {
+                      if (!sortField) return 0;
+                      if (sortOrder === 'asc') return stats[a][sortField] - stats[b][sortField];
+                      return stats[b][sortField] - stats[a][sortField];
+                    }).map(player => (
+                      <tr key={player}>
+                        <td className="px-2 py-1 text-sm font-medium text-gray-900">{player}</td>
+                        <td className="px-2 py-1 text-center">{stats[player].presencas}</td>
+                        <td className="px-2 py-1 text-center">{stats[player].gols}</td>
+                        <td className="px-2 py-1 text-center">{stats[player].assist}</td>
+                        <td className="px-2 py-1 text-center">{stats[player].amarelo}</td>
+                        <td className="px-2 py-1 text-center">{stats[player].vermelho}</td>
+                        <td className="px-2 py-1 text-center">{stats[player].golsSofridos}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </>
+            );
+          })() : <div className="text-center text-gray-500">Nenhuma estatística disponível.</div>}
+        </div>
+      </div>
+
       {/* Seção financeira */}
       <div className="mt-8">
         <h2 className="text-lg font-medium text-gray-900 mb-4">Últimas Movimentações</h2>
         <div className="bg-white shadow overflow-hidden sm:rounded-md">
-          {dashboardData && dashboardData.recentTransactions.length > 0 ? (
-            <ul role="list" className="divide-y divide-gray-200">
+          {dashboardData && dashboardData.recentTransactions && dashboardData.recentTransactions.length > 0 ? (
+          <ul role="list" className="divide-y divide-gray-200">
               {dashboardData.recentTransactions.map((transaction) => (
-                <li key={transaction.id}>
-                  <div className="px-4 py-4 sm:px-6">
-                    <div className="flex items-center justify-between">
-                      <div className="text-sm text-gray-900">{transaction.description}</div>
-                      <div className={`text-sm font-medium ${
-                        transaction.type === 'income' ? 'text-green-600' : 'text-red-600'
-                      }`}>
+              <li key={transaction.id}>
+                <div className="px-4 py-4 sm:px-6">
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm text-gray-900">{transaction.description}</div>
+                    <div className={`text-sm font-medium ${
+                      transaction.type === 'income' ? 'text-green-600' : 'text-red-600'
+                    }`}>
                         {transaction.type === 'income' ? <ArrowTrendingUpIcon className="h-5 w-5 inline mr-1" /> : <ArrowTrendingDownIcon className="h-5 w-5 inline mr-1" />}
-                        R$ {Math.abs(transaction.amount).toFixed(2)}
+                      R$ {Math.abs(transaction.amount).toFixed(2)}
                       </div>
-                    </div>
                   </div>
-                </li>
-              ))}
-            </ul>
+                </div>
+              </li>
+            ))}
+          </ul>
           ) : (
             <div className="text-center py-8 text-gray-500">
               Nenhuma movimentação financeira registrada.

@@ -13,15 +13,16 @@ interface Transaction {
 
 interface TransactionListProps {
   onTransactionDeleted?: () => void
+  refresh?: number
 }
 
-export default function TransactionList({ onTransactionDeleted }: TransactionListProps) {
+export default function TransactionList({ onTransactionDeleted, refresh }: TransactionListProps) {
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     fetchTransactions()
-  }, [])
+  }, [refresh])
 
   const fetchTransactions = async () => {
     try {

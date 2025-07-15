@@ -11,32 +11,34 @@ export async function GET() {
     }
 
     // Buscar o time do usuário
-    const team = await prisma.team.findFirst({
-      where: {
-        users: {
-          some: {
-            userId: session.user.id,
-            role: 'owner'
-          }
-        }
-      }
+    const teamUser = await prisma.teamUser.findFirst({
+      where: { userId: session.user.id },
+      select: { teamId: true }
     })
-
-    if (!team) {
+    if (!teamUser) {
       return NextResponse.json({ error: 'Time não encontrado' }, { status: 404 })
     }
 
     // Buscar todas as transações do time
     const transactions = await prisma.transaction.findMany({
       where: {
-        teamId: team.id
+        teamId: teamUser.teamId
       },
       orderBy: {
         date: 'desc'
       }
     })
 
-    return NextResponse.json(transactions)
+    // Formatar os dados para garantir consistência
+    const formattedTransactions = transactions.map(transaction => ({
+      id: transaction.id,
+      description: transaction.description,
+      amount: transaction.amount,
+      type: transaction.type.toUpperCase() as 'INCOME' | 'EXPENSE',
+      date: transaction.date.toISOString()
+    }))
+
+    return NextResponse.json(formattedTransactions)
   } catch (error) {
     console.error('Erro ao buscar transações:', error)
     return NextResponse.json(
@@ -54,32 +56,48 @@ export async function POST(request: Request) {
     }
 
     // Buscar o time do usuário
-    const team = await prisma.team.findFirst({
-      where: {
-        users: {
-          some: {
-            userId: session.user.id,
-            role: 'owner'
-          }
-        }
-      }
+    const teamUser = await prisma.teamUser.findFirst({
+      where: { userId: session.user.id },
+      select: { teamId: true }
     })
-
-    if (!team) {
+    if (!teamUser) {
       return NextResponse.json({ error: 'Time não encontrado' }, { status: 404 })
     }
 
     const data = await request.json()
     console.log('Dados recebidos:', data)
 
+    // Validações
+    if (!data.description || !data.amount || !data.type || !data.date) {
+      return NextResponse.json(
+        { error: 'Dados incompletos' },
+        { status: 400 }
+      )
+    }
+
+    if (data.type !== 'income' && data.type !== 'expense') {
+      return NextResponse.json(
+        { error: 'Tipo de transação inválido' },
+        { status: 400 }
+      )
+    }
+
+    const amount = parseFloat(data.amount)
+    if (isNaN(amount) || amount <= 0) {
+      return NextResponse.json(
+        { error: 'Valor inválido' },
+        { status: 400 }
+      )
+    }
+
     // Criar a transação
     const transaction = await prisma.transaction.create({
       data: {
         description: data.description,
-        amount: parseFloat(data.amount),
+        amount: amount,
         type: data.type,
         date: new Date(data.date),
-        teamId: team.id
+        teamId: teamUser.teamId
       }
     })
 

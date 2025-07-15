@@ -3,6 +3,19 @@ import cloudinary from '@/lib/cloudinary'
 
 export async function GET() {
   try {
+    // Verificar se o Cloudinary está configurado
+    if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
+      return NextResponse.json({
+        success: false,
+        error: 'Cloudinary não configurado - variáveis de ambiente ausentes',
+        config: {
+          cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+          api_key_prefix: process.env.CLOUDINARY_API_KEY?.substring(0, 4),
+          has_secret: !!process.env.CLOUDINARY_API_SECRET
+        }
+      }, { status: 500 })
+    }
+
     // Imagem de teste em base64 (1x1 pixel transparente)
     const testImage = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=='
 

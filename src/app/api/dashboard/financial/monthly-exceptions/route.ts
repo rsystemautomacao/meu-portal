@@ -11,27 +11,18 @@ export async function GET() {
     }
 
     // Buscar o time do usuário
-    const team = await prisma.team.findFirst({
-      where: {
-        users: {
-          some: {
-            userId: session.user.id,
-            role: 'owner'
-          }
-        }
-      }
+    const teamUser = await prisma.teamUser.findFirst({
+      where: { userId: session.user.id },
+      select: { teamId: true }
     })
-
-    if (!team) {
+    if (!teamUser) {
       return NextResponse.json({ error: 'Time não encontrado' }, { status: 404 })
     }
 
     // Buscar todas as exceções do time
     const exceptions = await prisma.monthlyFeeException.findMany({
       where: {
-        player: {
-          teamId: team.id
-        }
+        teamId: teamUser.teamId
       },
       include: {
         player: {
@@ -62,18 +53,11 @@ export async function POST(request: Request) {
     }
 
     // Buscar o time do usuário
-    const team = await prisma.team.findFirst({
-      where: {
-        users: {
-          some: {
-            userId: session.user.id,
-            role: 'owner'
-          }
-        }
-      }
+    const teamUser = await prisma.teamUser.findFirst({
+      where: { userId: session.user.id },
+      select: { teamId: true }
     })
-
-    if (!team) {
+    if (!teamUser) {
       return NextResponse.json({ error: 'Time não encontrado' }, { status: 404 })
     }
 
@@ -87,7 +71,7 @@ export async function POST(request: Request) {
     const players = await prisma.player.findMany({
       where: {
         id: { in: playerIds },
-        teamId: team.id
+        teamId: teamUser.teamId
       }
     })
     console.log('Jogadores encontrados:', players.length)
@@ -103,19 +87,23 @@ export async function POST(request: Request) {
     console.log('Removendo exceções existentes...')
     const deletedExceptions = await prisma.monthlyFeeException.deleteMany({
       where: {
-        player: {
-          teamId: team.id
-        }
+        teamId: teamUser.teamId
       }
     })
     console.log('Exceções removidas:', deletedExceptions)
 
     // Criar as novas exceções
     console.log('Criando novas exceções...')
+    const currentMonth = new Date().getMonth() + 1
+    const currentYear = new Date().getFullYear()
+
     const validExceptions = exceptions
       .filter((e: any) => e.playerId) // Ignorar exceções sem playerId
       .map((exception: any) => ({
+        teamId: teamUser.teamId,
         playerId: exception.playerId,
+        month: currentMonth,
+        year: currentYear,
         amount: exception.amount ? parseFloat(exception.amount) : null,
         isExempt: Boolean(exception.isExempt)
       }))
@@ -178,9 +166,14 @@ export async function DELETE(request: Request) {
     const exception = await prisma.monthlyFeeException.findUnique({
       where: { id },
       include: {
-        player: {
-          select: {
-            teamId: true
+        team: {
+          include: {
+            users: {
+              where: {
+                userId: session.user.id,
+                role: 'owner'
+              }
+            }
           }
         }
       }
@@ -193,19 +186,7 @@ export async function DELETE(request: Request) {
       )
     }
 
-    const team = await prisma.team.findFirst({
-      where: {
-        id: exception.player.teamId,
-        users: {
-          some: {
-            userId: session.user.id,
-            role: 'owner'
-          }
-        }
-      }
-    })
-
-    if (!team) {
+    if (exception.team.users.length === 0) {
       return NextResponse.json(
         { error: 'Não autorizado a remover esta exceção' },
         { status: 403 }

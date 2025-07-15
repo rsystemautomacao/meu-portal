@@ -35,6 +35,7 @@ export default function FinancialPage() {
   const [activeTab, setActiveTab] = useState('overview')
   const [showNotifications, setShowNotifications] = useState(false)
   const [notifications, setNotifications] = useState<{ id: string; message: string }[]>([])
+  const [transactionsRefresh, setTransactionsRefresh] = useState(0)
   const router = useRouter()
 
   // Função para verificar pagamentos em atraso
@@ -166,12 +167,12 @@ export default function FinancialPage() {
           {activeTab === 'overview' && (
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
               <MonthlyReport />
-              <PlayerPaymentStatus />
+              <PlayerPaymentStatus onTransactionsChange={() => setTransactionsRefresh(r => r + 1)} />
             </div>
           )}
 
           {activeTab === 'players' && (
-            <PlayerPaymentStatus />
+            <PlayerPaymentStatus onTransactionsChange={() => setTransactionsRefresh(r => r + 1)} />
           )}
 
           {activeTab === 'transactions' && (
@@ -181,12 +182,13 @@ export default function FinancialPage() {
               </Suspense>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-6">
-                  <MonthlyFeeConfig onConfigUpdate={() => {}} />
-                  <MonthlyFeeExceptions />
+                  {/* Ocultar MonthlyFeeConfig e MonthlyFeeExceptions */}
+                  {/* <MonthlyFeeConfig onConfigUpdate={() => {}} /> */}
+                  {/* <MonthlyFeeExceptions /> */}
                 </div>
                 <div className="space-y-6">
-                  <TransactionForm />
-                  <TransactionList />
+                  <TransactionForm onTransactionCreated={() => setTransactionsRefresh(r => r + 1)} />
+                  <TransactionList refresh={transactionsRefresh} />
                 </div>
               </div>
             </div>

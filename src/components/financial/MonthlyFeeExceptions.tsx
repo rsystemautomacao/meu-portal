@@ -70,20 +70,31 @@ export default function MonthlyFeeExceptions({ onUpdate }: MonthlyFeeExceptionsP
   const handleSave = async () => {
     try {
       setLoading(true)
+      
+      // Validar se todos os jogadores foram selecionados
+      const validExceptions = exceptions.filter(ex => ex.playerId)
+      if (validExceptions.length === 0) {
+        toast.error('Adicione pelo menos uma exceção')
+        return
+      }
+
       const response = await fetch('/api/dashboard/financial/monthly-exceptions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(exceptions)
+        body: JSON.stringify(validExceptions)
       })
 
-      if (!response.ok) throw new Error('Erro ao salvar exceções')
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.message || 'Erro ao salvar exceções')
+      }
       
       const savedExceptions = await response.json()
       setExceptions(savedExceptions)
       toast.success('Exceções salvas com sucesso!')
       onUpdate?.()
     } catch (error) {
-      toast.error('Erro ao salvar exceções')
+      toast.error(error instanceof Error ? error.message : 'Erro ao salvar exceções')
       console.error(error)
     } finally {
       setLoading(false)
@@ -177,7 +188,7 @@ export default function MonthlyFeeExceptions({ onUpdate }: MonthlyFeeExceptionsP
               onClick={() => handleRemoveException(index)}
               className="text-red-600 hover:text-red-700"
             >
-              Remover
+              <TrashIcon className="h-4 w-4" />
             </button>
           </div>
         ))}
@@ -198,9 +209,10 @@ export default function MonthlyFeeExceptions({ onUpdate }: MonthlyFeeExceptionsP
       <div className="mt-4 flex gap-4">
         <button
           onClick={handleAddException}
-          className="px-4 py-2 text-sm font-medium text-blue-700 hover:text-blue-800"
+          className="px-4 py-2 text-sm font-medium text-blue-700 hover:text-blue-800 flex items-center gap-1"
         >
-          + Adicionar Exceção
+          <PlusIcon className="h-4 w-4" />
+          Adicionar Exceção
         </button>
 
         <button

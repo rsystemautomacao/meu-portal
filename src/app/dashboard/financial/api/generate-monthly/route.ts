@@ -60,8 +60,8 @@ export async function POST(req: Request) {
     // Verificar se já existem mensalidades para este mês
     const existingPayments = await prisma.payment.findMany({
       where: {
-        team: {
-          id: teamUser.teamId
+        player: {
+          teamId: teamUser.teamId
         },
         month: currentMonth,
         year: currentYear
@@ -75,25 +75,6 @@ export async function POST(req: Request) {
       )
     }
 
-    // Gerar mensalidades para cada jogador
-    const payments = await Promise.all(
-      players.map(player => {
-        const dueDate = new Date(currentYear, currentMonth - 1, config.day)
-        
-        return prisma.payment.create({
-          data: {
-            teamId: teamUser.teamId,
-            playerId: player.id,
-            amount: config.amount,
-            dueDate,
-            status: 'PENDING',
-            month: currentMonth,
-            year: currentYear
-          }
-        })
-      })
-    )
-
     // Registrar a transação de receita total
     const transaction = await prisma.transaction.create({
       data: {
@@ -104,6 +85,25 @@ export async function POST(req: Request) {
         teamId: teamUser.teamId
       }
     })
+
+    // Gerar mensalidades para cada jogador
+    const payments = await Promise.all(
+      players.map(player => {
+        const dueDate = new Date(currentYear, currentMonth - 1, config.day)
+        
+        return prisma.payment.create({
+          data: {
+            playerId: player.id,
+            transactionId: transaction.id,
+            amount: config.amount,
+            dueDate,
+            status: 'PENDING',
+            month: currentMonth,
+            year: currentYear
+          }
+        })
+      })
+    )
 
     return NextResponse.json({
       message: 'Mensalidades geradas com sucesso',

@@ -36,10 +36,14 @@ export default function TransactionForm({ onTransactionCreated }: TransactionFor
   const fetchPlayers = async () => {
     try {
       const response = await fetch('/api/dashboard/financial/players')
+      if (!response.ok) {
+        throw new Error('Erro ao carregar jogadores')
+      }
       const data = await response.json()
       setPlayers(data)
     } catch (error) {
       console.error('Erro ao carregar jogadores:', error)
+      toast.error('Erro ao carregar jogadores')
     }
   }
 
@@ -102,6 +106,28 @@ export default function TransactionForm({ onTransactionCreated }: TransactionFor
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    // Validações
+    if (formData.type === 'INCOME' && formData.incomeType === 'MONTHLY_FEE' && selectedPlayers.length === 0) {
+      toast.error('Selecione pelo menos um jogador')
+      return
+    }
+
+    if (formData.type === 'INCOME' && formData.incomeType !== 'MONTHLY_FEE' && !formData.amount) {
+      toast.error('Informe o valor')
+      return
+    }
+
+    if (formData.type === 'EXPENSE' && !formData.amount) {
+      toast.error('Informe o valor')
+      return
+    }
+
+    if (formData.type === 'INCOME' && formData.incomeType === 'OTHER' && !formData.description) {
+      toast.error('Informe a descrição')
+      return
+    }
+
     try {
       setLoading(true)
       console.log('Enviando dados:', formData)
@@ -113,14 +139,17 @@ export default function TransactionForm({ onTransactionCreated }: TransactionFor
           ...formData,
           amount: formData.type === 'INCOME' && formData.incomeType === 'MONTHLY_FEE'
             ? calculateTotalAmount()
-            : formData.amount,
+            : parseFloat(formData.amount),
           playerIds: formData.type === 'INCOME' && formData.incomeType === 'MONTHLY_FEE'
             ? selectedPlayers
             : [],
         })
       })
 
-      if (!response.ok) throw new Error('Erro ao criar transação')
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.message || 'Erro ao criar transação')
+      }
 
       const transaction = await response.json()
       console.log('Transação criada:', transaction)
@@ -140,7 +169,7 @@ export default function TransactionForm({ onTransactionCreated }: TransactionFor
       setSelectedPlayers([])
     } catch (error) {
       console.error('Erro ao criar transação:', error)
-      toast.error('Erro ao registrar transação')
+      toast.error(error instanceof Error ? error.message : 'Erro ao registrar transação')
     } finally {
       setLoading(false)
     }

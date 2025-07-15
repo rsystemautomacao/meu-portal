@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { Dialog, Transition } from '@headlessui/react'
+import { Fragment, useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
@@ -9,6 +10,8 @@ import Link from 'next/link'
 import MatchModal from '@/components/matches/MatchModal'
 import StatsModal from '@/components/matches/StatsModal'
 import { useRouter } from 'next/navigation'
+import DatePicker from 'react-datepicker'
+import 'react-datepicker/dist/react-datepicker.css'
 
 // Desabilitar pré-renderização estática
 export const dynamic = 'force-dynamic'
@@ -17,9 +20,14 @@ interface Match {
   id: string
   date: string
   opponent: string
-  score: string | null
+  ourScore: number
+  opponentScore: number
+  ourScore1: number
+  opponentScore1: number
+  ourScore2: number
+  opponentScore2: number
   teamId: string
-  team: {
+  team?: {
     name: string
     primaryColor: string
     secondaryColor: string
@@ -29,7 +37,7 @@ interface Match {
     shareToken: string
     status: string
   }
-  matchStats: Array<{
+  matchStats?: Array<{
     id: string
     goals: number
     assists: number
@@ -40,6 +48,22 @@ interface Match {
       name: string
     }
   }>
+  events?: Array<{
+    id: string
+    type: string
+    player: string
+    minute: number
+    team: string
+    quadro: number
+    assist?: string
+  }>
+}
+
+// Função utilitária para cor do badge por resultado
+function getQuadroBadgeColor(ourScore: number, opponentScore: number) {
+  if (ourScore > opponentScore) return 'bg-green-100 text-green-800';
+  if (ourScore < opponentScore) return 'bg-red-100 text-red-800';
+  return 'bg-blue-100 text-blue-800';
 }
 
 export default function MatchesPage() {
@@ -49,7 +73,15 @@ export default function MatchesPage() {
   const [error, setError] = useState('')
   const [isMatchModalOpen, setIsMatchModalOpen] = useState(false)
   const [selectedMatch, setSelectedMatch] = useState<Match | undefined>(undefined)
+  const [isChoiceModalOpen, setIsChoiceModalOpen] = useState(false)
+  const [choice, setChoice] = useState<'manual' | 'sumula' | null>(null)
+  const [sumulaLink, setSumulaLink] = useState<string | null>(null)
+  const [sumulaLoading, setSumulaLoading] = useState(false)
+  const [showSumulaForm, setShowSumulaForm] = useState(false)
+  const [sumulaForm, setSumulaForm] = useState({ date: null as Date | null, opponent: '', location: '' })
+  const [sumulaFormError, setSumulaFormError] = useState('')
   const router = useRouter()
+  const [copied, setCopied] = useState(false)
 
   const fetchMatches = async () => {
     try {
@@ -84,8 +116,8 @@ export default function MatchesPage() {
   }, [session, status, router])
 
   const handleAddMatch = () => {
-    setSelectedMatch(undefined)
-    setIsMatchModalOpen(true)
+    setChoice(null)
+    setIsChoiceModalOpen(true)
   }
 
   const handleEditMatch = (match: Match) => {
@@ -97,7 +129,7 @@ export default function MatchesPage() {
     if (!confirm('Tem certeza que deseja excluir esta partida?')) return
 
     try {
-      const response = await fetch(`/api/matches?id=${id}`, {
+      const response = await fetch(`/api/matches/${id}`, {
         method: 'DELETE'
       })
 
@@ -112,9 +144,9 @@ export default function MatchesPage() {
 
   const handleSaveMatch = async (matchData: any) => {
     try {
-      const url = selectedMatch ? '/api/matches' : '/api/matches'
+      const url = selectedMatch ? `/api/matches/${selectedMatch.id}` : '/api/matches'
       const method = selectedMatch ? 'PUT' : 'POST'
-      const data = selectedMatch ? { ...matchData, id: selectedMatch.id } : matchData
+      const data = selectedMatch ? matchData : matchData
 
       const response = await fetch(url, {
         method,
@@ -138,33 +170,39 @@ export default function MatchesPage() {
     setSelectedMatch(match)
   }
 
-  const handleCreateMatchSheet = async (matchId: string) => {
+  const handleCreateMatchSheet = async () => {
+    setSumulaForm({ date: null, opponent: '', location: '' })
+    setSumulaFormError('')
+    setShowSumulaForm(true)
+  }
+  const handleConfirmSumulaForm = async () => {
+    if (!sumulaForm.date || !sumulaForm.opponent || !sumulaForm.location) {
+      setSumulaFormError('Preencha todos os campos!')
+      return
+    }
+    setSumulaLoading(true)
+    setSumulaFormError('')
     try {
-      const response = await fetch('/api/matches/sheet', {
+      const res = await fetch('/api/matches/sheet', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ matchId })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          date: sumulaForm.date.toISOString(),
+          opponent: sumulaForm.opponent,
+          location: sumulaForm.location
+        })
       })
-
-      if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.error || 'Erro ao criar súmula')
+      const data = await res.json()
+      if (data.shareToken) {
+        setSumulaLink(`${window.location.origin}/matches/sheet/${data.shareToken}`)
+        setShowSumulaForm(false)
+      } else {
+        setSumulaFormError(data.error || 'Erro ao criar súmula')
       }
-
-      const data = await response.json()
-      const shareUrl = `${window.location.origin}/matches/sheet/${data.shareToken}`
-      
-      // Copia o link para a área de transferência
-      await navigator.clipboard.writeText(shareUrl)
-      alert('Link da súmula copiado para a área de transferência!')
-      
-      // Atualiza a lista de partidas
-      fetchMatches()
-    } catch (error) {
-      console.error(error)
-      alert('Erro ao criar súmula')
+    } catch (e) {
+      setSumulaFormError('Erro ao criar súmula')
+    } finally {
+      setSumulaLoading(false)
     }
   }
 
@@ -205,13 +243,10 @@ export default function MatchesPage() {
                       Adversário
                     </th>
                     <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                      Placar
+                      1º Quadro
                     </th>
                     <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                      Estatísticas
-                    </th>
-                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                      Súmula
+                      2º Quadro
                     </th>
                     <th scope="col" className="relative py-3.5 pl-3 pr-4 sm:pr-6">
                       <span className="sr-only">Ações</span>
@@ -227,55 +262,49 @@ export default function MatchesPage() {
                       <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                         {match.opponent}
                       </td>
-                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                        {match.score || '-'}
+                      <td className="whitespace-nowrap px-3 py-4 text-center">
+                        <span className={`inline-block text-base font-bold rounded px-3 py-1 ${getQuadroBadgeColor(match.ourScore1, match.opponentScore1)}`}>
+                          {match.ourScore1} × {match.opponentScore1}
+                        </span>
+                      </td>
+                      <td className="whitespace-nowrap px-3 py-4 text-center">
+                        <span className={`inline-block text-base font-bold rounded px-3 py-1 ${getQuadroBadgeColor(match.ourScore2, match.opponentScore2)}`}>
+                          {match.ourScore2} × {match.opponentScore2}
+                        </span>
                       </td>
                       <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                        <button
-                          type="button"
-                          onClick={() => handleViewStats(match)}
-                          className="inline-flex items-center text-primary hover:text-opacity-90"
-                        >
-                          <ChartBarIcon className="h-5 w-5 mr-1" />
-                          Ver Estatísticas
-                        </button>
-                      </td>
-                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                        {match.matchSheet ? (
-                          <a
-                            href={`/matches/sheet/${match.matchSheet.shareToken}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center text-primary hover:text-opacity-90"
+                        {match.events && match.events.length > 0 ? (
+                          <button
+                            type="button"
+                            className="inline-flex items-center text-primary hover:text-primary-dark"
+                            onClick={() => handleViewStats(match)}
                           >
-                            <DocumentTextIcon className="h-5 w-5 mr-1" />
-                            Ver Súmula
-                            {match.matchSheet.status === 'pending' && (
-                              <span className="ml-2 inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800">
-                                Pendente
-                              </span>
-                            )}
-                            {match.matchSheet.status === 'in_progress' && (
-                              <span className="ml-2 inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800">
-                                Em Andamento
-                              </span>
-                            )}
-                            {match.matchSheet.status === 'finished' && (
-                              <span className="ml-2 inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
-                                Finalizada
-                              </span>
-                            )}
-                          </a>
+                            <ChartBarIcon className="h-5 w-5 mr-1" />
+                            Ver Estatísticas
+                          </button>
                         ) : (
                           <button
                             type="button"
-                            onClick={() => handleCreateMatchSheet(match.id)}
-                            className="inline-flex items-center text-primary hover:text-opacity-90"
+                            className="inline-flex items-center text-gray-400 cursor-not-allowed"
+                            title="Estatísticas indisponíveis"
+                            disabled
+                          >
+                            <ChartBarIcon className="h-5 w-5 mr-1" />
+                            Ver Estatísticas
+                          </button>
+                        )}
+                      </td>
+                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                        {(!match.events || match.events.length === 0) ? (
+                          <button
+                            type="button"
+                            onClick={() => handleCreateMatchSheet()}
+                            className="inline-flex items-center text-primary hover:text-primary-dark"
                           >
                             <DocumentTextIcon className="h-5 w-5 mr-1" />
                             Criar Súmula
                           </button>
-                        )}
+                        ) : null}
                       </td>
                       <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
                         <div className="flex justify-end gap-2">
@@ -293,23 +322,6 @@ export default function MatchesPage() {
                           >
                             <TrashIcon className="h-5 w-5" />
                           </button>
-                          {!match.matchSheet && (
-                            <button
-                              type="button"
-                              onClick={() => handleCreateMatchSheet(match.id)}
-                              className="text-primary hover:text-primary-dark"
-                            >
-                              <DocumentTextIcon className="h-5 w-5" />
-                            </button>
-                          )}
-                          {match.matchSheet && (
-                            <Link
-                              href={`/matches/sheet/${match.matchSheet.shareToken}`}
-                              className="text-primary hover:text-primary-dark"
-                            >
-                              <DocumentTextIcon className="h-5 w-5" />
-                            </Link>
-                          )}
                         </div>
                       </td>
                     </tr>
@@ -327,6 +339,149 @@ export default function MatchesPage() {
         onSave={handleSaveMatch}
         match={selectedMatch}
       />
+
+      {/* Modal de escolha */}
+      <Transition.Root show={isChoiceModalOpen} as={Fragment}>
+        <Dialog as="div" className="relative z-30" onClose={() => setIsChoiceModalOpen(false)}>
+          <div className="fixed inset-0 bg-black bg-opacity-40" />
+          <div className="fixed inset-0 z-30 flex items-center justify-center">
+            <Dialog.Panel className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-lg mx-auto">
+              <Dialog.Title as="h3" className="text-2xl font-bold leading-6 text-gray-900 mb-6 text-center">
+                Como deseja registrar o resultado da partida?
+              </Dialog.Title>
+              <div className="flex flex-col gap-4">
+                <button
+                  className="w-full rounded-lg bg-primary text-white px-6 py-3 text-lg font-bold shadow hover:bg-opacity-90 transition"
+                  onClick={() => {
+                    setIsChoiceModalOpen(false)
+                    setIsMatchModalOpen(true)
+                  }}
+                >
+                  Preencher placar manualmente
+                </button>
+                <button
+                  className="w-full rounded-lg bg-gray-200 text-gray-900 px-6 py-3 text-lg font-bold shadow hover:bg-gray-300 transition"
+                  onClick={handleCreateMatchSheet}
+                  disabled={sumulaLoading}
+                >
+                  {sumulaLoading ? 'Gerando link...' : 'Gerar link de súmula online (colaborativa)'}
+                </button>
+                {sumulaLink && (
+                  <div className="bg-gray-100 rounded p-3 text-center mt-2">
+                    <div className="text-xs text-gray-500 mb-1">Link da súmula online:</div>
+                    <input
+                      className="w-full text-xs p-2 rounded border border-gray-300 mb-1"
+                      value={sumulaLink}
+                      readOnly
+                      onFocus={e => e.target.select()}
+                    />
+                    <button
+                      className="text-primary underline text-xs"
+                      onClick={async () => {
+                        await navigator.clipboard.writeText(sumulaLink!)
+                        setCopied(true)
+                        setTimeout(() => setCopied(false), 2000)
+                      }}
+                    >
+                      Copiar link
+                    </button>
+                    {copied && (
+                      <div className="mt-2 text-green-600 text-xs font-bold animate-pulse">Copiado!</div>
+                    )}
+                    <button
+                      className="w-full mt-3 bg-primary text-white rounded py-2 font-bold"
+                      onClick={() => {
+                        setSumulaLink(null)
+                        setIsChoiceModalOpen(false)
+                      }}
+                    >
+                      OK
+                    </button>
+                  </div>
+                )}
+              </div>
+              <div className="mt-6 text-center">
+                <button
+                  className="text-base text-gray-500 hover:text-gray-700 font-semibold px-4 py-2 rounded transition"
+                  onClick={() => setIsChoiceModalOpen(false)}
+                >
+                  Cancelar
+                </button>
+              </div>
+            </Dialog.Panel>
+          </div>
+        </Dialog>
+      </Transition.Root>
+      {/* Modal de criação de súmula online estilizado */}
+      {showSumulaForm && (
+        <Transition.Root show={showSumulaForm} as={Fragment}>
+          <Dialog as="div" className="relative z-30" onClose={() => setShowSumulaForm(false)}>
+            <div className="fixed inset-0 bg-black bg-opacity-40" />
+            <div className="fixed inset-0 z-30 flex items-center justify-center">
+              <Dialog.Panel className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md mx-auto">
+                <Dialog.Title as="h3" className="text-2xl font-bold leading-6 text-gray-900 mb-6 text-center">
+                  Nova Súmula Online
+                </Dialog.Title>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Data da partida</label>
+                  <DatePicker
+                    selected={sumulaForm.date}
+                    onChange={date => setSumulaForm(f => ({ ...f, date }))}
+                    dateFormat="dd/MM/yyyy"
+                    className="w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm p-2"
+                    placeholderText="Selecione a data"
+                  />
+                </div>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Adversário</label>
+                  <input
+                    type="text"
+                    className="w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm p-2"
+                    placeholder="Nome do adversário"
+                    value={sumulaForm.opponent}
+                    onChange={e => setSumulaForm(f => ({ ...f, opponent: e.target.value }))}
+                  />
+                </div>
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Local</label>
+                  <select
+                    className="w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm p-2"
+                    value={sumulaForm.location}
+                    onChange={e => setSumulaForm(f => ({ ...f, location: e.target.value }))}
+                  >
+                    <option value="">Selecione o local</option>
+                    <option value="Casa">Casa</option>
+                    <option value="Visitante">Visitante</option>
+                  </select>
+                </div>
+                {sumulaFormError && <div className="text-red-500 text-sm mb-4">{sumulaFormError}</div>}
+                <div className="flex flex-col gap-2">
+                  <button
+                    className="w-full bg-black text-white font-bold py-3 rounded-lg hover:bg-gray-900 transition"
+                    onClick={handleConfirmSumulaForm}
+                  >
+                    Criar Súmula
+                  </button>
+                  <button
+                    className="w-full bg-gray-100 text-gray-700 font-bold py-3 rounded-lg hover:bg-gray-200 transition"
+                    onClick={() => setShowSumulaForm(false)}
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </Dialog.Panel>
+            </div>
+          </Dialog>
+        </Transition.Root>
+      )}
+      {/* Modal de estatísticas */}
+      {selectedMatch && selectedMatch.events && selectedMatch.events.length > 0 && (
+        <StatsModal
+          isOpen={!!selectedMatch}
+          onClose={() => setSelectedMatch(undefined)}
+          events={selectedMatch.events}
+        />
+      )}
     </div>
   )
 } 

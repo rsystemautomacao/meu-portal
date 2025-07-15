@@ -12,24 +12,13 @@ console.log('Cloudinary Config:', {
   env: process.env.NODE_ENV
 })
 
-if (!cloudName || !apiKey || !apiSecret) {
-  throw new Error(`Cloudinary environment variables are missing:
-    CLOUDINARY_CLOUD_NAME: ${!!cloudName}
-    CLOUDINARY_API_KEY: ${!!apiKey}
-    CLOUDINARY_API_SECRET: ${!!apiSecret}
-  `)
-}
-
-// Configurar o Cloudinary
-cloudinary.config({
-  cloud_name: cloudName,
-  api_key: apiKey,
-  api_secret: apiSecret,
-  secure: true
-})
-
 // Função para gerar assinatura
 export function generateSignature(params: Record<string, any>) {
+  if (!cloudName || !apiKey || !apiSecret) {
+    console.warn('Cloudinary não configurado - generateSignature não disponível')
+    return { timestamp: 0, signature: '' }
+  }
+  
   const timestamp = Math.round(new Date().getTime() / 1000)
   const signature = cloudinary.utils.api_sign_request(
     { ...params, timestamp },
@@ -38,17 +27,29 @@ export function generateSignature(params: Record<string, any>) {
   return { timestamp, signature }
 }
 
-// Teste de conexão
-cloudinary.uploader.upload(
-  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
-  { folder: 'test' },
-  (error, result) => {
-    if (error) {
-      console.error('Erro ao conectar com Cloudinary:', error)
-    } else {
-      console.log('Conexão com Cloudinary estabelecida com sucesso')
+// Configurar o Cloudinary apenas se as variáveis estiverem disponíveis
+if (cloudName && apiKey && apiSecret) {
+  cloudinary.config({
+    cloud_name: cloudName,
+    api_key: apiKey,
+    api_secret: apiSecret,
+    secure: true
+  })
+
+  // Teste de conexão
+  cloudinary.uploader.upload(
+    'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+    { folder: 'test' },
+    (error, result) => {
+      if (error) {
+        console.error('Erro ao conectar com Cloudinary:', error)
+      } else {
+        console.log('Conexão com Cloudinary estabelecida com sucesso')
+      }
     }
-  }
-)
+  )
+} else {
+  console.warn('Cloudinary não configurado - variáveis de ambiente ausentes')
+}
 
 export default cloudinary 

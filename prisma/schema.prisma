@@ -64,7 +64,7 @@ model Player {
   team            Team      @relation(fields: [teamId], references: [id], onDelete: Cascade)
   teamId          String    @db.ObjectId
   payments        Payment[]
-  monthlyFeeExceptions MonthlyFeeException[] @relation("PlayerExceptions")
+  monthlyFeeExceptions MonthlyFeeException[]
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 }
@@ -76,6 +76,12 @@ model Match {
   location       String
   ourScore       Int
   opponentScore  Int
+  // Novos campos para placares dos quadros
+  ourScore1      Int
+  opponentScore1 Int
+  ourScore2      Int
+  opponentScore2 Int
+  shareToken     String?   @unique
   team           Team      @relation(fields: [teamId], references: [id], onDelete: Cascade)
   teamId         String    @db.ObjectId
   events         MatchEvent[]
@@ -90,6 +96,10 @@ model MatchEvent {
   type      String   // "goal", "assist", "yellow_card", "red_card"
   player    String   // Player name or ID
   minute    Int
+  team      String   // "home" ou "away"
+  quadro    Int      // 1 ou 2
+  assist    String?  // Nome do jogador da assistência (opcional)
+  goleiro   String?  // Nome do goleiro (opcional, para gols sofridos)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -121,11 +131,12 @@ model MonthlyFeeException {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
   teamId    String   @db.ObjectId
-  player    Player   @relation("PlayerExceptions", fields: [playerId], references: [id], onDelete: Cascade)
+  player    Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
   playerId  String   @db.ObjectId
   month     Int
   year      Int
   isExempt  Boolean
+  amount    Float?   // Valor personalizado (opcional)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -176,8 +187,8 @@ model Payment {
   year          Int
   amount        Float
   paid          Boolean     @default(false)
-  transaction   Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
-  transactionId String      @unique @db.ObjectId
+  transaction   Transaction? @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  transactionId String?      @unique @db.ObjectId
   dueDate       DateTime
   paymentDate   DateTime?
   status        String    // PENDING, PAID, LATE

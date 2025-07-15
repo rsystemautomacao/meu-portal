@@ -3,6 +3,82 @@ import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 
+export async function GET(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user) {
+      return NextResponse.json(
+        { error: 'Não autorizado' },
+        { status: 401 }
+      )
+    }
+
+    // Buscar o time do usuário
+    const teamUser = await prisma.teamUser.findFirst({
+      where: {
+        userId: session.user.id,
+        role: {
+          in: ["owner", "admin"]
+        }
+      },
+      include: {
+        team: true
+      }
+    })
+
+    if (!teamUser) {
+      return NextResponse.json(
+        { error: 'Usuário não tem permissão para visualizar jogadores' },
+        { status: 403 }
+      )
+    }
+
+    // Buscar o jogador
+    const player = await prisma.player.findUnique({
+      where: { id: params.id },
+      include: {
+        payments: {
+          where: {
+            month: new Date().getMonth() + 1,
+            year: new Date().getFullYear(),
+          },
+        },
+        monthlyFeeExceptions: {
+          where: {
+            month: new Date().getMonth() + 1,
+            year: new Date().getFullYear(),
+          },
+        },
+      },
+    })
+
+    if (!player) {
+      return NextResponse.json(
+        { error: 'Jogador não encontrado' },
+        { status: 404 }
+      )
+    }
+
+    if (player.teamId !== teamUser.teamId) {
+      return NextResponse.json(
+        { error: 'Jogador não pertence ao seu time' },
+        { status: 403 }
+      )
+    }
+
+    return NextResponse.json(player)
+  } catch (error) {
+    console.error('Erro ao buscar jogador:', error)
+    return NextResponse.json(
+      { error: 'Erro ao buscar jogador' },
+      { status: 500 }
+    )
+  }
+}
+
 export async function PUT(
   request: Request,
   { params }: { params: { id: string } }

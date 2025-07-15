@@ -4,11 +4,11 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 interface PaymentAlert {
-  playerId: string;
-  playerName: string;
+  id: string;
   message: string;
-  type: 'missing' | 'overdue';
-  dueDate: Date;
+  playerName: string;
+  daysLate: number;
+  dueDate: string;
 }
 
 export default function PaymentAlerts() {
@@ -19,14 +19,17 @@ export default function PaymentAlerts() {
   useEffect(() => {
     const fetchAlerts = async () => {
       try {
+        setLoading(true);
         const response = await fetch('/api/dashboard/financial/check-payments');
         if (!response.ok) {
           throw new Error('Erro ao carregar alertas');
         }
         const data = await response.json();
         setAlerts(data);
+        setError(null);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Erro ao carregar alertas');
+        setAlerts([]);
       } finally {
         setLoading(false);
       }
@@ -75,9 +78,9 @@ export default function PaymentAlerts() {
       <div className="space-y-3">
         {alerts.map((alert) => (
           <div
-            key={`${alert.playerId}-${alert.type}`}
+            key={`${alert.id}-${alert.daysLate}`}
             className={`p-3 rounded-md ${
-              alert.type === 'overdue'
+              alert.daysLate > 20
                 ? 'bg-red-50 border border-red-200'
                 : 'bg-yellow-50 border border-yellow-200'
             }`}

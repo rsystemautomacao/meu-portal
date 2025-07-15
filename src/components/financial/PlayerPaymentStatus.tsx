@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
+import PaymentModal from './PaymentModal'
+import { toast } from 'react-hot-toast'
 
 interface Player {
   id: string
@@ -15,12 +17,27 @@ interface Player {
 
 interface PlayerPaymentStatusProps {
   onPlayerSelect?: (playerId: string) => void
+  onTransactionsChange?: () => void
 }
 
-export default function PlayerPaymentStatus({ onPlayerSelect }: PlayerPaymentStatusProps) {
+interface Payment {
+  id: string
+  playerId: string
+  amount: number
+  dueDate: string
+  paymentDate?: string
+  status: 'pending' | 'paid' | 'late' | 'exempt'
+  month: number
+  year: number
+}
+
+export default function PlayerPaymentStatus({ onPlayerSelect, onTransactionsChange }: PlayerPaymentStatusProps) {
   const [players, setPlayers] = useState<Player[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('all') // 'all', 'paid', 'late', 'veryLate', 'pending', 'exempt'
+  const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null)
+  const [showPaymentModal, setShowPaymentModal] = useState(false)
+  const [currentPayment, setCurrentPayment] = useState<Payment | null>(null)
 
   useEffect(() => {
     fetchPlayers()
@@ -38,6 +55,98 @@ export default function PlayerPaymentStatus({ onPlayerSelect }: PlayerPaymentSta
       console.error('Erro ao carregar jogadores:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleOpenPaymentModal = async (player: Player) => {
+    // Buscar pagamento do mês vigente
+    try {
+      const now = new Date()
+      const month = now.getMonth() + 1
+      const year = now.getFullYear()
+      const res = await fetch(`/api/players/${player.id}`)
+      const playerData = await res.json()
+      // Procurar pagamento do mês vigente
+      const payment = playerData.payments?.find((p: any) => p.month === month && p.year === year)
+      if (payment) {
+        setCurrentPayment(payment)
+      } else {
+        setCurrentPayment(null)
+      }
+    } catch {
+      setCurrentPayment(null)
+    }
+    setSelectedPlayer(player)
+    setShowPaymentModal(true)
+  }
+
+  // Função para registrar pagamento
+  const handleRegisterPayment = async (player: Player, paymentData: any) => {
+    try {
+      const now = new Date()
+      const month = now.getMonth() + 1
+      const year = now.getFullYear()
+      
+      // Buscar se já existe pagamento do mês vigente
+      let paymentId = currentPayment?.id
+      let response
+      if (paymentId) {
+        // Atualizar pagamento existente
+        response = await fetch(`/api/financial/payments/${paymentId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            status: paymentData.status,
+            paymentDate: paymentData.paymentDate
+          })
+        })
+      } else {
+        // Criar novo pagamento
+        response = await fetch('/api/financial/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            playerIds: [player.id],
+            month,
+            year,
+            amount: player.monthlyFee,
+            status: paymentData.status
+          })
+        })
+      }
+      
+      if (!response.ok) {
+        if (response.status === 404) {
+          // Pagamento não encontrado, recarregar lista e avisar
+          fetchPlayers()
+          setShowPaymentModal(false)
+          setSelectedPlayer(null)
+          setCurrentPayment(null)
+          toast.error('O pagamento selecionado não existe mais. A lista foi atualizada.')
+          // Forçar atualização do dashboard para atualizar saldo
+          setTimeout(() => {
+            window.location.reload()
+          }, 500)
+          return
+        }
+        const error = await response.json()
+        throw new Error(error.error || 'Erro ao registrar pagamento')
+      }
+      
+      toast.success('Pagamento registrado com sucesso!')
+      
+      setShowPaymentModal(false)
+      setSelectedPlayer(null)
+      setCurrentPayment(null)
+      fetchPlayers() // Atualiza a lista
+      onTransactionsChange?.() // Atualiza transações
+      
+      // Forçar atualização do dashboard para atualizar saldo
+      setTimeout(() => {
+        window.location.reload()
+      }, 500)
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Erro ao registrar pagamento')
     }
   }
 
@@ -186,7 +295,7 @@ export default function PlayerPaymentStatus({ onPlayerSelect }: PlayerPaymentSta
                 return (
                   <tr
                     key={player.id}
-                    onClick={() => onPlayerSelect?.(player.id)}
+                    onClick={() => handleOpenPaymentModal(player)}
                     className="hover:bg-gray-50 cursor-pointer"
                   >
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -225,6 +334,26 @@ export default function PlayerPaymentStatus({ onPlayerSelect }: PlayerPaymentSta
           </tbody>
         </table>
       </div>
+      {/* Modal de Pagamento */}
+      <PaymentModal
+        key={selectedPlayer ? selectedPlayer.id : 'none'}
+        isOpen={showPaymentModal}
+        onClose={() => { setShowPaymentModal(false); setSelectedPlayer(null); setCurrentPayment(null) }}
+        onSave={(data) => selectedPlayer && handleRegisterPayment(selectedPlayer, data)}
+        payment={currentPayment ? {
+          ...currentPayment,
+          playerName: selectedPlayer?.name || '',
+        } : (selectedPlayer ? {
+          id: selectedPlayer.id,
+          playerId: selectedPlayer.id,
+          playerName: selectedPlayer.name,
+          amount: selectedPlayer.monthlyFee,
+          dueDate: `Dia ${selectedPlayer.dueDay}`,
+          status: selectedPlayer.status === 'veryLate' ? 'late' : selectedPlayer.status,
+          month: new Date().getMonth() + 1,
+          year: new Date().getFullYear(),
+        } : undefined)}
+      />
     </div>
   )
 } 
