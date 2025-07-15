@@ -92,7 +92,7 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen flex bg-gradient-to-b from-primary/5 to-secondary/5">
+    <div className="min-h-screen flex flex-col md:flex-row bg-gradient-to-b from-primary/5 to-secondary/5">
       {/* Sidebar */}
       <div className="flex-shrink-0 transition-all duration-300 ease-in-out">
         <Sidebar teamColors={teamColors} />
@@ -100,7 +100,7 @@ export default function DashboardLayout({
 
       {/* Main content */}
       <div className="flex-1 overflow-auto">
-        <main className="py-6 px-4 sm:px-6 lg:px-8">
+        <main className="py-4 px-2 sm:px-6 lg:px-8">
           {children}
         </main>
       </div>

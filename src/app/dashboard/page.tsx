@@ -242,7 +242,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Cards de resumo */}
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-8">
         <div className="bg-white overflow-hidden shadow rounded-lg">
           <div className="p-5">
             <div className="flex items-center">
@@ -342,7 +342,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Seção de últimas partidas */}
-      <div className="mt-8">
+      <div className="mt-8 overflow-x-auto w-full">
         <h2 className="text-lg font-medium text-gray-900 mb-4">Últimas Partidas</h2>
         <div className="bg-white shadow overflow-hidden sm:rounded-md">
           {dashboardData?.recentMatches && dashboardData.recentMatches.length > 0 ? (
@@ -410,7 +410,7 @@ export default function DashboardPage() {
                     {copied ? 'Copiado!' : 'Copiar estatísticas'}
                   </button>
                 </div>
-                <table className="min-w-full divide-y divide-gray-200">
+                <table className="min-w-full divide-y divide-gray-200 text-xs sm:text-sm">
                   <thead>
                     <tr>
                       <th className="px-2 py-1 text-left text-xs font-semibold text-gray-700">Jogador</th>

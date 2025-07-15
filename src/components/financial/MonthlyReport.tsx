@@ -113,7 +113,7 @@ export default function MonthlyReport() {
       </div>
 
       {/* Cards de resumo com fallback */}
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-3 mb-6">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 mb-6">
         <div className="bg-white overflow-hidden shadow rounded-lg">
           <div className="p-5">
             <div className="flex items-center">
@@ -176,7 +176,7 @@ export default function MonthlyReport() {
       </div>
 
       {/* Detalhamento por tipo */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         {/* Entradas por tipo */}
         <div>
           <h3 className="text-lg font-medium text-gray-900 mb-4">Entradas por Tipo</h3>

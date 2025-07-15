@@ -37,6 +37,7 @@ export default function Sidebar({ teamColors }: SidebarProps) {
   const router = useRouter()
   const [isExpanded, setIsExpanded] = useState(false)
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
+  const [mobileOpen, setMobileOpen] = useState(false)
 
   const toggleSidebar = () => {
     setIsExpanded(!isExpanded)
@@ -55,24 +56,74 @@ export default function Sidebar({ teamColors }: SidebarProps) {
     }
   }
 
+  // Sidebar para mobile (drawer)
   return (
-    <div 
-      className={`flex flex-col h-screen transition-all duration-300 ease-in-out ${isExpanded ? 'w-64' : 'w-16'}`} 
-      style={{ backgroundColor: teamColors.primaryColor }}
-    >
-      {/* Botão de Toggle */}
+    <>
+      {/* Botão para abrir menu no mobile */}
       <button
-        onClick={toggleSidebar}
-        className="p-3 hover:bg-opacity-75 text-white self-end"
+        className="md:hidden fixed top-4 left-4 z-50 bg-primary text-white p-2 rounded-full shadow-lg focus:outline-none"
+        onClick={() => setMobileOpen(true)}
+        aria-label="Abrir menu"
+        style={{ backgroundColor: teamColors.primaryColor }}
       >
-        {isExpanded ? (
-          <XMarkIcon className="h-6 w-6" />
-        ) : (
-          <Bars3Icon className="h-6 w-6" />
-        )}
+        <Bars3Icon className="h-7 w-7" />
       </button>
 
-      <div className="flex flex-col justify-between h-[calc(100vh-3rem)]">
+      {/* Drawer mobile */}
+      {mobileOpen && (
+        <div className="fixed inset-0 z-50 flex">
+          {/* Fundo escuro */}
+          <div className="fixed inset-0 bg-black bg-opacity-40" onClick={() => setMobileOpen(false)} />
+          {/* Menu drawer */}
+          <div className="relative w-4/5 max-w-xs bg-primary h-full flex flex-col p-4" style={{ backgroundColor: teamColors.primaryColor }}>
+            <button
+              onClick={() => setMobileOpen(false)}
+              className="self-end mb-4 text-white"
+              aria-label="Fechar menu"
+            >
+              <XMarkIcon className="h-7 w-7" />
+            </button>
+            <nav className="flex-1 space-y-2">
+              {menuItems.map((item) => {
+                const isActive = pathname === item.href
+                return (
+                  <Link
+                    key={item.name}
+                    href={item.href}
+                    onClick={() => setMobileOpen(false)}
+                    className={`flex items-center px-3 py-3 text-base font-semibold rounded-lg transition-all duration-200 ${isActive ? 'bg-secondary text-white' : 'text-white hover:bg-secondary/80'}`}
+                    style={{ backgroundColor: isActive ? teamColors.secondaryColor : 'transparent' }}
+                  >
+                    <item.icon className="h-6 w-6 mr-3" />
+                    {item.name}
+                  </Link>
+                )
+              })}
+            </nav>
+            <button
+              onClick={() => { setShowLogoutConfirm(true); setMobileOpen(false); }}
+              className="mt-6 flex items-center px-3 py-3 text-base font-semibold rounded-lg text-white hover:bg-red-600 transition-all"
+            >
+              <ArrowRightOnRectangleIcon className="h-6 w-6 mr-3" />
+              Sair
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Sidebar desktop/tablet */}
+      <div className={`hidden md:flex flex-col h-screen transition-all duration-300 ease-in-out ${isExpanded ? 'w-64' : 'w-16'}`} style={{ backgroundColor: teamColors.primaryColor }}>
+        {/* Botão de Toggle */}
+        <button
+          onClick={toggleSidebar}
+          className="p-3 hover:bg-opacity-75 text-white self-end"
+        >
+          {isExpanded ? (
+            <XMarkIcon className="h-6 w-6" />
+          ) : (
+            <Bars3Icon className="h-6 w-6" />
+          )}
+        </button>
         {/* Menu principal */}
         <nav className="flex-none px-2 space-y-1">
           {menuItems.map((item) => {
@@ -81,67 +132,35 @@ export default function Sidebar({ teamColors }: SidebarProps) {
               <Link
                 key={item.name}
                 href={item.href}
-                className={`
-                  group flex items-center px-2 py-2 text-sm font-medium rounded-md
-                  transition-all duration-300 ease-in-out
-                  ${isActive 
-                    ? 'bg-opacity-90 text-white' 
-                    : 'text-white hover:bg-opacity-75'}
-                `}
-                style={{
-                  backgroundColor: isActive ? teamColors.secondaryColor : 'transparent',
-                }}
+                className={`group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-all duration-300 ease-in-out ${isActive ? 'bg-opacity-90 text-white' : 'text-white hover:bg-opacity-75'}`}
+                style={{ backgroundColor: isActive ? teamColors.secondaryColor : 'transparent' }}
               >
-                <item.icon
-                  className={`
-                    flex-shrink-0 h-6 w-6
-                    ${isActive ? 'text-white' : 'text-white'}
-                  `}
-                  aria-hidden="true"
-                />
+                <item.icon className="flex-shrink-0 h-6 w-6 text-white" aria-hidden="true" />
                 {isExpanded && (
-                  <span className="ml-3 transition-opacity duration-300">
-                    {item.name}
-                  </span>
+                  <span className="ml-3 transition-opacity duration-300">{item.name}</span>
                 )}
               </Link>
             )
           })}
         </nav>
-
         {/* Botão de Logout */}
-        <div className="flex-none px-2 pb-4 border-t border-white/10 pt-4">
-          <button
-            onClick={() => setShowLogoutConfirm(true)}
-            className={`
-              w-full group flex items-center px-2 py-2 text-sm font-medium rounded-md
-              transition-all duration-300 ease-in-out
-              text-white hover:bg-opacity-75
-            `}
-          >
-            <ArrowRightOnRectangleIcon
-              className="flex-shrink-0 h-6 w-6 text-white"
-              aria-hidden="true"
-            />
-            {isExpanded && (
-              <span className="ml-3 transition-opacity duration-300">
-                Sair
-              </span>
-            )}
-          </button>
-        </div>
+        <button
+          onClick={() => setShowLogoutConfirm(true)}
+          className={`w-full group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-all duration-300 ease-in-out text-white hover:bg-opacity-75`}
+        >
+          <ArrowRightOnRectangleIcon className="flex-shrink-0 h-6 w-6 text-white" aria-hidden="true" />
+          {isExpanded && (
+            <span className="ml-3 transition-opacity duration-300">Sair</span>
+          )}
+        </button>
       </div>
 
       {/* Modal de Confirmação de Logout */}
       {showLogoutConfirm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-sm w-full mx-4">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">
-              Confirmar Saída
-            </h3>
-            <p className="text-sm text-gray-500 mb-6">
-              Tem certeza que deseja sair do sistema?
-            </p>
+            <h3 className="text-lg font-medium text-gray-900 mb-4">Confirmar Saída</h3>
+            <p className="text-sm text-gray-500 mb-6">Tem certeza que deseja sair do sistema?</p>
             <div className="flex justify-end space-x-3">
               <button
                 onClick={() => setShowLogoutConfirm(false)}
@@ -159,6 +178,6 @@ export default function Sidebar({ teamColors }: SidebarProps) {
           </div>
         </div>
       )}
-    </div>
+    </>
   )
 } 

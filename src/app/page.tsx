@@ -24,24 +24,24 @@ export default function Home() {
           />
         </div>
         <div className="mx-auto max-w-2xl py-32 sm:py-48 lg:py-56">
-          <div className="text-center">
-            <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-6xl">
+          <div className="text-center px-2 sm:px-0">
+            <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-gray-900">
               Gerencie seu time com facilidade
             </h1>
-            <p className="mt-6 text-lg leading-8 text-gray-600">
+            <p className="mt-4 text-base sm:text-lg leading-7 text-gray-600">
               Organize jogadores, partidas, estatísticas e finanças do seu time em um só lugar.
               Acesse de qualquer dispositivo, mesmo offline.
             </p>
-            <div className="mt-10 flex items-center justify-center gap-x-6">
+            <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-x-6">
               <Link
                 href="/auth/register"
-                className="rounded-md bg-primary px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-secondary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary transition-colors"
+                className="rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-secondary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary transition-colors w-full sm:w-auto"
               >
                 Começar agora
               </Link>
               <Link
                 href="/auth/login"
-                className="text-sm font-semibold leading-6 text-gray-900 hover:text-primary transition-colors"
+                className="text-sm font-semibold leading-6 text-gray-900 hover:text-primary transition-colors w-full sm:w-auto text-center"
               >
                 Já tem uma conta? <span aria-hidden="true">→</span>
               </Link>

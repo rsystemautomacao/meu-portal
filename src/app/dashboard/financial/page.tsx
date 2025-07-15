@@ -165,7 +165,7 @@ export default function FinancialPage() {
         {/* Conteúdo das abas */}
         <div className="mt-6">
           {activeTab === 'overview' && (
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
               <MonthlyReport />
               <PlayerPaymentStatus onTransactionsChange={() => setTransactionsRefresh(r => r + 1)} />
             </div>
@@ -180,7 +180,7 @@ export default function FinancialPage() {
               <Suspense fallback={<div>Carregando alertas...</div>}>
                 <PaymentAlerts />
               </Suspense>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-6">
                   {/* Ocultar MonthlyFeeConfig e MonthlyFeeExceptions */}
                   {/* <MonthlyFeeConfig onConfigUpdate={() => {}} /> */}
