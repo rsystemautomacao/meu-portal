@@ -85,6 +85,7 @@ model Match {
   team           Team      @relation(fields: [teamId], references: [id], onDelete: Cascade)
   teamId         String    @db.ObjectId
   events         MatchEvent[]
+  status         String    @default("open") // open, completed, expired
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 }

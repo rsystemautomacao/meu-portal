@@ -213,17 +213,16 @@ export default function DashboardPage() {
 
   // Função para copiar estatísticas
   function handleCopyStats(stats: any, allPlayers: string[]) {
-    const header = ['Jogador', '✅', '⚽', '🅰️', '🟨', '🟥', '🥅'];
-    const rows = allPlayers.filter(p => p !== 'Adversário').map(player => [
-      player,
-      stats[player].presencas,
-      stats[player].gols,
-      stats[player].assist,
-      stats[player].amarelo,
-      stats[player].vermelho,
-      stats[player].golsSofridos
-    ]);
-    const text = [header.join('\t'), ...rows.map(r => r.join('\t'))].join('\n');
+    const header = ['Jogador', '✅', '⚽', '🅰️', '��', '🟥', '🥅'];
+    // Definir larguras fixas para cada coluna
+    const colWidths = [12, 3, 3, 3, 3, 3, 3];
+    const pad = (str: string | number, len: number) => String(str).padEnd(len, ' ');
+    const headerLine = header.map((h, i) => pad(h, colWidths[i])).join('');
+    const rows = allPlayers.filter(p => p !== 'Adversário').map(player =>
+      [player, stats[player].presencas, stats[player].gols, stats[player].assist, stats[player].amarelo, stats[player].vermelho, stats[player].golsSofridos]
+        .map((v, i) => pad(v, colWidths[i])).join('')
+    );
+    const text = [headerLine, ...rows].join('\n');
     navigator.clipboard.writeText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);

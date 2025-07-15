@@ -73,6 +73,10 @@ export async function GET(request: NextRequest) {
     if (!match) {
       return NextResponse.json({ error: 'Súmula não encontrada' }, { status: 404 })
     }
+    const status = (match as any).status || 'open'
+    if (status === 'completed' || status === 'expired') {
+      return NextResponse.json({ error: 'Súmula já preenchida ou expirada' }, { status: 410 })
+    }
     return NextResponse.json(match)
   } catch (error) {
     console.error('Erro ao buscar súmula:', error)
@@ -102,6 +106,24 @@ export async function PUT(request: NextRequest) {
         opponentScore2: opponentScore2 ?? match.opponentScore2
       }
     })
+    // Tentar atualizar status via comando raw (MongoDB)
+    try {
+      // @ts-ignore
+      await prisma.$runCommandRaw({
+        update: 'Match',
+        updates: [
+          {
+            q: { _id: match.id },
+            u: { $set: { status: 'completed' } },
+            upsert: false,
+            multi: false
+          }
+        ]
+      })
+    } catch (e) {
+      // Se não suportar, ignora
+      console.warn('Não foi possível atualizar status via comando raw:', e)
+    }
     // Atualizar eventos (opcional, sobrescreve todos)
     if (Array.isArray(events)) {
       // Deleta eventos antigos e cria novos

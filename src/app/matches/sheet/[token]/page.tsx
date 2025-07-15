@@ -230,18 +230,15 @@ export default function MatchSheetPage() {
       alert('Selecione ou preencha o jogador!')
       return
     }
-    if (!form.minute) {
-      alert('Preencha o minuto do evento!')
-      return
-    }
-    let evento: any = { ...form, minute: parseInt(form.minute), quadro: quadroSelecionado }
+    // Permitir campo minuto vazio e considerar como zero
+    let minuteValue = parseInt(form.minute)
+    if (isNaN(minuteValue)) minuteValue = 0
+    let evento: any = { ...form, minute: minuteValue, quadro: quadroSelecionado }
     evento.team = getTeamType(form.team)
     if (!(form.type === 'goal' && evento.team === 'home')) {
-      // Não incluir assist se não for gol do próprio time
       const { assist, ...rest } = evento
       evento = rest
     }
-    // NOVO: se for gol do adversário, incluir goleiro se selecionado
     if (evento.type === 'goal' && evento.team === 'away' && form.goleiro) {
       evento.goleiro = form.goleiro
     }
@@ -330,20 +327,20 @@ export default function MatchSheetPage() {
   if (!match) return null
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center px-2 py-4">
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex flex-col items-center px-2 py-6">
       {/* NOVO: Seleção inicial do quadro, desabilitando quadros já preenchidos */}
       {quadroSelecionado === null && !sumulaCompleta && !finalizado && (
         <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow p-6 max-w-xs w-full text-center">
-            <div className="font-bold mb-4">Qual quadro deseja preencher?</div>
+          <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-xs w-full text-center border border-primary/20">
+            <div className="font-bold text-xl mb-4 text-primary">Qual quadro deseja preencher?</div>
             <div className="flex gap-4 justify-center">
               <button
-                className={`bg-blue-600 text-white rounded px-4 py-2 font-bold text-lg hover:bg-blue-700 ${quadrosPreenchidos[1] ? 'opacity-50 cursor-not-allowed' : ''}`}
+                className={`bg-blue-600 text-white rounded-lg px-6 py-3 font-bold text-lg shadow hover:bg-blue-700 transition ${quadrosPreenchidos[1] ? 'opacity-50 cursor-not-allowed' : ''}`}
                 onClick={() => !quadrosPreenchidos[1] && setQuadroSelecionado(1)}
                 disabled={quadrosPreenchidos[1]}
               >1º Quadro</button>
               <button
-                className={`bg-blue-600 text-white rounded px-4 py-2 font-bold text-lg hover:bg-blue-700 ${quadrosPreenchidos[2] ? 'opacity-50 cursor-not-allowed' : ''}`}
+                className={`bg-blue-600 text-white rounded-lg px-6 py-3 font-bold text-lg shadow hover:bg-blue-700 transition ${quadrosPreenchidos[2] ? 'opacity-50 cursor-not-allowed' : ''}`}
                 onClick={() => !quadrosPreenchidos[2] && setQuadroSelecionado(2)}
                 disabled={quadrosPreenchidos[2]}
               >2º Quadro</button>
@@ -354,8 +351,8 @@ export default function MatchSheetPage() {
       {/* Modal de seleção de jogadores presentes */}
       {selecionandoPresentes && (
         <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow p-6 max-w-xs w-full text-center">
-            <div className="font-bold mb-4">Selecione os jogadores presentes</div>
+          <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-xs w-full text-center border border-primary/20">
+            <div className="font-bold text-xl mb-4 text-primary">Selecione os jogadores presentes</div>
             <div className="max-h-60 overflow-y-auto mb-4 text-left">
               {jogadores.map((j: any) => (
                 <label key={j.id} className="flex items-center gap-2 py-1 cursor-pointer">
@@ -372,7 +369,7 @@ export default function MatchSheetPage() {
               ))}
             </div>
             <button
-              className="bg-primary text-white rounded px-4 py-2 font-bold mt-2 disabled:opacity-50"
+              className="bg-primary text-white rounded-lg px-6 py-2 font-bold mt-2 shadow hover:bg-primary/90 transition"
               disabled={presentes.length === 0}
               onClick={() => setSelecionandoPresentes(false)}
             >
@@ -381,15 +378,16 @@ export default function MatchSheetPage() {
           </div>
         </div>
       )}
-      <div className="w-full max-w-md bg-white rounded-lg shadow p-4 mb-4">
+      {/* Cabeçalho da súmula */}
+      <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-6 mb-6 border border-primary/10">
         <div className="text-center mb-2">
           <div className="text-xs text-gray-400">Súmula Online</div>
-          <div className="font-bold text-lg">{match.team?.name} vs {match.opponent}</div>
+          <div className="font-bold text-2xl text-primary mb-1">{match.team?.name} vs {match.opponent}</div>
           <div className="text-sm text-gray-500">{format(new Date(match.date), "d 'de' MMMM 'de' yyyy", { locale: ptBR })}</div>
           <div className="mt-2">
             <label className="block text-sm font-medium text-gray-700">Local</label>
             <select
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm bg-gray-50 text-center"
               value={match.location || ''}
               disabled
             >
@@ -414,15 +412,13 @@ export default function MatchSheetPage() {
           </div>
         </div>
       </div>
-
-      {/* Só exibe o formulário se quadroSelecionado estiver definido E já selecionou presentes */}
-      {podeAdicionarEvento && !sumulaCompleta && (
-        <div className="w-full max-w-md bg-white rounded-lg shadow p-4 mb-4">
-          <div className="mb-2 font-semibold text-center">Adicionar Evento</div>
-          <div className="flex flex-col gap-2">
-            {/* Mover seleção de time para o topo */}
+      {/* Formulário de eventos */}
+      {podeAdicionarEvento && (
+        <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-6 mb-6 border border-primary/10">
+          <div className="mb-4 font-semibold text-center text-lg text-primary">Adicionar Evento</div>
+          <div className="flex flex-col gap-3">
             <select
-              className="rounded border-gray-300 p-2"
+              className="rounded border-gray-300 p-3 text-lg bg-gray-50"
               value={form.team}
               onChange={e => setForm(f => ({ ...f, team: e.target.value }))}
             >
@@ -430,7 +426,7 @@ export default function MatchSheetPage() {
               <option value="away">Adversário</option>
             </select>
             <select
-              className="rounded border-gray-300 p-2"
+              className="rounded border-gray-300 p-3 text-lg bg-gray-50"
               value={form.type}
               onChange={e => setForm(f => ({ ...f, type: e.target.value }))}
             >
@@ -438,10 +434,9 @@ export default function MatchSheetPage() {
                 <option key={ev.type} value={ev.type}>{ev.label}</option>
               ))}
             </select>
-            {/* Campo de jogador: dropdown se for Meu time, texto livre se for Adversário */}
             {form.team === 'home' ? (
               <select
-                className="rounded border-gray-300 p-2"
+                className="rounded border-gray-300 p-3 text-lg bg-gray-50"
                 value={form.player}
                 onChange={e => setForm(f => ({ ...f, player: e.target.value }))}
               >
@@ -452,7 +447,7 @@ export default function MatchSheetPage() {
               </select>
             ) : (
               <input
-                className="rounded border-gray-300 p-2"
+                className="rounded border-gray-300 p-3 text-lg bg-gray-50"
                 placeholder="Nome do jogador"
                 value={form.player}
                 onChange={e => setForm(f => ({ ...f, player: e.target.value }))}
@@ -461,7 +456,7 @@ export default function MatchSheetPage() {
             {/* NOVO: campo de assistência se for gol do próprio time */}
             {form.type === 'goal' && form.team === 'home' && (
               <select
-                className="rounded border-gray-300 p-2"
+                className="rounded border-gray-300 p-3 text-lg bg-gray-50"
                 value={form.assist}
                 onChange={e => setForm(f => ({ ...f, assist: e.target.value }))}
               >
@@ -475,7 +470,7 @@ export default function MatchSheetPage() {
             {/* NOVO: campo de goleiro se for gol do adversário */}
             {form.type === 'goal' && form.team === 'away' && (
               <select
-                className="rounded border-gray-300 p-2"
+                className="rounded border-gray-300 p-3 text-lg bg-gray-50"
                 value={form.goleiro}
                 onChange={e => setForm(f => ({ ...f, goleiro: e.target.value }))}
               >
@@ -486,77 +481,61 @@ export default function MatchSheetPage() {
               </select>
             )}
             {/* Timer do quadro */}
-            {podeAdicionarEvento && (
-              <div className="w-full max-w-md bg-white rounded-lg shadow p-4 mb-4 flex flex-col items-center">
-                <div className="mb-2 font-semibold text-center">Tempo do {quadroSelecionado}º Quadro</div>
-                <div className="flex items-center gap-4 mb-2">
-                  <span className="text-3xl font-mono">{formatTimer(timer[quadroSelecionado as 1|2])}</span>
-                  <button
-                    className={`px-3 py-1 rounded ${timerRunning[quadroSelecionado as 1|2] ? 'bg-yellow-500 text-white' : 'bg-green-600 text-white'} font-bold`}
-                    onClick={() => {
-                      if (!timerRunning[quadroSelecionado as 1|2]) {
-                        // Ao iniciar, se timer estiver zerado, resetar para valor inicial
-                        if (timer[quadroSelecionado as 1|2] === 0) {
-                          setTimer(t => ({ ...t, [quadroSelecionado as 1|2]: timerInitial[quadroSelecionado as 1|2] * 60 }))
-                        }
+            <div className="w-full bg-gray-50 rounded-lg p-3 flex flex-col items-center mt-2">
+              <div className="mb-2 font-semibold text-center text-primary">Tempo do {quadroSelecionado}º Quadro</div>
+              <div className="flex items-center gap-4 mb-2">
+                <span className="text-3xl font-mono">{formatTimer(timer[quadroSelecionado as 1|2])}</span>
+                <button
+                  className={`px-3 py-1 rounded-lg ${timerRunning[quadroSelecionado as 1|2] ? 'bg-yellow-500 text-white' : 'bg-green-600 text-white'} font-bold shadow`}
+                  onClick={() => {
+                    if (!timerRunning[quadroSelecionado as 1|2]) {
+                      if (timer[quadroSelecionado as 1|2] === 0) {
+                        setTimer(t => ({ ...t, [quadroSelecionado as 1|2]: timerInitial[quadroSelecionado as 1|2] * 60 }))
                       }
-                      setTimerRunning(t => ({ ...t, [quadroSelecionado as 1|2]: !t[quadroSelecionado as 1|2] }))
-                    }}
-                    type="button"
-                  >
-                    {timerRunning[quadroSelecionado as 1|2] ? 'Pausar' : 'Iniciar'}
-                  </button>
-                  <button
-                    className="px-3 py-1 rounded bg-gray-300 text-gray-700 font-bold"
-                    onClick={() => setTimer(t => ({ ...t, [quadroSelecionado as 1|2]: timerInitial[quadroSelecionado as 1|2] * 60 }))}
-                    type="button"
-                  >
-                    Zerar
-                  </button>
-                  <input
-                    type="number"
-                    min={1}
-                    className="w-16 ml-2 rounded border-gray-300 p-1 text-center"
-                    value={timerInitial[quadroSelecionado as 1|2]}
-                    onChange={e => {
-                      const min = Math.max(1, Number(e.target.value))
-                      setTimerInitial(ti => ({ ...ti, [quadroSelecionado as 1|2]: min }))
-                      setTimer(t => ({ ...t, [quadroSelecionado as 1|2]: min * 60 }))
-                    }}
-                    disabled={timerRunning[quadroSelecionado as 1|2]}
-                    title="Editar minutos antes de iniciar"
-                  />
-                  <span className="text-xs text-gray-500">min</span>
-                </div>
+                    }
+                    setTimerRunning(t => ({ ...t, [quadroSelecionado as 1|2]: !t[quadroSelecionado as 1|2] }))
+                  }}
+                  type="button"
+                >
+                  {timerRunning[quadroSelecionado as 1|2] ? 'Pausar' : 'Iniciar'}
+                </button>
+                <button
+                  className="px-3 py-1 rounded-lg bg-gray-300 text-gray-700 font-bold shadow"
+                  onClick={() => setTimer(t => ({ ...t, [quadroSelecionado as 1|2]: timerInitial[quadroSelecionado as 1|2] * 60 }))}
+                  type="button"
+                >
+                  Zerar
+                </button>
+                <input
+                  type="number"
+                  min={1}
+                  className="w-16 ml-2 rounded border-gray-300 p-1 text-center bg-white"
+                  value={timerInitial[quadroSelecionado as 1|2]}
+                  onChange={e => {
+                    const min = Math.max(1, Number(e.target.value))
+                    setTimerInitial(ti => ({ ...ti, [quadroSelecionado as 1|2]: min }))
+                    setTimer(t => ({ ...t, [quadroSelecionado as 1|2]: min * 60 }))
+                  }}
+                  disabled={timerRunning[quadroSelecionado as 1|2]}
+                  title="Editar minutos antes de iniciar"
+                />
+                <span className="text-xs text-gray-500">min</span>
               </div>
-            )}
-            {/* Modal de fim do tempo do timer */}
-            <Dialog open={showTimerEndModal} onClose={() => setShowTimerEndModal(false)} className="fixed z-50 inset-0 overflow-y-auto">
-              <div className="flex items-center justify-center min-h-screen px-4">
-                <Dialog.Panel className="bg-white rounded-lg shadow-xl p-6 z-50 max-w-sm mx-auto">
-                  <Dialog.Title className="text-lg font-bold mb-2">Tempo esgotado!</Dialog.Title>
-                  <Dialog.Description className="mb-4">O tempo do quadro acabou. Clique em OK para continuar.</Dialog.Description>
-                  <button
-                    className="bg-primary text-white px-4 py-2 rounded font-bold"
-                    onClick={() => setShowTimerEndModal(false)}
-                  >OK</button>
-                </Dialog.Panel>
-              </div>
-            </Dialog>
+            </div>
             {/* Campo minuto preenchido automaticamente ao adicionar evento */}
             <input
-              className="rounded border-gray-300 p-2"
+              className="rounded border-gray-300 p-3 text-lg bg-gray-50 text-center"
               placeholder="Minuto"
               type="number"
               value={form.minute}
-              readOnly
+              onChange={e => setForm(f => ({ ...f, minute: e.target.value }))}
             />
             {/* Campo quadro fixo, não editável */}
-            <div className="rounded border border-gray-300 p-2 bg-gray-100 text-center text-gray-700">
+            <div className="rounded border border-gray-300 p-3 bg-gray-100 text-center text-gray-700 font-bold">
               {quadroSelecionado}º Quadro
             </div>
             <button
-              className="bg-primary text-white rounded py-2 font-bold mt-2"
+              className="bg-primary text-white rounded-lg py-3 font-bold mt-2 shadow hover:bg-primary/90 transition text-lg"
               onClick={() => {
                 setForm(f => ({ ...f, minute: String(Math.ceil(timer[quadroSelecionado as 1|2]/60)) }));
                 handleAddEvent();
@@ -568,19 +547,18 @@ export default function MatchSheetPage() {
           </div>
         </div>
       )}
-
-      <div className="w-full max-w-md bg-white rounded-lg shadow p-4 mb-4">
-        <div className="mb-2 font-semibold text-center">Eventos</div>
+      {/* Lista de eventos */}
+      <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-6 mb-6 border border-primary/10">
+        <div className="mb-2 font-semibold text-center text-lg text-primary">Eventos</div>
         {events.length === 0 && <div className="text-center text-gray-400">Nenhum evento registrado.</div>}
         <ul className="divide-y divide-gray-100">
           {events.map((ev, i) => (
             <li key={i} className="flex items-center justify-between py-2 text-sm">
-              <span className={`px-2 py-1 rounded ${EVENT_TYPES.find(t => t.type === ev.type)?.color || 'bg-gray-200'}`}>{EVENT_TYPES.find(t => t.type === ev.type)?.label || ev.type}</span>
+              <span className={`px-2 py-1 rounded-lg ${EVENT_TYPES.find(t => t.type === ev.type)?.color || 'bg-gray-200'}`}>{EVENT_TYPES.find(t => t.type === ev.type)?.label || ev.type}</span>
               <span>{ev.player}</span>
               <span>{ev.minute}'</span>
               <span>{ev.quadro}ºQ</span>
               <span>{ev.team === 'home' ? 'Meu time' : 'Adversário'}</span>
-              {/* NOVO: mostrar assistência se houver */}
               {ev.type === 'goal' && ev.team === 'home' && ev.assist && (
                 <span className="ml-2 text-xs text-blue-600">Assist: {ev.assist}</span>
               )}
@@ -588,18 +566,19 @@ export default function MatchSheetPage() {
           ))}
         </ul>
       </div>
-
-      {!sumulaCompleta ? (
+      {/* Botão de finalizar quadro ou sumula */}
+      {quadroSelecionado !== null && !finalizado && (
         <button
-          className="w-full max-w-md bg-green-600 text-white rounded-lg py-3 font-bold text-lg shadow mb-4"
+          className="w-full max-w-md bg-green-600 text-white rounded-2xl py-4 font-bold text-lg shadow-lg mb-6 hover:bg-green-700 transition"
           onClick={handleFinalizarQuadro}
           disabled={saving}
         >
           {saving ? 'Salvando...' : 'Finalizar e Salvar Quadro'}
         </button>
-      ) : (
+      )}
+      {finalizado && (
         <button
-          className="w-full max-w-md bg-green-700 text-white rounded-lg py-3 font-bold text-lg shadow mb-4"
+          className="w-full max-w-md bg-green-700 text-white rounded-2xl py-4 font-bold text-lg shadow-lg mb-6 hover:bg-green-800 transition"
           onClick={() => {
             setFinalizado(true)
             router.push('/dashboard/matches')
@@ -608,9 +587,8 @@ export default function MatchSheetPage() {
           Súmula finalizada e salva!
         </button>
       )}
-
       <button
-        className="w-full max-w-md bg-gray-200 text-gray-700 rounded-lg py-2 text-center"
+        className="w-full max-w-md bg-gray-200 text-gray-700 rounded-2xl py-3 text-center font-bold shadow mb-2 hover:bg-gray-300 transition"
         onClick={() => router.push('/dashboard/matches')}
       >
         Voltar

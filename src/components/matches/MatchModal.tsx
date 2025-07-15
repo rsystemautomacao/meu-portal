@@ -209,7 +209,7 @@ export default function MatchModal({ isOpen, onClose, onSave, match }: MatchModa
               leaveFrom="opacity-100 translate-y-0 sm:scale-100"
               leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
             >
-              <Dialog.Panel className="relative transform overflow-hidden rounded-lg bg-white px-2 pb-4 pt-5 text-left shadow-xl transition-all w-full max-w-full sm:my-8 sm:w-full sm:max-w-lg sm:p-6 mx-2">
+              <Dialog.Panel className="relative transform overflow-hidden rounded-2xl bg-white px-4 pb-6 pt-6 text-left shadow-2xl transition-all w-full max-w-full sm:my-8 sm:w-full sm:max-w-xl sm:p-8 mx-2 border border-primary/20">
                 <div className="absolute right-0 top-0 hidden pr-4 pt-4 sm:block">
                   <button
                     type="button"
@@ -223,47 +223,46 @@ export default function MatchModal({ isOpen, onClose, onSave, match }: MatchModa
 
                 <div className="sm:flex sm:items-start">
                   <div className="mt-3 text-center sm:mt-0 sm:text-left w-full">
-                    <Dialog.Title as="h3" className="text-2xl font-bold leading-6 text-gray-900 mb-4">
+                    <Dialog.Title as="h3" className="text-3xl font-extrabold leading-8 text-primary mb-6 text-center">
                       {match ? 'Editar Partida' : 'Nova Partida'}
                     </Dialog.Title>
-                    <div className="space-y-6">
-                      <form onSubmit={handleSubmit} className="space-y-6">
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                          <div>
-                            <label htmlFor="date" className="block text-sm font-semibold text-gray-700 mb-1">Data</label>
+                    <div className="space-y-8">
+                      <form onSubmit={handleSubmit} className="space-y-8">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                          <div className="bg-gray-50 rounded-lg p-4 flex flex-col items-center shadow-sm">
+                            <label htmlFor="date" className="block text-sm font-semibold text-gray-700 mb-2">Data</label>
                             <DatePicker
                               selected={formData.date}
                               onChange={date => setFormData({ ...formData, date })}
                               dateFormat="dd/MM/yyyy"
                               locale={ptBR}
                               placeholderText="Selecione a data"
-                              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
+                              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm text-center font-bold text-lg"
                               id="date"
                               name="date"
                               required
                             />
                           </div>
-                          <div>
-                            <label htmlFor="opponent" className="block text-sm font-semibold text-gray-700 mb-1">Adversário</label>
+                          <div className="bg-gray-50 rounded-lg p-4 flex flex-col items-center shadow-sm">
+                            <label htmlFor="opponent" className="block text-sm font-semibold text-gray-700 mb-2">Adversário</label>
                             <input
                               type="text"
                               name="opponent"
-                              id="opponent"
-                              required
+                              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm text-center font-bold text-lg"
+                              placeholder="Nome do adversário"
                               value={formData.opponent}
-                              onChange={(e) => setFormData({ ...formData, opponent: e.target.value })}
-                              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
+                              onChange={e => setFormData({ ...formData, opponent: e.target.value })}
+                              required
                             />
                           </div>
-                          <div>
-                            <label htmlFor="location" className="block text-sm font-semibold text-gray-700 mb-1">Local</label>
+                          <div className="bg-gray-50 rounded-lg p-4 flex flex-col items-center shadow-sm">
+                            <label htmlFor="location" className="block text-sm font-semibold text-gray-700 mb-2">Local</label>
                             <select
                               name="location"
-                              id="location"
-                              required
+                              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm text-center font-bold text-lg"
                               value={formData.location}
                               onChange={e => setFormData({ ...formData, location: e.target.value })}
-                              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
+                              required
                             >
                               <option value="">Selecione</option>
                               <option value="Casa">Casa</option>
@@ -411,19 +410,19 @@ export default function MatchModal({ isOpen, onClose, onSave, match }: MatchModa
                             </div>
                           </div>
                         )}
-                        <div className="mt-6 flex justify-end gap-4">
+                        <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8">
+                          <button
+                            type="submit"
+                            className="w-full sm:w-auto bg-primary text-white font-bold py-3 px-8 rounded-lg shadow-lg hover:bg-opacity-90 transition text-lg"
+                          >
+                            {match ? 'Salvar Alterações' : 'Criar Partida'}
+                          </button>
                           <button
                             type="button"
-                            className="inline-flex justify-center rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                            className="w-full sm:w-auto bg-gray-100 text-gray-700 font-bold py-3 px-8 rounded-lg shadow hover:bg-gray-200 transition text-lg"
                             onClick={onClose}
                           >
                             Cancelar
-                          </button>
-                          <button
-                            type="submit"
-                            className="inline-flex justify-center rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-opacity-90"
-                          >
-                            {match ? 'Salvar' : 'Adicionar'}
                           </button>
                         </div>
                       </form>

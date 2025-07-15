@@ -54,6 +54,14 @@ export async function POST(req: Request) {
 
     const data = await req.json()
 
+    // Validação dos campos obrigatórios
+    if (!data.type || !data.date || !data.description || typeof data.amount !== 'number' || isNaN(data.amount)) {
+      return NextResponse.json(
+        { message: 'Campos obrigatórios ausentes ou inválidos', data },
+        { status: 400 }
+      )
+    }
+
     const teamUser = await prisma.teamUser.findFirst({
       where: { 
         userId: session.user.id,
@@ -80,7 +88,7 @@ export async function POST(req: Request) {
   } catch (error) {
     console.error('Erro ao criar transação:', error)
     return NextResponse.json(
-      { message: 'Erro ao criar transação' },
+      { message: 'Erro ao criar transação', error: String(error) },
       { status: 500 }
     )
   }
