@@ -237,7 +237,7 @@ export default function DashboardPage() {
   function handleCopyStats(stats: any, allPlayers: string[]) {
     const header = ['Jogador', '✅', '⚽', '🅰️', '🟨', '🟥', '🥅'];
     // Definir larguras fixas para cada coluna
-    const colWidths = [12, 3, 3, 3, 3, 3, 3];
+    const colWidths = [10, 2, 2, 2, 2, 2, 2];
     // Espaço fixo unicode (U+2007) para WhatsApp
     const fixedSpace = '\u2007';
     const pad = (str: string | number, len: number, align: 'left' | 'right' = 'left') => {

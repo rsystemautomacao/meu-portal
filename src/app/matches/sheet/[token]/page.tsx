@@ -199,6 +199,12 @@ export default function MatchSheetPage() {
     // eslint-disable-next-line
   }, [podeAdicionarEvento, restaurado])
 
+  // Função para selecionar tempo de jogo
+  const handleTimeSelect = (minutes: number) => {
+    setTimerInitial(t => ({ ...t, [quadroSelecionado as 1|2]: minutes }))
+    setTimer(t => ({ ...t, [quadroSelecionado as 1|2]: minutes * 60 }))
+  }
+
   // Ao trocar tipo de evento, atualizar minuto automaticamente
   useEffect(() => {
     if (!restaurado) return
@@ -528,16 +534,25 @@ export default function MatchSheetPage() {
                 ))}
               </select>
             )}
-            {/* Timer do quadro */}
-            <div className="w-full bg-gradient-to-r from-yellow-50 to-orange-50 rounded-xl p-6 flex flex-col items-center mt-4 border border-yellow-200">
-              <div className="mb-4 font-bold text-center text-xl text-yellow-900 flex items-center">
+            
+            {/* Timer do quadro - Reposicionado e melhorado */}
+            <div className="w-full bg-gradient-to-r from-yellow-50 to-orange-50 rounded-xl p-6 border border-yellow-200">
+              <div className="mb-4 font-bold text-center text-xl text-yellow-900 flex items-center justify-center">
                 <span className="mr-2">⏱️</span>
                 Tempo do {quadroSelecionado}º Quadro
               </div>
-              <div className="flex items-center gap-4 mb-4">
-                <span className="text-4xl font-mono bg-white px-4 py-2 rounded-lg shadow-sm border border-yellow-200">{formatTimer(timer[quadroSelecionado as 1|2])}</span>
+              
+              {/* Display do timer */}
+              <div className="text-center mb-4">
+                <span className="text-5xl font-mono bg-white px-6 py-3 rounded-xl shadow-lg border border-yellow-200 text-yellow-900">
+                  {formatTimer(timer[quadroSelecionado as 1|2])}
+                </span>
+              </div>
+              
+              {/* Controles do timer */}
+              <div className="flex justify-center gap-3 mb-4">
                 <button
-                  className={`px-6 py-3 rounded-xl font-bold shadow-lg transition-all duration-200 ${timerRunning[quadroSelecionado as 1|2] ? 'bg-yellow-500 text-white hover:bg-yellow-600' : 'bg-green-600 text-white hover:bg-green-700'} transform hover:scale-105`}
+                  className={`px-4 py-2 rounded-lg font-bold shadow-lg transition-all duration-200 ${timerRunning[quadroSelecionado as 1|2] ? 'bg-yellow-500 text-white hover:bg-yellow-600' : 'bg-green-600 text-white hover:bg-green-700'} transform hover:scale-105`}
                   onClick={() => {
                     if (!timerRunning[quadroSelecionado as 1|2]) {
                       if (timer[quadroSelecionado as 1|2] === 0) {
@@ -551,27 +566,32 @@ export default function MatchSheetPage() {
                   {timerRunning[quadroSelecionado as 1|2] ? '⏸️ Pausar' : '▶️ Iniciar'}
                 </button>
                 <button
-                  className="px-6 py-3 rounded-xl bg-gray-300 text-gray-700 font-bold shadow-lg hover:bg-gray-400 transition-all duration-200 transform hover:scale-105"
+                  className="px-4 py-2 rounded-lg bg-gray-300 text-gray-700 font-bold shadow-lg hover:bg-gray-400 transition-all duration-200 transform hover:scale-105"
                   onClick={() => setTimer(t => ({ ...t, [quadroSelecionado as 1|2]: timerInitial[quadroSelecionado as 1|2] * 60 }))}
                   type="button"
                 >
                   🔄 Zerar
                 </button>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="number"
-                    min={1}
-                    className="w-20 rounded-lg border-gray-300 p-2 text-center bg-white shadow-sm"
-                    value={timerInitial[quadroSelecionado as 1|2]}
-                    onChange={e => {
-                      const min = Math.max(1, Number(e.target.value))
-                      setTimerInitial(ti => ({ ...ti, [quadroSelecionado as 1|2]: min }))
-                      setTimer(t => ({ ...t, [quadroSelecionado as 1|2]: min * 60 }))
-                    }}
-                    disabled={timerRunning[quadroSelecionado as 1|2]}
-                    title="Editar minutos antes de iniciar"
-                  />
-                  <span className="text-sm text-gray-600 font-semibold">min</span>
+              </div>
+              
+              {/* Seleção rápida de tempo */}
+              <div className="text-center">
+                <div className="text-sm text-yellow-700 font-semibold mb-2">Tempo de jogo:</div>
+                <div className="flex flex-wrap justify-center gap-2">
+                  {[5, 10, 15, 20, 25, 30].map(minutes => (
+                    <button
+                      key={minutes}
+                      className={`px-3 py-1 rounded-lg text-sm font-semibold transition-all duration-200 ${
+                        timerInitial[quadroSelecionado as 1|2] === minutes
+                          ? 'bg-yellow-600 text-white'
+                          : 'bg-white text-yellow-700 hover:bg-yellow-100'
+                      }`}
+                      onClick={() => handleTimeSelect(minutes)}
+                      disabled={timerRunning[quadroSelecionado as 1|2]}
+                    >
+                      {minutes}min
+                    </button>
+                  ))}
                 </div>
               </div>
             </div>

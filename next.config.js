@@ -2,7 +2,11 @@ const withPWA = require('next-pwa')({
   dest: 'public',
   register: true,
   skipWaiting: true,
-  disable: process.env.NODE_ENV === 'development',
+  disable: false, // Habilitar em desenvolvimento também
+  buildExcludes: [/middleware-manifest\.json$/],
+  fallbacks: {
+    document: '/offline',
+  },
   runtimeCaching: [
     {
       urlPattern: /^https:\/\/fonts\.(?:gstatic|googleapis)\.com\/.*/i,

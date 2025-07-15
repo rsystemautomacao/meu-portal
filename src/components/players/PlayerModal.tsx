@@ -113,6 +113,12 @@ export default function PlayerModal({ isOpen, onClose, onSave, player }: PlayerM
   }
 
   const handlePhotoClick = () => {
+    // Usar o input existente se disponível
+    if (fileInputRef.current) {
+      fileInputRef.current.click()
+      return
+    }
+    
     // Criar input temporário para mobile
     const input = document.createElement('input')
     input.type = 'file'
@@ -352,9 +358,18 @@ export default function PlayerModal({ isOpen, onClose, onSave, player }: PlayerM
                             name="birthDate"
                             id="birthDate"
                             value={formData.birthDate}
-                            onChange={(e) => setFormData({ ...formData, birthDate: e.target.value })}
+                            onChange={(e) => {
+                              let value = e.target.value;
+                              // Formatar automaticamente DD/MM/AAAA
+                              if (value.length === 2 && !value.includes('/')) {
+                                value += '/';
+                              } else if (value.length === 5 && value.split('/').length === 2) {
+                                value += '/';
+                              }
+                              setFormData({ ...formData, birthDate: value });
+                            }}
                             placeholder="DD/MM/AAAA"
-                            pattern="\\d{2}/\\d{2}/\\d{4}"
+                            maxLength={10}
                             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
                           />
                         </div>
@@ -368,9 +383,18 @@ export default function PlayerModal({ isOpen, onClose, onSave, player }: PlayerM
                             name="joinDate"
                             id="joinDate"
                             value={formData.joinDate}
-                            onChange={(e) => setFormData({ ...formData, joinDate: e.target.value })}
+                            onChange={(e) => {
+                              let value = e.target.value;
+                              // Formatar automaticamente DD/MM/AAAA
+                              if (value.length === 2 && !value.includes('/')) {
+                                value += '/';
+                              } else if (value.length === 5 && value.split('/').length === 2) {
+                                value += '/';
+                              }
+                              setFormData({ ...formData, joinDate: value });
+                            }}
                             placeholder="DD/MM/AAAA"
-                            pattern="\\d{2}/\\d{2}/\\d{4}"
+                            maxLength={10}
                             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
                           />
                         </div>

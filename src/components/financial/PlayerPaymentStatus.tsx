@@ -50,9 +50,15 @@ export default function PlayerPaymentStatus({ onPlayerSelect, onTransactionsChan
         throw new Error('Falha ao buscar dados dos jogadores')
       }
       const data = await response.json()
-      setPlayers(data)
+      // Garantir que data.players é um array
+      if (data && data.players && Array.isArray(data.players)) {
+        setPlayers(data.players)
+      } else {
+        setPlayers([])
+      }
     } catch (error) {
       console.error('Erro ao carregar jogadores:', error)
+      setPlayers([])
     } finally {
       setLoading(false)
     }

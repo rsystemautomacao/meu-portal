@@ -7,6 +7,7 @@ export default function PWAInstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null)
   const [showInstallPrompt, setShowInstallPrompt] = useState(false)
   const [isInstalled, setIsInstalled] = useState(false)
+  const [dismissed, setDismissed] = useState(false)
 
   useEffect(() => {
     // Verificar se já está instalado
@@ -15,6 +16,20 @@ export default function PWAInstallPrompt() {
       setIsInstalled(true)
       return
     }
+
+    // Verificar se foi dispensado
+    const dismissedStorage = localStorage.getItem('pwa-install-dismissed')
+    if (dismissedStorage) {
+      setDismissed(true)
+      return
+    }
+
+    // Mostrar prompt após 3 segundos se não foi dispensado
+    const timer = setTimeout(() => {
+      if (!isInstalled && !dismissed) {
+        setShowInstallPrompt(true)
+      }
+    }, 3000)
 
     // Escutar o evento beforeinstallprompt
     const handleBeforeInstallPrompt = (e: Event) => {
@@ -34,10 +49,11 @@ export default function PWAInstallPrompt() {
     window.addEventListener('appinstalled', handleAppInstalled)
 
     return () => {
+      clearTimeout(timer)
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
       window.removeEventListener('appinstalled', handleAppInstalled)
     }
-  }, [])
+  }, [isInstalled, dismissed])
 
   const handleInstallClick = async () => {
     if (!deferredPrompt) return
@@ -56,9 +72,21 @@ export default function PWAInstallPrompt() {
   const handleDismiss = () => {
     setShowInstallPrompt(false)
     setDeferredPrompt(null)
+    setDismissed(true)
+    localStorage.setItem('pwa-install-dismissed', 'true')
   }
 
-  if (isInstalled || !showInstallPrompt) {
+  const handleManualInstall = () => {
+    // Tentar instalar manualmente
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.ready.then((registration) => {
+        // Mostrar instruções de instalação manual
+        alert('Para instalar o app:\n\n1. Toque no menu do navegador (⋮)\n2. Selecione "Adicionar à tela inicial"\n3. Toque em "Adicionar"')
+      })
+    }
+  }
+
+  if (isInstalled || !showInstallPrompt || dismissed) {
     return null
   }
 
@@ -81,10 +109,10 @@ export default function PWAInstallPrompt() {
           </div>
           <div className="flex items-center space-x-2">
             <button
-              onClick={handleInstallClick}
+              onClick={deferredPrompt ? handleInstallClick : handleManualInstall}
               className="bg-white text-blue-600 px-4 py-2 rounded-lg font-semibold hover:bg-blue-50 transition-colors"
             >
-              Instalar
+              {deferredPrompt ? 'Instalar' : 'Como Instalar'}
             </button>
             <button
               onClick={handleDismiss}

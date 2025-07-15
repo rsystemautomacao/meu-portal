@@ -296,46 +296,44 @@ export default function MatchesPage() {
                         )}
                       </td>
                       <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                        {(!match.events || match.events.length === 0) ? (
-                          match.matchSheet ? (
-                            // Se já existe súmula online, mostrar opção de copiar link
-                            <div className="flex flex-col gap-1">
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  const link = `${window.location.origin}/matches/sheet/${match.matchSheet?.shareToken}`
-                                  navigator.clipboard.writeText(link)
-                                  toast.success('Link copiado para a área de transferência!')
-                                }}
-                                className="inline-flex items-center text-green-600 hover:text-green-800"
-                              >
-                                <DocumentTextIcon className="h-5 w-5 mr-1" />
-                                Copiar Link
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  const link = `${window.location.origin}/matches/sheet/${match.matchSheet?.shareToken}`
-                                  window.open(link, '_blank')
-                                }}
-                                className="inline-flex items-center text-blue-600 hover:text-blue-800 text-xs"
-                              >
-                                <DocumentTextIcon className="h-4 w-4 mr-1" />
-                                Abrir Súmula
-                              </button>
-                            </div>
-                          ) : (
-                            // Se não existe súmula online, mostrar opção de criar
+                        {match.matchSheet ? (
+                          // Se já existe súmula online, mostrar opção de copiar link
+                          <div className="flex flex-col gap-1">
                             <button
                               type="button"
-                              onClick={() => handleCreateMatchSheet()}
-                              className="inline-flex items-center text-primary hover:text-primary-dark"
+                              onClick={() => {
+                                const link = `${window.location.origin}/matches/sheet/${match.matchSheet?.shareToken}`
+                                navigator.clipboard.writeText(link)
+                                toast.success('Link copiado para a área de transferência!')
+                              }}
+                              className="inline-flex items-center text-green-600 hover:text-green-800"
                             >
                               <DocumentTextIcon className="h-5 w-5 mr-1" />
-                              Criar Súmula
+                              Copiar Link
                             </button>
-                          )
-                        ) : null}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const link = `${window.location.origin}/matches/sheet/${match.matchSheet?.shareToken}`
+                                window.open(link, '_blank')
+                              }}
+                              className="inline-flex items-center text-blue-600 hover:text-blue-800 text-xs"
+                            >
+                              <DocumentTextIcon className="h-4 w-4 mr-1" />
+                              Abrir Súmula
+                            </button>
+                          </div>
+                        ) : (
+                          // Se não existe súmula online, mostrar opção de criar
+                          <button
+                            type="button"
+                            onClick={() => handleCreateMatchSheet()}
+                            className="inline-flex items-center text-primary hover:text-primary-dark"
+                          >
+                            <DocumentTextIcon className="h-5 w-5 mr-1" />
+                            Criar Súmula
+                          </button>
+                        )}
                       </td>
                       <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
                         <div className="flex justify-end gap-2">
