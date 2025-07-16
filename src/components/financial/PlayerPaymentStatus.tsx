@@ -13,6 +13,7 @@ interface Player {
   dueDay: number
   lastPaymentDate: string | null
   status: 'paid' | 'late' | 'veryLate' | 'pending' | 'exempt'
+  isExempt: boolean
 }
 
 interface PlayerPaymentStatusProps {
@@ -307,10 +308,16 @@ export default function PlayerPaymentStatus({ onPlayerSelect, onTransactionsChan
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900">{player.name}</div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">
-                        {player.monthlyFee > 0 ? `R$ ${player.monthlyFee.toFixed(2)}` : 'N/A'}
-                      </div>
+                    <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                      {player.isExempt ? (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                          Isento
+                        </span>
+                      ) : (
+                        typeof player.monthlyFee === 'number' && !isNaN(player.monthlyFee)
+                          ? `R$ ${player.monthlyFee.toFixed(2)}`
+                          : <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 border border-gray-200">Não definido</span>
+                      )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">Dia {player.dueDay}</div>

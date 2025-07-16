@@ -147,34 +147,23 @@ O app será instalado como um programa normal!
             </div>
           </div>
           <div className="flex items-center space-x-2">
-            <button
-              onClick={(e) => {
-                console.log('Botão clicado:', e.target)
-                console.log('Evento:', e)
-                e.preventDefault()
-                e.stopPropagation()
-                if (deferredPrompt) {
-                  handleInstallClick()
-                } else {
-                  handleManualInstall()
-                }
-              }}
-              onTouchStart={(e) => {
-                console.log('Touch start:', e)
-              }}
-              onTouchEnd={(e) => {
-                console.log('Touch end:', e)
-              }}
-              className="bg-white text-blue-600 px-4 py-2 rounded-lg font-semibold hover:bg-blue-50 transition-colors cursor-pointer select-none touch-manipulation"
-              style={{ 
-                userSelect: 'none', 
-                WebkitUserSelect: 'none',
-                WebkitTouchCallout: 'none',
-                WebkitTapHighlightColor: 'transparent'
-              }}
-            >
-              {deferredPrompt ? 'Instalar' : 'Como Instalar'}
-            </button>
+            {deferredPrompt ? (
+              <button
+                onClick={handleInstallClick}
+                className="bg-white text-blue-600 px-4 py-2 rounded-lg font-semibold hover:bg-blue-50 transition-colors cursor-pointer select-none touch-manipulation"
+                style={{ userSelect: 'none', WebkitUserSelect: 'none', WebkitTouchCallout: 'none', WebkitTapHighlightColor: 'transparent' }}
+              >
+                Instalar
+              </button>
+            ) : (
+              <button
+                onClick={handleManualInstall}
+                className="bg-white text-blue-600 px-4 py-2 rounded-lg font-semibold hover:bg-blue-50 transition-colors cursor-pointer select-none touch-manipulation"
+                style={{ userSelect: 'none', WebkitUserSelect: 'none', WebkitTouchCallout: 'none', WebkitTapHighlightColor: 'transparent' }}
+              >
+                Como Instalar
+              </button>
+            )}
             <button
               onClick={handleDismiss}
               className="text-blue-100 hover:text-white transition-colors"

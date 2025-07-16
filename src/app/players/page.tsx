@@ -215,8 +215,8 @@ export default function PlayersPage() {
                             Isento
                           </span>
                         ) : (
-                          typeof player.monthlyFee === 'number' && !isNaN(player.monthlyFee)
-                            ? `R$ ${player.monthlyFee.toFixed(2)}`
+                          !isNaN(Number(player.monthlyFee)) && String(player.monthlyFee) !== '' && player.monthlyFee !== null && player.monthlyFee !== undefined
+                            ? `R$ ${Number(player.monthlyFee).toFixed(2)}`
                             : <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 border border-gray-200">Não definido</span>
                         )}
                       </td>

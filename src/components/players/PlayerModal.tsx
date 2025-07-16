@@ -169,11 +169,12 @@ export default function PlayerModal({ isOpen, onClose, onSave, player }: PlayerM
                       <form onSubmit={handleSubmit} className="space-y-6">
                         {/* Upload de Foto */}
                         <div className="flex justify-center">
-                          <div
+                          <label
+                            htmlFor="player-photo-input"
                             className="relative mt-2 h-32 w-32 cursor-pointer overflow-hidden rounded-full bg-gradient-to-br from-blue-200 via-white to-indigo-200 border-4 border-blue-400 shadow-lg hover:border-indigo-500 transition-colors flex items-center justify-center group"
                             onClick={handlePhotoClick}
                             onTouchEnd={handlePhotoClick}
-                            style={{ 
+                            style={{
                               touchAction: 'manipulation',
                               WebkitTapHighlightColor: 'transparent',
                               boxShadow: '0 4px 24px 0 rgba(30,64,175,0.10)'
@@ -192,6 +193,7 @@ export default function PlayerModal({ isOpen, onClose, onSave, player }: PlayerM
                               </div>
                             )}
                             <input
+                              id="player-photo-input"
                               ref={fileInputRef}
                               type="file"
                               accept="image/*"
@@ -200,7 +202,7 @@ export default function PlayerModal({ isOpen, onClose, onSave, player }: PlayerM
                               tabIndex={-1}
                             />
                             <div className="absolute bottom-2 right-2 bg-blue-600 text-white rounded-full p-1 shadow-md text-xs font-bold group-hover:bg-indigo-600 transition-colors">+</div>
-                          </div>
+                          </label>
                         </div>
 
                         {/* Botão de teste para mobile */}

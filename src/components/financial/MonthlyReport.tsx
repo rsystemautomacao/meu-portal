@@ -93,7 +93,7 @@ export default function MonthlyReport() {
         <input
           type="month"
           value={format(selectedMonth, 'yyyy-MM')}
-          onChange={(e) => setSelectedMonth(new Date(e.target.value))}
+          onChange={(e) => setSelectedMonth(new Date(e.target.value + '-01'))}
           className="mt-4 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
         />
       </div>
@@ -107,7 +107,7 @@ export default function MonthlyReport() {
         <input
           type="month"
           value={format(selectedMonth, 'yyyy-MM')}
-          onChange={(e) => setSelectedMonth(new Date(e.target.value))}
+          onChange={(e) => setSelectedMonth(new Date(e.target.value + '-01'))}
           className="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
         />
       </div>

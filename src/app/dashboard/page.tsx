@@ -243,7 +243,7 @@ export default function DashboardPage() {
       'Jogador'.length
     );
     // Definir larguras fixas para cada coluna
-    const colWidths = [10, 3, 3, 3, 3, 3, 3];
+    const colWidths = [8, 3, 3, 3, 3, 3, 3];
     const fixedSpace = '\u2007';
     const pad = (str: string | number, len: number, align: 'left' | 'right' = 'left') => {
       str = String(str ?? '');
