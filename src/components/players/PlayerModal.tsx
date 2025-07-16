@@ -112,82 +112,11 @@ export default function PlayerModal({ isOpen, onClose, onSave, player }: PlayerM
     }
   }
 
-  const handlePhotoClick = () => {
-    console.log('handlePhotoClick chamado')
-    
-    // Verificar se estamos no mobile
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
-    
-    // Usar o input existente se disponível
+  const handlePhotoClick = (e?: React.SyntheticEvent) => {
+    if (e) e.preventDefault();
     if (fileInputRef.current) {
-      console.log('Usando input existente')
-      fileInputRef.current.click()
-      return
+      fileInputRef.current.click();
     }
-    
-    console.log('Criando input temporário para mobile')
-    // Criar input temporário para mobile
-    const input = document.createElement('input')
-    input.type = 'file'
-    input.accept = 'image/*'
-    
-    // Configurações específicas para mobile
-    if (isMobile) {
-      // Remover capture para permitir escolha entre galeria e câmera
-      // input.capture = 'environment'
-      console.log('Configurado para mobile')
-    }
-    
-    input.onchange = (e) => {
-      console.log('Input change detectado')
-      const target = e.target as HTMLInputElement
-      if (target.files?.[0]) {
-        const file = target.files[0]
-        console.log('Arquivo selecionado:', file.name, file.type, file.size)
-        
-        // Validar tipo de arquivo
-        if (!file.type.startsWith('image/')) {
-          alert('Por favor, selecione apenas arquivos de imagem')
-          return
-        }
-        
-        // Validar tamanho (máximo 5MB)
-        if (file.size > 5 * 1024 * 1024) {
-          alert('A imagem deve ter no máximo 5MB')
-          return
-        }
-        
-        const reader = new FileReader()
-        reader.onloadend = () => {
-          console.log('Arquivo lido com sucesso')
-          setPhotoPreview(reader.result as string)
-          setFormData({ ...formData, photoUrl: reader.result as string })
-        }
-        reader.onerror = () => {
-          console.error('Erro ao ler arquivo')
-          alert('Erro ao ler o arquivo. Tente novamente.')
-        }
-        reader.readAsDataURL(file)
-      } else {
-        console.log('Nenhum arquivo selecionado')
-      }
-    }
-    
-    // Adicionar ao DOM temporariamente para garantir que funcione no mobile
-    input.style.position = 'absolute'
-    input.style.left = '-9999px'
-    input.style.top = '-9999px'
-    document.body.appendChild(input)
-    
-    // Trigger do input
-    input.click()
-    
-    // Remover do DOM após um tempo
-    setTimeout(() => {
-      if (document.body.contains(input)) {
-        document.body.removeChild(input)
-      }
-    }, 1000)
   }
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -229,10 +158,10 @@ export default function PlayerModal({ isOpen, onClose, onSave, player }: PlayerM
               leaveFrom="opacity-100 translate-y-0 sm:scale-100"
               leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
             >
-              <Dialog.Panel className="relative transform overflow-hidden rounded-2xl bg-white px-2 pb-4 pt-5 text-left shadow-xl transition-all w-full max-w-full sm:my-8 sm:w-full sm:max-w-lg sm:p-6 mx-2">
+              <Dialog.Panel className="relative transform overflow-hidden rounded-2xl bg-gradient-to-br from-blue-50 via-white to-indigo-100 px-2 pb-4 pt-5 text-left shadow-2xl transition-all w-full max-w-full sm:my-8 sm:w-full sm:max-w-lg sm:p-6 mx-2 border border-blue-200">
                 <div>
                   <div className="mt-3 sm:mt-5">
-                    <Dialog.Title as="h3" className="text-xl font-bold leading-6 text-gray-900 mb-4 text-center">
+                    <Dialog.Title as="h3" className="text-2xl font-extrabold leading-6 text-blue-900 mb-4 text-center drop-shadow-sm">
                       {player ? '✏️ Editar Jogador' : '👤 Novo Jogador'}
                     </Dialog.Title>
                     <div className="mt-2">
@@ -240,23 +169,25 @@ export default function PlayerModal({ isOpen, onClose, onSave, player }: PlayerM
                         {/* Upload de Foto */}
                         <div className="flex justify-center">
                           <div
-                            className="relative mt-2 h-32 w-32 cursor-pointer overflow-hidden rounded-xl bg-gradient-to-br from-gray-100 to-gray-200 border-2 border-dashed border-gray-300 hover:border-blue-400 transition-colors flex items-center justify-center"
+                            className="relative mt-2 h-32 w-32 cursor-pointer overflow-hidden rounded-full bg-gradient-to-br from-blue-200 via-white to-indigo-200 border-4 border-blue-400 shadow-lg hover:border-indigo-500 transition-colors flex items-center justify-center group"
                             onClick={handlePhotoClick}
+                            onTouchEnd={handlePhotoClick}
                             style={{ 
                               touchAction: 'manipulation',
-                              WebkitTapHighlightColor: 'transparent'
+                              WebkitTapHighlightColor: 'transparent',
+                              boxShadow: '0 4px 24px 0 rgba(30,64,175,0.10)'
                             }}
                           >
                             {photoPreview ? (
                               <img
                                 src={photoPreview}
                                 alt="Preview"
-                                className="h-32 w-32 rounded-xl object-cover"
+                                className="h-32 w-32 rounded-full object-cover border-2 border-white shadow-md group-hover:scale-105 transition-transform duration-200"
                               />
                             ) : (
-                              <div className="text-center">
-                                <PhotoIcon className="h-12 w-12 text-gray-400 mx-auto mb-2" aria-hidden="true" />
-                                <p className="text-xs text-gray-500">Clique para adicionar foto</p>
+                              <div className="text-center flex flex-col items-center justify-center">
+                                <PhotoIcon className="h-14 w-14 text-blue-400 mb-2 drop-shadow" aria-hidden="true" />
+                                <p className="text-xs text-blue-700 font-semibold">Clique para adicionar foto</p>
                               </div>
                             )}
                             <input
@@ -264,79 +195,64 @@ export default function PlayerModal({ isOpen, onClose, onSave, player }: PlayerM
                               ref={fileInputRef}
                               onChange={handlePhotoChange}
                               accept="image/*"
-                              className="hidden"
-                              style={{ 
+                              tabIndex={-1}
+                              style={{
                                 position: 'absolute',
-                                left: '-9999px',
-                                top: '-9999px',
+                                left: 0,
+                                top: 0,
+                                width: '100%',
+                                height: '100%',
                                 opacity: 0,
-                                pointerEvents: 'none'
+                                zIndex: 2,
+                                cursor: 'pointer',
                               }}
                             />
+                            <div className="absolute bottom-2 right-2 bg-blue-600 text-white rounded-full p-1 shadow-md text-xs font-bold group-hover:bg-indigo-600 transition-colors">+</div>
                           </div>
                         </div>
 
                         {/* Botão de teste para mobile */}
-                        <div className="flex justify-center">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              console.log('Botão de teste clicado')
-                              if (fileInputRef.current) {
-                                fileInputRef.current.click()
-                              }
-                            }}
-                            className="bg-red-500 text-white px-4 py-2 rounded text-sm"
-                          >
-                            Teste Upload
-                          </button>
-                        </div>
+                        {/* Removido o botão de teste upload */}
 
                         <div>
-                          <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-                            Nome
-                          </label>
+                          <label htmlFor="name" className="block text-sm font-bold text-blue-900 mb-1">Nome</label>
                           <input
                             type="text"
                             name="name"
                             id="name"
                             value={formData.name}
                             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                            className="mt-1 block w-full rounded-md border-blue-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm bg-white/80 text-blue-900 font-semibold placeholder:text-blue-300"
                             required
                           />
                         </div>
 
                         <div>
-                          <label htmlFor="number" className="block text-sm font-medium text-gray-700">
-                            Número
-                          </label>
+                          <label htmlFor="number" className="block text-sm font-bold text-blue-900 mb-1">Número</label>
                           <input
                             type="number"
                             name="number"
                             id="number"
                             value={formData.number}
                             onChange={(e) => setFormData({ ...formData, number: e.target.value })}
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                            className="mt-1 block w-full rounded-md border-blue-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm bg-white/80 text-blue-900 font-semibold placeholder:text-blue-300"
                             required
                           />
                         </div>
 
                         <div>
-                          <label htmlFor="position" className="block text-sm font-medium text-gray-700">
-                            Posição
-                          </label>
+                          <label htmlFor="position" className="block text-sm font-bold text-blue-900 mb-1">Posição</label>
                           <select
                             id="position"
                             name="position"
                             value={formData.position}
                             onChange={(e) => setFormData({ ...formData, position: e.target.value })}
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                            className="mt-1 block w-full rounded-md border-blue-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm bg-white/80 text-blue-900 font-semibold"
                             required
                           >
                             <option value="">Selecione uma posição</option>
                             {PLAYER_POSITIONS.map((pos) => (
-                              <option key={pos} value={pos}>
+                              <option key={pos} value={pos} className="text-blue-900">
                                 {pos}
                               </option>
                             ))}
@@ -344,54 +260,48 @@ export default function PlayerModal({ isOpen, onClose, onSave, player }: PlayerM
                         </div>
 
                         <div>
-                          <label htmlFor="status" className="block text-sm font-medium text-gray-700">
-                            Status
-                          </label>
+                          <label htmlFor="status" className="block text-sm font-bold text-blue-900 mb-1">Status</label>
                           <select
                             id="status"
                             name="status"
                             value={formData.status}
                             onChange={(e) => setFormData({ ...formData, status: e.target.value as 'ACTIVE' | 'INACTIVE' })}
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                            className="mt-1 block w-full rounded-md border-blue-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm bg-white/80 text-blue-900 font-semibold"
                           >
                             {statusOptions.map((option) => (
-                              <option key={option.value} value={option.value}>
+                              <option key={option.value} value={option.value} className="text-blue-900">
                                 {option.label}
                               </option>
                             ))}
                           </select>
                         </div>
 
-                        <div>
-                          <div className="flex items-center">
-                            <input
-                              id="isExempt"
-                              name="isExempt"
-                              type="checkbox"
-                              checked={formData.isExempt}
-                              onChange={(e) => {
-                                setFormData({ 
-                                  ...formData, 
-                                  isExempt: e.target.checked,
-                                  monthlyFee: e.target.checked ? '' : formData.monthlyFee 
-                                })
-                              }}
-                              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                            />
-                            <label htmlFor="isExempt" className="ml-2 block text-sm text-gray-900">
-                              Isento de mensalidade
-                            </label>
-                          </div>
+                        <div className="flex items-center">
+                          <input
+                            id="isExempt"
+                            name="isExempt"
+                            type="checkbox"
+                            checked={formData.isExempt}
+                            onChange={(e) => {
+                              setFormData({ 
+                                ...formData, 
+                                isExempt: e.target.checked,
+                                monthlyFee: e.target.checked ? '' : formData.monthlyFee 
+                              })
+                            }}
+                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-blue-300 rounded"
+                          />
+                          <label htmlFor="isExempt" className="ml-2 block text-sm text-blue-900 font-semibold">
+                            Isento de mensalidade
+                          </label>
                         </div>
 
                         {!formData.isExempt && (
                           <div>
-                            <label htmlFor="monthlyFee" className="block text-sm font-medium text-gray-700">
-                              Valor da Mensalidade
-                            </label>
+                            <label htmlFor="monthlyFee" className="block text-sm font-bold text-blue-900 mb-1">Valor da Mensalidade</label>
                             <div className="mt-1 relative rounded-md shadow-sm">
                               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <span className="text-gray-500 sm:text-sm">R$</span>
+                                <span className="text-blue-400 sm:text-sm font-bold">R$</span>
                               </div>
                               <input
                                 type="number"
@@ -399,7 +309,7 @@ export default function PlayerModal({ isOpen, onClose, onSave, player }: PlayerM
                                 id="monthlyFee"
                                 value={formData.monthlyFee}
                                 onChange={(e) => setFormData({ ...formData, monthlyFee: e.target.value })}
-                                className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 pr-12 sm:text-sm border-gray-300 rounded-md"
+                                className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 pr-12 sm:text-sm border-blue-200 rounded-md bg-white/80 text-blue-900 font-semibold placeholder:text-blue-300"
                                 placeholder="0.00"
                                 step="0.01"
                                 min="0"
@@ -409,9 +319,7 @@ export default function PlayerModal({ isOpen, onClose, onSave, player }: PlayerM
                         )}
 
                         <div>
-                          <label htmlFor="birthDate" className="block text-sm font-medium text-gray-700">
-                            Data de Nascimento
-                          </label>
+                          <label htmlFor="birthDate" className="block text-sm font-bold text-blue-900 mb-1">Data de Nascimento</label>
                           <input
                             type="text"
                             name="birthDate"
@@ -429,14 +337,12 @@ export default function PlayerModal({ isOpen, onClose, onSave, player }: PlayerM
                             }}
                             placeholder="DD/MM/AAAA"
                             maxLength={10}
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                            className="mt-1 block w-full rounded-md border-blue-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm bg-white/80 text-blue-900 font-semibold placeholder:text-blue-300"
                           />
                         </div>
 
                         <div>
-                          <label htmlFor="joinDate" className="block text-sm font-medium text-gray-700">
-                            Data de Entrada
-                          </label>
+                          <label htmlFor="joinDate" className="block text-sm font-bold text-blue-900 mb-1">Data de Entrada</label>
                           <input
                             type="text"
                             name="joinDate"
@@ -454,20 +360,20 @@ export default function PlayerModal({ isOpen, onClose, onSave, player }: PlayerM
                             }}
                             placeholder="DD/MM/AAAA"
                             maxLength={10}
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                            className="mt-1 block w-full rounded-md border-blue-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm bg-white/80 text-blue-900 font-semibold placeholder:text-blue-300"
                           />
                         </div>
 
                         <div className="mt-5 sm:mt-6 sm:grid sm:grid-flow-row-dense sm:grid-cols-2 sm:gap-3">
                           <button
                             type="submit"
-                            className="inline-flex w-full justify-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 sm:col-start-2"
+                            className="inline-flex w-full justify-center rounded-md bg-gradient-to-r from-blue-600 to-indigo-600 px-3 py-2 text-sm font-bold text-white shadow-lg hover:bg-indigo-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 sm:col-start-2 transition-colors duration-200"
                           >
                             Salvar
                           </button>
                           <button
                             type="button"
-                            className="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:col-start-1 sm:mt-0"
+                            className="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-bold text-blue-900 shadow-sm ring-1 ring-inset ring-blue-200 hover:bg-blue-50 sm:col-start-1 sm:mt-0 transition-colors duration-200"
                             onClick={onClose}
                           >
                             Cancelar

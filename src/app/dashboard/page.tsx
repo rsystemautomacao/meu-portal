@@ -235,31 +235,27 @@ export default function DashboardPage() {
 
   // Função para copiar estatísticas
   function handleCopyStats(stats: any, allPlayers: string[]) {
-    const header = ['Jogador', '✅', '⚽', '🅰️', '🟨', '🟥', '🥅'];
-    
+    // Cabeçalho só com abreviações
+    const header = ['Jogador', 'PR', 'GL', 'AS', 'AM', 'VM', 'GS'];
     // Calcular a largura máxima do nome do jogador para alinhamento
     const maxNameLength = Math.max(
       ...allPlayers.filter(p => p !== 'Adversário').map(name => name.length),
       'Jogador'.length
     );
-    
-    // Definir larguras fixas para cada coluna (nome + 2 espaços, números com 2 dígitos)
+    // Definir larguras fixas para cada coluna
     const colWidths = [maxNameLength + 2, 3, 3, 3, 3, 3, 3];
-    
-    // Espaço fixo unicode (U+2007) para WhatsApp
     const fixedSpace = '\u2007';
-    
     const pad = (str: string | number, len: number, align: 'left' | 'right' = 'left') => {
       str = String(str ?? '');
-      // Substituir espaço normal por espaço fixo
       let padded = align === 'left' ? str.padEnd(len, ' ') : str.padStart(len, ' ');
       return padded.replace(/ /g, fixedSpace);
     };
-    
-    const headerLine = header.map((h, i) => pad(h, colWidths[i])).join(' ');
+    // Linha de cabeçalho
+    const headerLine = '`' + header.map((h, i) => pad(h, colWidths[i])).join(' ') + '`';
+    // Linhas dos jogadores
     const rows = allPlayers.filter(p => p !== 'Adversário').map(player =>
-      [player, stats[player].presencas, stats[player].gols, stats[player].assist, stats[player].amarelo, stats[player].vermelho, stats[player].golsSofridos]
-        .map((v, i) => pad(v, colWidths[i], i === 0 ? 'left' : 'right')).join(' ')
+      '`' + [player, stats[player].presencas, stats[player].gols, stats[player].assist, stats[player].amarelo, stats[player].vermelho, stats[player].golsSofridos]
+        .map((v, i) => pad(v, colWidths[i], i === 0 ? 'left' : 'right')).join(' ') + '`'
     );
     const text = [headerLine, ...rows].join('\n');
     navigator.clipboard.writeText(text);
