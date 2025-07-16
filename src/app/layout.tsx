@@ -4,7 +4,7 @@ import type { Metadata } from 'next'
 import { Providers } from '@/components/providers'
 import PWAInstallPrompt from '@/components/PWAInstallPrompt'
 import { OfflineIndicator } from '@/components/OfflineIndicator'
-import { useEffect } from 'react'
+import ServiceWorkerRegister from '@/components/ServiceWorkerRegister'
 
 const inter = Inter({ 
   subsets: ['latin'],
@@ -65,15 +65,6 @@ export default function RootLayout({
 }: {
   children: React.ReactNode
 }) {
-  useEffect(() => {
-    if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js').catch((err) => {
-          console.warn('Service Worker registration failed:', err)
-        })
-      })
-    }
-  }, [])
   return (
     <html lang="pt-BR" className={`h-full ${inter.variable} font-sans antialiased`}>
       <head>
@@ -110,6 +101,7 @@ export default function RootLayout({
       </head>
       <body className="h-full bg-gray-50 text-gray-900">
         <Providers>
+          <ServiceWorkerRegister />
           {children}
           <PWAInstallPrompt />
           <OfflineIndicator />
