@@ -3,6 +3,8 @@
 import { Dialog, Transition } from '@headlessui/react'
 import { PhotoIcon } from '@heroicons/react/24/solid'
 import { Fragment, useRef, useState, useEffect } from 'react'
+import { format, parse } from 'date-fns'
+import { ptBR } from 'date-fns/locale'
 
 const PLAYER_POSITIONS = [
   'Goleiro',
@@ -55,20 +57,11 @@ export default function PlayerModal({ isOpen, onClose, onSave, player }: PlayerM
   useEffect(() => {
     if (player) {
       setFormData({
-        id: player.id,
-        name: player.name,
-        number: player.number.toString(),
-        position: player.position,
-        status: player.status,
-        photoUrl: player.photoUrl || '',
-        birthDate: player.birthDate ? new Date(player.birthDate).toISOString().split('T')[0] : '',
-        joinDate: player.joinDate ? new Date(player.joinDate).toISOString().split('T')[0] : '',
-        isExempt: player.isExempt,
-        monthlyFee: player.monthlyFee?.toString() || ''
+        ...player,
+        birthDate: player.birthDate ? format(new Date(player.birthDate), 'dd/MM/yyyy') : '',
+        joinDate: player.joinDate ? format(new Date(player.joinDate), 'dd/MM/yyyy') : '',
       })
-      if (player.photoUrl) {
-        setPhotoPreview(player.photoUrl)
-      }
+      setPhotoPreview(player.photoUrl || null)
     } else {
       setFormData({
         name: '',
@@ -79,11 +72,11 @@ export default function PlayerModal({ isOpen, onClose, onSave, player }: PlayerM
         birthDate: '',
         joinDate: '',
         isExempt: false,
-        monthlyFee: ''
+        monthlyFee: '',
       })
       setPhotoPreview(null)
     }
-  }, [player])
+  }, [player, isOpen])
 
   const handlePhotoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -121,14 +114,22 @@ export default function PlayerModal({ isOpen, onClose, onSave, player }: PlayerM
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    
-    // Garantir que monthlyFee seja 0 quando isento
+    const parseDate = (str: string) => {
+      if (!str) return ''
+      const [d, m, y] = str.split('/')
+      if (d && m && y) {
+        const date = new Date(`${y}-${m}-${d}T00:00:00`)
+        if (!isNaN(date.getTime())) return date.toISOString().split('T')[0]
+      }
+      return ''
+    }
     const dataToSend = {
       ...formData,
       id: player?.id,
+      birthDate: parseDate(formData.birthDate || ''),
+      joinDate: parseDate(formData.joinDate || ''),
       monthlyFee: formData.isExempt ? '0' : formData.monthlyFee || '0'
     }
-    
     onSave(dataToSend)
   }
 
@@ -191,21 +192,12 @@ export default function PlayerModal({ isOpen, onClose, onSave, player }: PlayerM
                               </div>
                             )}
                             <input
-                              type="file"
                               ref={fileInputRef}
-                              onChange={handlePhotoChange}
+                              type="file"
                               accept="image/*"
+                              onChange={handlePhotoChange}
+                              style={{ position: 'absolute', opacity: 0, width: '100%', height: '100%', left: 0, top: 0, zIndex: 2, cursor: 'pointer' }}
                               tabIndex={-1}
-                              style={{
-                                position: 'absolute',
-                                left: 0,
-                                top: 0,
-                                width: '100%',
-                                height: '100%',
-                                opacity: 0,
-                                zIndex: 2,
-                                cursor: 'pointer',
-                              }}
                             />
                             <div className="absolute bottom-2 right-2 bg-blue-600 text-white rounded-full p-1 shadow-md text-xs font-bold group-hover:bg-indigo-600 transition-colors">+</div>
                           </div>
@@ -325,16 +317,7 @@ export default function PlayerModal({ isOpen, onClose, onSave, player }: PlayerM
                             name="birthDate"
                             id="birthDate"
                             value={formData.birthDate}
-                            onChange={(e) => {
-                              let value = e.target.value;
-                              // Formatar automaticamente DD/MM/AAAA
-                              if (value.length === 2 && !value.includes('/')) {
-                                value += '/';
-                              } else if (value.length === 5 && value.split('/').length === 2) {
-                                value += '/';
-                              }
-                              setFormData({ ...formData, birthDate: value });
-                            }}
+                            onChange={e => setFormData({ ...formData, birthDate: e.target.value.replace(/[^\d\/]/g, '').slice(0, 10) })}
                             placeholder="DD/MM/AAAA"
                             maxLength={10}
                             className="mt-1 block w-full rounded-md border-blue-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm bg-white/80 text-blue-900 font-semibold placeholder:text-blue-300"
@@ -348,16 +331,7 @@ export default function PlayerModal({ isOpen, onClose, onSave, player }: PlayerM
                             name="joinDate"
                             id="joinDate"
                             value={formData.joinDate}
-                            onChange={(e) => {
-                              let value = e.target.value;
-                              // Formatar automaticamente DD/MM/AAAA
-                              if (value.length === 2 && !value.includes('/')) {
-                                value += '/';
-                              } else if (value.length === 5 && value.split('/').length === 2) {
-                                value += '/';
-                              }
-                              setFormData({ ...formData, joinDate: value });
-                            }}
+                            onChange={e => setFormData({ ...formData, joinDate: e.target.value.replace(/[^\d\/]/g, '').slice(0, 10) })}
                             placeholder="DD/MM/AAAA"
                             maxLength={10}
                             className="mt-1 block w-full rounded-md border-blue-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm bg-white/80 text-blue-900 font-semibold placeholder:text-blue-300"

@@ -215,9 +215,9 @@ export default function PlayersPage() {
                             Isento
                           </span>
                         ) : (
-                          typeof player.monthlyFee === 'number' && !isNaN(player.monthlyFee) && player.monthlyFee > 0
+                          typeof player.monthlyFee === 'number' && !isNaN(player.monthlyFee)
                             ? `R$ ${player.monthlyFee.toFixed(2)}`
-                            : <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 border border-gray-200"><svg className="h-4 w-4 text-orange-400 mr-1" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>Não definido</span>
+                            : <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 border border-gray-200">Não definido</span>
                         )}
                       </td>
                       <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">

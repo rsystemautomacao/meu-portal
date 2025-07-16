@@ -176,15 +176,6 @@ O app será instalado como um programa normal!
               {deferredPrompt ? 'Instalar' : 'Como Instalar'}
             </button>
             <button
-              onClick={() => {
-                console.log('Botão de teste clicado')
-                alert('Teste de clique funcionando!')
-              }}
-              className="bg-red-500 text-white px-2 py-1 rounded text-xs"
-            >
-              TESTE
-            </button>
-            <button
               onClick={handleDismiss}
               className="text-blue-100 hover:text-white transition-colors"
             >
