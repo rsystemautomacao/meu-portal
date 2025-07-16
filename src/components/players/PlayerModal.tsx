@@ -172,8 +172,6 @@ export default function PlayerModal({ isOpen, onClose, onSave, player }: PlayerM
                           <label
                             htmlFor="player-photo-input"
                             className="relative mt-2 h-32 w-32 cursor-pointer overflow-hidden rounded-full bg-gradient-to-br from-blue-200 via-white to-indigo-200 border-4 border-blue-400 shadow-lg hover:border-indigo-500 transition-colors flex items-center justify-center group"
-                            onClick={handlePhotoClick}
-                            onTouchEnd={handlePhotoClick}
                             style={{
                               touchAction: 'manipulation',
                               WebkitTapHighlightColor: 'transparent',
@@ -199,7 +197,6 @@ export default function PlayerModal({ isOpen, onClose, onSave, player }: PlayerM
                               accept="image/*"
                               onChange={handlePhotoChange}
                               style={{ position: 'absolute', opacity: 0, width: '100%', height: '100%', left: 0, top: 0, zIndex: 2, cursor: 'pointer' }}
-                              tabIndex={-1}
                             />
                             <div className="absolute bottom-2 right-2 bg-blue-600 text-white rounded-full p-1 shadow-md text-xs font-bold group-hover:bg-indigo-600 transition-colors">+</div>
                           </label>

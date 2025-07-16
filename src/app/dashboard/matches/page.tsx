@@ -5,7 +5,7 @@ import { Fragment, useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import { PencilIcon, TrashIcon, ChartBarIcon, DocumentTextIcon } from '@heroicons/react/24/outline'
+import { PencilIcon, TrashIcon, ChartBarIcon, DocumentTextIcon, CalendarIcon } from '@heroicons/react/24/outline'
 import Link from 'next/link'
 import MatchModal from '@/components/matches/MatchModal'
 import StatsModal from '@/components/matches/StatsModal'
@@ -415,7 +415,7 @@ export default function MatchesPage() {
                     onClick={handleCreateMatchSheet}
                     disabled={sumulaLoading}
                   >
-                    {sumulaLoading ? '⏳ Gerando link...' : '🔗 Gerar link de súmula online (colaborativa)'}
+                    {sumulaLoading ? '⏳ Gerando link...' : '🔗 Gerar link de súmula online'}
                   </button>
                 </div>
               )}
@@ -437,36 +437,36 @@ export default function MatchesPage() {
           <Dialog as="div" className="relative z-30" onClose={() => setShowSumulaForm(false)}>
             <div className="fixed inset-0 bg-black bg-opacity-40" />
             <div className="fixed inset-0 z-30 flex items-center justify-center overflow-y-auto p-4">
-              <Dialog.Panel className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm mx-auto my-8">
-                <Dialog.Title as="h3" className="text-xl font-bold leading-6 text-gray-900 mb-6 text-center">
-                  Nova Súmula Online
+              <Dialog.Panel className="bg-gradient-to-br from-blue-50 via-white to-indigo-100 rounded-2xl shadow-2xl p-8 w-full max-w-sm mx-auto my-8 border-2 border-blue-200">
+                <Dialog.Title as="h3" className="text-2xl font-extrabold leading-6 text-blue-900 mb-6 text-center drop-shadow-sm flex items-center justify-center gap-2">
+                  <CalendarIcon className="h-7 w-7 text-blue-400" /> Nova Súmula Online
                 </Dialog.Title>
                 <div className="space-y-4">
                   <div className="text-center">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Data da partida</label>
+                    <label className="block text-sm font-bold text-blue-900 mb-2">Data da partida</label>
                     <DatePicker
                       selected={sumulaForm.date}
                       onChange={date => setSumulaForm(f => ({ ...f, date }))}
                       dateFormat="dd/MM/yyyy"
-                      className="w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm p-3 text-center"
+                      className="w-full rounded-md border-blue-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-3 text-center bg-white/80 text-blue-900 font-semibold placeholder:text-blue-300"
                       placeholderText="Selecione a data"
                       popperPlacement="bottom"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Adversário</label>
+                    <label className="block text-sm font-bold text-blue-900 mb-1">Adversário</label>
                     <input
                       type="text"
-                      className="w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm p-3"
+                      className="w-full rounded-md border-blue-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-3 bg-white/80 text-blue-900 font-semibold placeholder:text-blue-300"
                       placeholder="Nome do adversário"
                       value={sumulaForm.opponent}
                       onChange={e => setSumulaForm(f => ({ ...f, opponent: e.target.value }))}
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Local</label>
+                    <label className="block text-sm font-bold text-blue-900 mb-1">Local</label>
                     <select
-                      className="w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm p-3"
+                      className="w-full rounded-md border-blue-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-3 bg-white/80 text-blue-900 font-semibold"
                       value={sumulaForm.location}
                       onChange={e => setSumulaForm(f => ({ ...f, location: e.target.value }))}
                     >
@@ -475,10 +475,10 @@ export default function MatchesPage() {
                       <option value="Visitante">Visitante</option>
                     </select>
                   </div>
-                  {sumulaFormError && <div className="text-red-500 text-sm">{sumulaFormError}</div>}
+                  {sumulaFormError && <div className="text-red-500 text-sm font-semibold text-center">{sumulaFormError}</div>}
                   <div className="flex flex-col gap-2 mt-6">
                     <button
-                      className="w-full bg-black text-white font-bold py-3 rounded-lg hover:bg-gray-900 transition"
+                      className="w-full bg-gradient-to-r from-black to-gray-900 text-white font-bold py-3 rounded-lg hover:bg-gray-900 transition"
                       onClick={handleConfirmSumulaForm}
                     >
                       Criar Súmula
