@@ -235,15 +235,15 @@ export default function DashboardPage() {
 
   // Função para copiar estatísticas
   function handleCopyStats(stats: any, allPlayers: string[]) {
-    // Cabeçalho só com abreviações
-    const header = ['Jogador', 'PR', 'GL', 'AS', 'AM', 'VM', 'GS'];
+    // Cabeçalho com abreviações mais compactas
+    const header = ['Jogador', 'P', 'G', 'A', 'CA', 'CV', 'GS'];
     // Calcular a largura máxima do nome do jogador para alinhamento
     const maxNameLength = Math.max(
       ...allPlayers.filter(p => p !== 'Adversário').map(name => name.length),
       'Jogador'.length
     );
-    // Definir larguras fixas para cada coluna
-    const colWidths = [6, 3, 3, 3, 3, 3, 3];
+    // Definir larguras fixas para cada coluna (mais compactas)
+    const colWidths = [maxNameLength, 2, 2, 2, 2, 2, 2];
     const fixedSpace = '\u2007';
     const pad = (str: string | number, len: number, align: 'left' | 'right' = 'left') => {
       str = String(str ?? '');
@@ -259,7 +259,9 @@ export default function DashboardPage() {
     );
     const text = [headerLine, ...rows].join('\n');
     navigator.clipboard.writeText(text);
+    setCopied(true);
     toast.success('Estatísticas copiadas!');
+    setTimeout(() => setCopied(false), 2000);
   }
 
   return (
@@ -443,7 +445,11 @@ export default function DashboardPage() {
                     Gols Pró: <span className="font-bold">{golsPro}</span> &nbsp; | &nbsp; Gols Contra: <span className="font-bold">{golsContra}</span> &nbsp; | &nbsp; Saldo: <span className="font-bold">{golsPro - golsContra}</span>
                   </div>
                   <button
-                    className="flex items-center gap-1 text-xs text-primary hover:underline focus:outline-none"
+                    className={`flex items-center gap-1 text-xs focus:outline-none transition-colors duration-200 ${
+                      copied 
+                        ? 'text-green-600 font-semibold' 
+                        : 'text-primary hover:underline'
+                    }`}
                     onClick={() => handleCopyStats(stats, allPlayers)}
                     title="Copiar estatísticas para área de transferência"
                   >
