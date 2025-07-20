@@ -186,6 +186,11 @@ export default function DashboardPage() {
           stats[ev.goleiro].golsSofridos++;
         }
         
+        // Contabilizar gols contra (gols do adversário)
+        if (ev.type === 'goal' && ev.team === 'away') {
+          golsContra++;
+        }
+        
         // Estatísticas normais para jogadores do time (NUNCA para adversário)
         if (!ev.player || ev.player === 'Adversário' || ev.player.trim() === '' || ev.team === 'away') return;
         
@@ -201,8 +206,6 @@ export default function DashboardPage() {
           if (ev.team === 'home') {
             stats[playerName].gols++;
             golsPro++;
-          } else if (ev.team === 'away') {
-            golsContra++;
           }
         }
         if (ev.type === 'assist') stats[playerName].assist++;

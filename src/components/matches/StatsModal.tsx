@@ -21,6 +21,34 @@ interface StatsModalProps {
 }
 
 export default function StatsModal({ isOpen, onClose, events }: StatsModalProps) {
+  // Forçar orientação landscape em dispositivos móveis quando modal abrir
+  useEffect(() => {
+    if (isOpen) {
+      const forceLandscape = async () => {
+        // Verificar se é dispositivo móvel
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+        
+        if (isMobile && 'screen' in window && 'orientation' in screen) {
+          try {
+            // Tentar forçar landscape
+            await (screen.orientation as any).lock('landscape')
+            console.log('Orientação forçada para landscape no modal')
+          } catch (error) {
+            console.log('Não foi possível forçar landscape no modal:', error)
+            // Fallback: mostrar mensagem para o usuário
+            if (window.innerHeight > window.innerWidth) {
+              alert('Para melhor visualização, gire o celular para a posição horizontal (deitado)')
+            }
+          }
+        }
+      }
+
+      // Executar após um pequeno delay para garantir que o modal abriu
+      const timer = setTimeout(forceLandscape, 300)
+      return () => clearTimeout(timer)
+    }
+  }, [isOpen])
+
   // Agrupar eventos por quadro
   const quadros = [1, 2];
   const getLabel = (type: string) => {

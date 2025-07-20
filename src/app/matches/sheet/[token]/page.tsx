@@ -51,6 +51,32 @@ export default function MatchSheetPage() {
 
   const STORAGE_KEY = token ? `sumula-online-${token}` : 'sumula-online-temp'
 
+  // Forçar orientação landscape em dispositivos móveis
+  useEffect(() => {
+    const forceLandscape = async () => {
+      // Verificar se é dispositivo móvel
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+      
+      if (isMobile && 'screen' in window && 'orientation' in screen) {
+        try {
+          // Tentar forçar landscape
+          await (screen.orientation as any).lock('landscape')
+          console.log('Orientação forçada para landscape')
+        } catch (error) {
+          console.log('Não foi possível forçar landscape:', error)
+          // Fallback: mostrar mensagem para o usuário
+          if (window.innerHeight > window.innerWidth) {
+            alert('Para melhor experiência, gire o celular para a posição horizontal (deitado)')
+          }
+        }
+      }
+    }
+
+    // Executar após um pequeno delay para garantir que a página carregou
+    const timer = setTimeout(forceLandscape, 500)
+    return () => clearTimeout(timer)
+  }, [])
+
   // Carregar rascunho salvo ao abrir a página
   useEffect(() => {
     if (!token) return
