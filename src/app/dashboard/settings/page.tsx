@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react'
 import { toast } from 'react-hot-toast'
 import { useRouter } from 'next/navigation'
 import { PhotoIcon, UserCircleIcon, Cog6ToothIcon, ShieldExclamationIcon, ArrowPathIcon, LockClosedIcon } from '@heroicons/react/24/outline'
+import HistoricalDebts from '@/components/financial/HistoricalDebts'
 
 // Interface para os dados do time e configurações
 interface TeamSettings {
@@ -296,6 +297,9 @@ export default function SettingsPage() {
                 Gerencie as informações, aparência e outras configurações do seu time.
             </p>
         </div>
+
+        {/* Débitos Históricos - PRIMEIRA SEÇÃO */}
+        <HistoricalDebts onDebtsChange={() => {}} />
 
         <form onSubmit={handleSave} className="space-y-8 bg-white p-8 rounded-lg shadow-md">
           {/* Informações Gerais */}

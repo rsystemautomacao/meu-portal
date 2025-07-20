@@ -34,6 +34,7 @@ model Team {
   transactions    Transaction[]
   monthlyFees     MonthlyFeeConfig[]
   monthlyFeeExceptions MonthlyFeeException[]
+  historicalDebts HistoricalDebt[]
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
 }
@@ -65,6 +66,7 @@ model Player {
   teamId          String    @db.ObjectId
   payments        Payment[]
   monthlyFeeExceptions MonthlyFeeException[]
+  historicalDebts HistoricalDebt[]
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 }
@@ -199,4 +201,22 @@ model Payment {
   @@index([playerId])
   @@index([status])
   @@index([month, year])
+}
+
+model HistoricalDebt {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  team        Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  teamId      String   @db.ObjectId
+  player      Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  playerId    String   @db.ObjectId
+  amount      Float
+  month       Int
+  year        Int
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([playerId])
+  @@index([teamId])
+  @@unique([playerId, month, year, teamId])
 } 

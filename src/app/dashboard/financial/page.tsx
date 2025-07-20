@@ -174,30 +174,6 @@ export default function FinancialPage() {
             </div>
           )}
         </div>
-        {/* Botões de exportação e copiar para WhatsApp */}
-        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mt-10 mb-4">
-          <button
-            onClick={() => {/* Implementar exportação PDF */}}
-            className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
-          >
-            <DocumentTextIcon className="h-5 w-5 mr-2" />
-            Exportar PDF
-          </button>
-          <button
-            onClick={() => {/* Implementar exportação Excel */}}
-            className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
-          >
-            <ArrowDownTrayIcon className="h-5 w-5 mr-2" />
-            Exportar Excel
-          </button>
-          <button
-            onClick={() => {/* Implementar cópia para WhatsApp */}}
-            className="inline-flex items-center px-4 py-2 border border-green-500 rounded-md shadow-sm text-sm font-medium text-green-700 bg-white hover:bg-green-50"
-          >
-            <PlusIcon className="h-5 w-5 mr-2" />
-            Copiar para WhatsApp
-          </button>
-        </div>
       </div>
 
       {/* Painel de Notificações */}

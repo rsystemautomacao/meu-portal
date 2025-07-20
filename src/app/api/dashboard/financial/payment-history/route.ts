@@ -43,7 +43,7 @@ export async function GET(req: Request) {
       ...(playerId && { id: playerId })
     }
 
-    // Buscar jogadores com pagamentos
+    // Buscar jogadores com pagamentos e débitos históricos
     const players = await prisma.player.findMany({
       where: playerWhere,
       include: {
@@ -65,15 +65,28 @@ export async function GET(req: Request) {
       }
     })
 
+    // Buscar débitos históricos separadamente
+    const historicalDebts = await prisma.historicalDebt.findMany({
+      where: {
+        teamId: teamUser.teamId,
+        ...(playerId && { playerId })
+      },
+      orderBy: { createdAt: 'desc' }
+    })
+
     // Processar dados dos jogadores
     const playersWithHistory = players.map((player: any) => {
-      // Calcular total em aberto
+      // Calcular total em aberto (pagamentos + débitos históricos)
       const outstandingPayments = player.payments.filter((p: any) => 
         p.status === 'PENDING' || p.status === 'LATE'
       )
       
-      const totalOutstanding = outstandingPayments.reduce((sum: number, p: any) => sum + p.amount, 0)
-      const monthsOutstanding = outstandingPayments.length
+      // Buscar débitos históricos deste jogador
+      const playerHistoricalDebts = historicalDebts.filter((d: any) => d.playerId === player.id)
+      const totalHistoricalDebt = playerHistoricalDebts.reduce((sum: number, d: any) => sum + d.amount, 0)
+      
+      const totalOutstanding = outstandingPayments.reduce((sum: number, p: any) => sum + p.amount, 0) + totalHistoricalDebt
+      const monthsOutstanding = outstandingPayments.length + playerHistoricalDebts.length
 
       // Filtrar pagamentos por status se especificado
       let filteredPayments = player.payments
