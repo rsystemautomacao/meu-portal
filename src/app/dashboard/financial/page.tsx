@@ -21,6 +21,7 @@ import PlayerPaymentStatus from '@/components/financial/PlayerPaymentStatus'
 import TransactionForm from '@/components/financial/TransactionForm'
 import TransactionList from '@/components/financial/TransactionList'
 import MonthlyReport from '@/components/financial/MonthlyReport'
+import DetailedPaymentReport from '@/components/financial/DetailedPaymentReport'
 import { toast } from 'react-hot-toast'
 import MonthlyFeeConfig from '@/components/financial/MonthlyFeeConfig'
 import MonthlyFeeExceptions from '@/components/financial/MonthlyFeeExceptions'
@@ -169,6 +170,7 @@ export default function FinancialPage() {
           {activeTab === 'reports' && (
             <div className="space-y-6">
               <MonthlyReport />
+              <DetailedPaymentReport />
             </div>
           )}
         </div>

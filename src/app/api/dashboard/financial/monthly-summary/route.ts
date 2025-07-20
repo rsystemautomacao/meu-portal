@@ -39,12 +39,12 @@ export async function GET(req: Request) {
 
     console.log('Mês selecionado:', monthParam, 'Mês calculado:', month, 'Ano:', year)
 
-    // Buscar transações do mês
+    // Buscar transações do mês usando targetMonth diretamente
     const transactions = await prisma.transaction.findMany({
       where: {
         teamId: teamUser.teamId,
         date: {
-          gte: new Date(year, month - 1, 1), // Primeiro dia do mês
+          gte: targetMonth, // Primeiro dia do mês selecionado
           lt: new Date(year, month, 1) // Primeiro dia do próximo mês
         }
       }
