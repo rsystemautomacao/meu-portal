@@ -29,6 +29,34 @@ interface MatchModalProps {
 }
 
 export default function MatchModal({ isOpen, onClose, onSave, match }: MatchModalProps) {
+  // Forçar orientação landscape em dispositivos móveis quando modal abrir
+  useEffect(() => {
+    if (isOpen) {
+      const forceLandscape = async () => {
+        // Verificar se é dispositivo móvel
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+        
+        if (isMobile && 'screen' in window && 'orientation' in screen) {
+          try {
+            // Tentar forçar landscape
+            await (screen.orientation as any).lock('landscape')
+            console.log('Orientação forçada para landscape no modal manual')
+          } catch (error) {
+            console.log('Não foi possível forçar landscape no modal manual:', error)
+            // Fallback: mostrar mensagem para o usuário
+            if (window.innerHeight > window.innerWidth) {
+              alert('Para melhor experiência, gire o celular para a posição horizontal (deitado)')
+            }
+          }
+        }
+      }
+
+      // Executar após um pequeno delay para garantir que o modal abriu
+      const timer = setTimeout(forceLandscape, 300)
+      return () => clearTimeout(timer)
+    }
+  }, [isOpen])
+
   const [formData, setFormData] = useState({
     date: match?.date ? new Date(match.date) : null,
     opponent: match?.opponent || '',

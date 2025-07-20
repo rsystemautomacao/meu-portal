@@ -533,19 +533,19 @@ export default function MatchSheetPage() {
             </div>
 
             {/* Botões de eventos para meu time */}
-            <div className="grid grid-cols-2 gap-3 mb-4">
+            <div className="grid grid-cols-2 gap-2 mb-4">
               {EVENT_TYPES.map(ev => (
                 <button
                   key={ev.type}
-                  className={`p-4 rounded-xl font-bold text-lg transition-all duration-200 transform hover:scale-105 ${
+                  className={`p-2 rounded-lg font-semibold text-sm transition-all duration-200 transform hover:scale-105 ${
                     selectedEventType === ev.type
                       ? 'bg-green-600 text-white shadow-lg'
                       : 'bg-white text-green-700 border-2 border-green-200 hover:border-green-400'
                   }`}
                   onClick={() => setSelectedEventType(ev.type)}
                 >
-                  <div className="text-2xl mb-1">{ev.icon}</div>
-                  <div className="text-sm">{ev.label}</div>
+                  <div className="text-lg mb-1">{ev.icon}</div>
+                  <div className="text-xs">{ev.label}</div>
                 </button>
               ))}
             </div>
@@ -596,19 +596,19 @@ export default function MatchSheetPage() {
             </div>
 
             {/* Botões de eventos para adversário */}
-            <div className="grid grid-cols-3 gap-3 mb-4">
+            <div className="grid grid-cols-3 gap-2 mb-4">
               {EVENT_TYPES.filter(ev => ev.type !== 'assist').map(ev => (
                 <button
                   key={ev.type}
-                  className={`p-4 rounded-xl font-bold text-lg transition-all duration-200 transform hover:scale-105 ${
+                  className={`p-2 rounded-lg font-semibold text-sm transition-all duration-200 transform hover:scale-105 ${
                     selectedEventType === ev.type
                       ? 'bg-red-600 text-white shadow-lg'
                       : 'bg-white text-red-700 border-2 border-red-200 hover:border-red-400'
                   }`}
                   onClick={() => setSelectedEventType(ev.type)}
                 >
-                  <div className="text-2xl mb-1">{ev.icon}</div>
-                  <div className="text-sm">{ev.label}</div>
+                  <div className="text-lg mb-1">{ev.icon}</div>
+                  <div className="text-xs">{ev.label}</div>
                 </button>
               ))}
             </div>
