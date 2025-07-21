@@ -8,7 +8,7 @@ export async function GET(request: Request) {
     const showDeleted = url.searchParams.get('showDeleted') === 'true';
     // Buscar todos os times, filtrando se necessário
     const teams = await prisma.team.findMany({
-      where: showDeleted ? {} : ({ deletedAt: null } as any),
+      where: showDeleted ? {} : ({ OR: [{ deletedAt: null }, { deletedAt: { equals: undefined } }] } as any),
       include: {
         users: {
           include: {
