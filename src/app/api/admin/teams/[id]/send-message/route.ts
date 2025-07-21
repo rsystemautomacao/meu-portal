@@ -8,7 +8,8 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   try {
-    const { messageType } = await request.json()
+    const { messageType, customMessage } = await request.json()
+    console.log('[SEND-MESSAGE] messageType:', messageType, 'customMessage:', customMessage)
     const teamId = params.id
 
     // Buscar o time
@@ -40,10 +41,17 @@ export async function POST(
     let message = ''
     let subject = ''
 
-    switch (messageType) {
-      case 'payment_reminder':
-        subject = 'Mensalidade Pendente - Meu Portal'
-        message = `Olá ${teamData.name}!
+    if (messageType === 'custom') {
+      subject = 'Mensagem do Administrador'
+      message = customMessage || ''
+      if (!message.trim()) {
+        return NextResponse.json({ error: 'Mensagem personalizada não pode ser vazia' }, { status: 400 })
+      }
+    } else {
+      switch (messageType) {
+        case 'payment_reminder':
+          subject = 'Mensalidade Pendente - Meu Portal'
+          message = `Olá ${teamData.name}!
 
 Este é um lembrete amigável sobre sua mensalidade do Meu Portal que está pendente.
 
@@ -58,11 +66,10 @@ Para continuar aproveitando todos os recursos do sistema, por favor, regularize 
 Agradecemos sua confiança!
 
 Equipe RSystem`
-        break
-
-      case 'payment_overdue':
-        subject = 'Mensalidade em Atraso - Meu Portal'
-        message = `Olá ${teamData.name}!
+          break
+        case 'payment_overdue':
+          subject = 'Mensalidade em Atraso - Meu Portal'
+          message = `Olá ${teamData.name}!
 
 Sua mensalidade do Meu Portal está em atraso há mais de 10 dias.
 
@@ -78,11 +85,10 @@ Para evitar o bloqueamento do acesso, regularize seu pagamento imediatamente.
 📧 Email: rsautomacao2000@gmail.com
 
 Equipe RSystem`
-        break
-
-      case 'access_blocked':
-        subject = 'Acesso Bloqueado - Meu Portal'
-        message = `Olá ${teamData.name}!
+          break
+        case 'access_blocked':
+          subject = 'Acesso Bloqueado - Meu Portal'
+          message = `Olá ${teamData.name}!
 
 Devido ao não pagamento da mensalidade, seu acesso ao Meu Portal foi bloqueado.
 
@@ -96,13 +102,14 @@ Para reativar seu acesso, efetue o pagamento da mensalidade em atraso.
 📧 Email: rsautomacao2000@gmail.com
 
 Equipe RSystem`
-        break
-
-      default:
-        return NextResponse.json(
-          { error: 'Tipo de mensagem inválido' },
-          { status: 400 }
-        )
+          break
+        default:
+          console.error('[SEND-MESSAGE] Tipo de mensagem inválido:', messageType)
+          return NextResponse.json(
+            { error: 'Tipo de mensagem inválido' },
+            { status: 400 }
+          )
+      }
     }
 
     // Preparar dados para envio
