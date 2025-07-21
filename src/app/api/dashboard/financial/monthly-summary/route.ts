@@ -33,11 +33,8 @@ export async function GET(req: Request) {
       targetMonth = new Date()
     }
 
-    // Extrair mês e ano da data calculada
-    const month = targetMonth.getMonth() + 1 // Converter de volta para 1-12
-    const year = targetMonth.getFullYear()
-
-    console.log('Mês selecionado:', monthParam, 'Mês calculado:', month, 'Ano:', year)
+    // Calcular o primeiro dia do próximo mês
+    const nextMonth = new Date(targetMonth.getFullYear(), targetMonth.getMonth() + 1, 1)
 
     // Buscar transações do mês usando targetMonth diretamente
     const transactions = await prisma.transaction.findMany({
@@ -45,7 +42,7 @@ export async function GET(req: Request) {
         teamId: teamUser.teamId,
         date: {
           gte: targetMonth, // Primeiro dia do mês selecionado
-          lt: new Date(year, month, 1) // Primeiro dia do próximo mês
+          lt: nextMonth // Primeiro dia do próximo mês
         }
       }
     })
@@ -81,8 +78,8 @@ export async function GET(req: Request) {
       balance,
       incomeByType,
       expenseByType,
-      month,
-      year
+      month: targetMonth.getMonth() + 1,
+      year: targetMonth.getFullYear()
     })
   } catch (error) {
     console.error('Erro ao buscar resumo mensal:', error)

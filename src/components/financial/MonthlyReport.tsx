@@ -7,6 +7,7 @@ import {
   ChartBarIcon,
   ArrowUpIcon,
   ArrowDownIcon,
+  CalendarIcon,
 } from '@heroicons/react/24/outline'
 
 interface MonthlySummary {
@@ -32,8 +33,10 @@ export default function MonthlyReport() {
 
   const fetchMonthlySummary = async () => {
     try {
+      const monthParam = format(selectedMonth, 'yyyy-MM')
+      
       const response = await fetch(
-        `/api/dashboard/financial/monthly-summary?month=${format(selectedMonth, 'yyyy-MM')}`
+        `/api/dashboard/financial/monthly-summary?month=${monthParam}`
       )
       const data = await response.json()
       setSummary(data)
@@ -70,12 +73,26 @@ export default function MonthlyReport() {
 
   if (loading) {
     return (
-      <div className="bg-white shadow rounded-lg p-6">
+      <div className="bg-gradient-to-br from-white to-gray-50 shadow-xl rounded-2xl p-8 w-full border border-gray-100">
         <div className="animate-pulse">
-          <div className="h-4 bg-gray-200 rounded w-1/4 mb-4"></div>
-          <div className="space-y-3">
+          <div className="flex justify-between items-center mb-8">
+            <div>
+              <div className="h-8 bg-gray-200 rounded w-48 mb-2"></div>
+              <div className="h-4 bg-gray-200 rounded w-64"></div>
+            </div>
+            <div className="h-10 bg-gray-200 rounded w-32"></div>
+          </div>
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-3 mb-8">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-12 bg-gray-200 rounded"></div>
+              <div key={i} className="bg-gray-200 rounded-xl h-32"></div>
+            ))}
+          </div>
+          <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
+            {[1, 2].map((i) => (
+              <div key={i} className="space-y-4">
+                <div className="h-6 bg-gray-200 rounded w-32"></div>
+                <div className="bg-gray-200 rounded-xl h-48"></div>
+              </div>
             ))}
           </div>
         </div>
@@ -85,47 +102,66 @@ export default function MonthlyReport() {
 
   if (!summary) {
     return (
-      <div className="bg-white shadow rounded-lg p-6 text-center">
-        <h2 className="text-lg font-medium text-gray-900">Resumo Financeiro</h2>
-        <p className="mt-4 text-gray-500">
+      <div className="bg-gradient-to-br from-white to-gray-50 shadow-xl rounded-2xl p-8 w-full border border-gray-100 text-center">
+        <div className="bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6">
+          <ChartBarIcon className="h-8 w-8 text-gray-400" />
+        </div>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Resumo Financeiro</h2>
+        <p className="text-gray-600 mb-6">
           Não há dados financeiros para o mês selecionado.
         </p>
-        <input
-          type="month"
-          value={format(selectedMonth, 'yyyy-MM')}
-          onChange={(e) => setSelectedMonth(new Date(e.target.value + '-01'))}
-          className="mt-4 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-        />
+        <div className="flex justify-center">
+          <input
+            type="month"
+            value={format(selectedMonth, 'yyyy-MM')}
+            onChange={(e) => {
+              const [year, month] = e.target.value.split('-').map(Number)
+              setSelectedMonth(new Date(year, month - 1, 1)) // Forçar primeiro dia do mês
+            }}
+            className="rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm font-medium"
+          />
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="bg-white shadow rounded-lg p-6 w-full">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-lg font-medium text-gray-900">Resumo Financeiro</h2>
-        <input
-          type="month"
-          value={format(selectedMonth, 'yyyy-MM')}
-          onChange={(e) => setSelectedMonth(new Date(e.target.value + '-01'))}
-          className="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-        />
+    <div className="bg-gradient-to-br from-white to-gray-50 shadow-xl rounded-2xl p-8 w-full border border-gray-100">
+      <div className="flex justify-between items-center mb-8">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-1">Resumo Financeiro</h2>
+          <p className="text-gray-600 text-sm">Análise detalhada das finanças do time</p>
+        </div>
+        <div className="flex items-center space-x-3">
+          <div className="bg-indigo-100 p-2 rounded-full">
+            <CalendarIcon className="h-5 w-5 text-indigo-600" />
+          </div>
+          <input
+            type="month"
+            value={format(selectedMonth, 'yyyy-MM')}
+            onChange={(e) => {
+              const [year, month] = e.target.value.split('-').map(Number)
+              setSelectedMonth(new Date(year, month - 1, 1)) // Forçar primeiro dia do mês
+            }}
+            className="rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm font-medium"
+          />
+        </div>
       </div>
 
       {/* Cards de resumo com fallback */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 mb-6 w-full">
-        <div className="bg-gray-50 overflow-hidden shadow rounded-lg">
-          <div className="p-4 sm:p-5">
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-3 mb-8 w-full">
+        <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 overflow-hidden shadow-lg rounded-xl hover:shadow-xl transition-all duration-300">
+          <div className="p-6">
             <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <ChartBarIcon className="h-5 w-5 sm:h-6 sm:w-6 text-gray-400" />
+              <div className="bg-blue-600 p-3 rounded-full shadow-lg">
+                <ChartBarIcon className="h-6 w-6 text-white" />
               </div>
-              <div className="ml-3 sm:ml-5 w-0 flex-1">
+              <div className="ml-4 w-0 flex-1">
                 <dl>
-                  <dt className="text-xs sm:text-sm font-medium text-gray-500 truncate">
+                  <dt className="text-sm font-semibold text-blue-700 truncate">
                     Saldo do Mês
                   </dt>
-                  <dd className="text-sm sm:text-lg font-medium text-gray-900">
+                  <dd className="text-2xl font-bold text-blue-900">
                     R$ {(summary.balance || 0).toFixed(2)}
                   </dd>
                 </dl>
@@ -134,18 +170,18 @@ export default function MonthlyReport() {
           </div>
         </div>
 
-        <div className="bg-gray-50 overflow-hidden shadow rounded-lg">
-          <div className="p-4 sm:p-5">
+        <div className="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 overflow-hidden shadow-lg rounded-xl hover:shadow-xl transition-all duration-300">
+          <div className="p-6">
             <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <ArrowUpIcon className="h-5 w-5 sm:h-6 sm:w-6 text-green-400" />
+              <div className="bg-green-600 p-3 rounded-full shadow-lg">
+                <ArrowUpIcon className="h-6 w-6 text-white" />
               </div>
-              <div className="ml-3 sm:ml-5 w-0 flex-1">
+              <div className="ml-4 w-0 flex-1">
                 <dl>
-                  <dt className="text-xs sm:text-sm font-medium text-gray-500 truncate">
+                  <dt className="text-sm font-semibold text-green-700 truncate">
                     Total de Entradas
                   </dt>
-                  <dd className="text-sm sm:text-lg font-medium text-green-600">
+                  <dd className="text-2xl font-bold text-green-900">
                     R$ {(summary.totalIncome || 0).toFixed(2)}
                   </dd>
                 </dl>
@@ -154,18 +190,18 @@ export default function MonthlyReport() {
           </div>
         </div>
 
-        <div className="bg-gray-50 overflow-hidden shadow rounded-lg">
-          <div className="p-4 sm:p-5">
+        <div className="bg-gradient-to-br from-red-50 to-red-100 border border-red-200 overflow-hidden shadow-lg rounded-xl hover:shadow-xl transition-all duration-300">
+          <div className="p-6">
             <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <ArrowDownIcon className="h-5 w-5 sm:h-6 sm:w-6 text-red-400" />
+              <div className="bg-red-600 p-3 rounded-full shadow-lg">
+                <ArrowDownIcon className="h-6 w-6 text-white" />
               </div>
-              <div className="ml-3 sm:ml-5 w-0 flex-1">
+              <div className="ml-4 w-0 flex-1">
                 <dl>
-                  <dt className="text-xs sm:text-sm font-medium text-gray-500 truncate">
+                  <dt className="text-sm font-semibold text-red-700 truncate">
                     Total de Saídas
                   </dt>
-                  <dd className="text-sm sm:text-lg font-medium text-red-600">
+                  <dd className="text-2xl font-bold text-red-900">
                     R$ {(summary.totalExpense || 0).toFixed(2)}
                   </dd>
                 </dl>
@@ -176,12 +212,17 @@ export default function MonthlyReport() {
       </div>
 
       {/* Detalhamento por tipo */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 w-full">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 w-full">
         {/* Entradas por tipo */}
         <div className="w-full">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">Entradas por Tipo</h3>
-          <div className="bg-gray-50 shadow overflow-hidden sm:rounded-md w-full">
-            <ul className="divide-y divide-gray-200">
+          <div className="flex items-center mb-6">
+            <div className="bg-green-100 p-2 rounded-full mr-3">
+              <ArrowUpIcon className="h-5 w-5 text-green-600" />
+            </div>
+            <h3 className="text-xl font-bold text-gray-900">Entradas por Tipo</h3>
+          </div>
+          <div className="bg-gradient-to-br from-green-50 to-white border border-green-200 shadow-lg overflow-hidden rounded-xl">
+            <ul className="divide-y divide-green-100">
               {Object.entries(summary?.incomeByType || {})
                 .sort(([a], [b]) => {
                   if (a === 'OTHER') return 1
@@ -189,12 +230,15 @@ export default function MonthlyReport() {
                   return a.localeCompare(b)
                 })
                 .map(([type, amount]) => (
-                  <li key={type} className="px-6 py-4">
+                  <li key={type} className="px-6 py-5 hover:bg-green-50 transition-colors duration-200">
                     <div className="flex items-center justify-between">
-                      <div className="text-sm font-medium text-gray-900">
-                        {getIncomeTypeLabel(type)}
+                      <div className="flex items-center">
+                        <div className="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
+                        <div className="text-sm font-semibold text-gray-900">
+                          {getIncomeTypeLabel(type)}
+                        </div>
                       </div>
-                      <div className="text-sm text-green-600">
+                      <div className="text-lg font-bold text-green-700">
                         R$ {amount.toFixed(2)}
                       </div>
                     </div>
@@ -206,9 +250,14 @@ export default function MonthlyReport() {
 
         {/* Saídas por tipo */}
         <div className="w-full">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">Saídas por Tipo</h3>
-          <div className="bg-gray-50 shadow overflow-hidden sm:rounded-md w-full">
-            <ul className="divide-y divide-gray-200">
+          <div className="flex items-center mb-6">
+            <div className="bg-red-100 p-2 rounded-full mr-3">
+              <ArrowDownIcon className="h-5 w-5 text-red-600" />
+            </div>
+            <h3 className="text-xl font-bold text-gray-900">Saídas por Tipo</h3>
+          </div>
+          <div className="bg-gradient-to-br from-red-50 to-white border border-red-200 shadow-lg overflow-hidden rounded-xl">
+            <ul className="divide-y divide-red-100">
               {Object.entries(summary?.expenseByType || {})
                 .sort(([a], [b]) => {
                   if (a === 'OTHER') return 1
@@ -216,12 +265,15 @@ export default function MonthlyReport() {
                   return a.localeCompare(b)
                 })
                 .map(([type, amount]) => (
-                  <li key={type} className="px-6 py-4">
+                  <li key={type} className="px-6 py-5 hover:bg-red-50 transition-colors duration-200">
                     <div className="flex items-center justify-between">
-                      <div className="text-sm font-medium text-gray-900">
-                        {getExpenseTypeLabel(type)}
+                      <div className="flex items-center">
+                        <div className="w-2 h-2 bg-red-500 rounded-full mr-3"></div>
+                        <div className="text-sm font-semibold text-gray-900">
+                          {getExpenseTypeLabel(type)}
+                        </div>
                       </div>
-                      <div className="text-sm text-red-600">
+                      <div className="text-lg font-bold text-red-700">
                         R$ {amount.toFixed(2)}
                       </div>
                     </div>

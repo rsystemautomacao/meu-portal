@@ -139,7 +139,7 @@ export default function DetailedPaymentReport() {
     return format(date, 'MMMM/yyyy', { locale: ptBR })
   }
 
-  const generateWhatsAppMessage = (type: 'general' | 'individual') => {
+  const generateWhatsAppMessage = (type: 'general' | 'individual', playerId?: string) => {
     if (!data) return ''
 
     if (type === 'general') {
@@ -160,7 +160,8 @@ export default function DetailedPaymentReport() {
       return message
     } else {
       // Mensagem individual
-      const player = data.players.find(p => p.id === selectedPlayer)
+      const targetPlayerId = playerId || selectedPlayer
+      const player = data.players.find(p => p.id === targetPlayerId)
       if (!player) return ''
 
       let message = `💰 MENSALIDADE - ${player.name.toUpperCase()}\n\n`
@@ -182,8 +183,8 @@ export default function DetailedPaymentReport() {
     }
   }
 
-  const copyToWhatsApp = async (type: 'general' | 'individual') => {
-    const message = generateWhatsAppMessage(type)
+  const copyToWhatsApp = async (type: 'general' | 'individual', playerId?: string) => {
+    const message = generateWhatsAppMessage(type, playerId)
     if (!message) {
       toast.error('Nenhuma mensagem para copiar')
       return
@@ -191,7 +192,14 @@ export default function DetailedPaymentReport() {
 
     try {
       await navigator.clipboard.writeText(message)
-      toast.success(type === 'general' ? 'Relatório copiado!' : 'Mensagem personalizada copiada!')
+      if (type === 'general') {
+        toast.success('Relatório copiado!')
+      } else if (playerId) {
+        const player = data?.players.find(p => p.id === playerId)
+        toast.success(`Mensagem de ${player?.name} copiada!`)
+      } else {
+        toast.success('Mensagem personalizada copiada!')
+      }
     } catch (error) {
       toast.error('Erro ao copiar para área de transferência')
     }
@@ -346,6 +354,22 @@ export default function DetailedPaymentReport() {
                       </p>
                       <p className="text-sm text-gray-500">Total em aberto</p>
                     </div>
+                    
+                    {/* Botão de copiar mensagem individual */}
+                    {player.hasOutstandingPayments && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          copyToWhatsApp('individual', player.id)
+                        }}
+                        className="flex items-center gap-1 px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 transition-colors"
+                        title="Copiar mensagem individual"
+                      >
+                        <ChatBubbleLeftRightIcon className="h-3 w-3" />
+                        Copiar
+                      </button>
+                    )}
+                    
                     {expandedPlayers.has(player.id) ? (
                       <ChevronUpIcon className="h-5 w-5 text-gray-400" />
                     ) : (
@@ -378,9 +402,14 @@ export default function DetailedPaymentReport() {
                             </p>
                           </div>
                           <div className="flex items-center space-x-3">
-                            <span className="font-medium text-gray-900">
-                              {formatCurrency(payment.amount)}
-                            </span>
+                            <div className="text-right">
+                              <span className="font-medium text-gray-900">
+                                {formatCurrency(payment.amount)}
+                              </span>
+                              <div className="text-xs text-gray-500 mt-1">
+                                1 mês em aberto
+                              </div>
+                            </div>
                             <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(payment.status)}`}>
                               {getStatusText(payment.status)}
                             </span>

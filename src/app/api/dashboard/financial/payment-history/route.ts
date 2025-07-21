@@ -66,7 +66,7 @@ export async function GET(req: Request) {
     })
 
     // Buscar débitos históricos separadamente
-    const historicalDebts = await prisma.historicalDebt.findMany({
+    const historicalDebts = await (prisma as any).historicalDebt.findMany({
       where: {
         teamId: teamUser.teamId,
         ...(playerId && { playerId })
@@ -85,8 +85,25 @@ export async function GET(req: Request) {
       const playerHistoricalDebts = historicalDebts.filter((d: any) => d.playerId === player.id)
       const totalHistoricalDebt = playerHistoricalDebts.reduce((sum: number, d: any) => sum + d.amount, 0)
       
-      const totalOutstanding = outstandingPayments.reduce((sum: number, p: any) => sum + p.amount, 0) + totalHistoricalDebt
-      const monthsOutstanding = outstandingPayments.length + playerHistoricalDebts.length
+      // Verificar se o mês atual está em atraso
+      const currentMonth = today.getMonth() + 1
+      const currentYear = today.getFullYear()
+      const currentMonthPayment = player.payments.find((p: any) => 
+        p.month === currentMonth && p.year === currentYear
+      )
+      
+      let additionalCurrentMonthDebt = 0
+      let additionalCurrentMonthCount = 0
+      
+      // Se não há pagamento para o mês atual ou está em atraso, adicionar ao total
+      if (!currentMonthPayment || (currentMonthPayment.status !== 'PAID' && today.getDate() > dueDay)) {
+        additionalCurrentMonthDebt = player.monthlyFee
+        additionalCurrentMonthCount = 1
+      }
+      
+      const totalOutstanding = outstandingPayments.reduce((sum: number, p: any) => sum + p.amount, 0) + 
+                              totalHistoricalDebt + additionalCurrentMonthDebt
+      const monthsOutstanding = outstandingPayments.length + playerHistoricalDebts.length + additionalCurrentMonthCount
 
       // Filtrar pagamentos por status se especificado
       let filteredPayments = player.payments

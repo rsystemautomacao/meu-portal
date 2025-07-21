@@ -82,8 +82,6 @@ export default function SettingsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [logoFile, setLogoFile] = useState<File | null>(null)
   const [logoPreview, setLogoPreview] = useState<string | null>(null)
-  const [playersWithOverdueFees, setPlayersWithOverdueFees] = useState<any[]>([])
-  const [loadingOverdueFees, setLoadingOverdueFees] = useState(false)
 
 
   useEffect(() => {
@@ -115,27 +113,7 @@ export default function SettingsPage() {
     }
   }, [session])
 
-  // Buscar jogadores com mensalidades em aberto
-  const fetchPlayersWithOverdueFees = async () => {
-    setLoadingOverdueFees(true)
-    try {
-      const response = await fetch('/api/dashboard/financial/players-status')
-      if (!response.ok) throw new Error('Falha ao buscar jogadores com mensalidades em aberto')
-      const data = await response.json()
-      setPlayersWithOverdueFees(data.playersWithOverdueFees || [])
-    } catch (error) {
-      toast.error('Não foi possível carregar os jogadores com mensalidades em aberto.')
-      console.error(error)
-    } finally {
-      setLoadingOverdueFees(false)
-    }
-  }
 
-  useEffect(() => {
-    if (session) {
-      fetchPlayersWithOverdueFees()
-    }
-  }, [session])
   
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -489,76 +467,7 @@ export default function SettingsPage() {
           </form>
         </div>
 
-        {/* Jogadores com Mensalidades em Aberto */}
-        <div className="mt-8 bg-white p-8 rounded-lg shadow-md">
-          <div className="border-b border-gray-900/10 pb-6">
-            <h2 className="text-base font-semibold leading-7 text-gray-900 flex items-center">
-              <Cog6ToothIcon className="h-5 w-5 mr-2 text-orange-600"/>
-              Jogadores com Mensalidades em Aberto
-            </h2>
-            <p className="mt-1 text-sm leading-6 text-gray-600">
-              Jogadores que têm mensalidades pendentes há mais de um mês. Útil para casos de migração de jogadores para o app.
-            </p>
-          </div>
 
-          <div className="mt-6">
-            {loadingOverdueFees ? (
-              <div className="text-center py-8">
-                <ArrowPathIcon className="h-8 w-8 animate-spin text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-500">Carregando jogadores...</p>
-              </div>
-            ) : playersWithOverdueFees.length > 0 ? (
-              <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-semibold text-orange-900">
-                    {playersWithOverdueFees.length} jogador(es) com mensalidades em aberto
-                  </h3>
-                  <button
-                    onClick={fetchPlayersWithOverdueFees}
-                    className="text-orange-600 hover:text-orange-800 text-sm font-medium"
-                  >
-                    Atualizar
-                  </button>
-                </div>
-                <div className="space-y-3">
-                  {playersWithOverdueFees.map((player: any) => (
-                    <div key={player.id} className="bg-white rounded-lg p-4 border border-orange-200 shadow-sm">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h4 className="font-semibold text-gray-900">{player.name}</h4>
-                          <p className="text-sm text-gray-600">
-                            Mensalidade: R$ {player.monthlyFee?.toFixed(2)}
-                          </p>
-                          <p className="text-xs text-orange-600">
-                            {player.monthsOverdue} mês(es) em atraso
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-lg font-bold text-orange-600">
-                            R$ {(player.monthlyFee * player.monthsOverdue).toFixed(2)}
-                          </p>
-                          <p className="text-xs text-gray-500">Total em aberto</p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <div className="mt-4 p-3 bg-orange-100 rounded-lg">
-                  <p className="text-sm text-orange-800">
-                    <strong>Dica:</strong> Para jogadores que migraram para o app, considere registrar as mensalidades pendentes 
-                    como transações manuais no sistema financeiro.
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <div className="text-center py-8">
-                <div className="text-4xl mb-2">✅</div>
-                <p className="text-gray-600 font-medium">Nenhum jogador com mensalidades em aberto</p>
-                <p className="text-sm text-gray-500 mt-1">Todos os jogadores estão em dia com suas mensalidades.</p>
-              </div>
-            )}
-          </div>
-        </div>
 
         {/* Zona de Perigo */}
         <div className="mt-8">

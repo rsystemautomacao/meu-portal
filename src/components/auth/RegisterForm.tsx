@@ -35,6 +35,7 @@ export default function RegisterForm() {
       const password = formData.get('password') as string
       const confirmPassword = formData.get('confirmPassword') as string
       const teamName = formData.get('teamName') as string
+      const whatsapp = formData.get('whatsapp') as string
       const primaryColor = formData.get('primaryColor') as string
       const secondaryColor = formData.get('secondaryColor') as string
 
@@ -81,6 +82,7 @@ export default function RegisterForm() {
           password,
           team: {
             name: teamName,
+            whatsapp,
             primaryColor,
             secondaryColor,
             logo: logoUrl
@@ -112,48 +114,52 @@ export default function RegisterForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-8">
       {error && (
-        <div className="rounded-xl bg-red-50 p-4 border border-red-100">
-          <div className="flex">
+        <div className="rounded-2xl bg-gradient-to-r from-red-50 to-red-100 p-6 border border-red-200 shadow-lg">
+          <div className="flex items-center">
             <div className="flex-shrink-0">
-              <svg
-                className="h-5 w-5 text-red-400"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z"
-                  clipRule="evenodd"
-                />
-              </svg>
+              <div className="bg-red-500 p-2 rounded-full">
+                <svg
+                  className="h-5 w-5 text-white"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </div>
             </div>
-            <div className="ml-3">
-              <h3 className="text-sm font-medium text-red-800">{error}</h3>
+            <div className="ml-4">
+              <h3 className="text-sm font-bold text-red-800">{error}</h3>
             </div>
           </div>
         </div>
       )}
 
       {success && (
-        <div className="rounded-xl bg-green-50 p-4 border border-green-100">
-          <div className="flex">
+        <div className="rounded-2xl bg-gradient-to-r from-green-50 to-green-100 p-6 border border-green-200 shadow-lg">
+          <div className="flex items-center">
             <div className="flex-shrink-0">
-              <svg
-                className="h-5 w-5 text-green-400"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                  clipRule="evenodd"
-                />
-              </svg>
+              <div className="bg-green-500 p-2 rounded-full">
+                <svg
+                  className="h-5 w-5 text-white"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </div>
             </div>
-            <div className="ml-3">
-              <h3 className="text-sm font-medium text-green-800">
+            <div className="ml-4">
+              <h3 className="text-sm font-bold text-green-800">
                 Conta criada com sucesso! Redirecionando para o login...
               </h3>
             </div>
@@ -161,73 +167,125 @@ export default function RegisterForm() {
         </div>
       )}
 
-      <div className="space-y-2">
+      <div className="space-y-3">
         <label
           htmlFor="email"
-          className="block text-sm font-medium leading-6 text-gray-900"
+          className="block text-sm font-bold leading-6 text-gray-900"
         >
           Email
         </label>
-        <input
-          id="email"
-          name="email"
-          type="email"
-          autoComplete="email"
-          required
-          className="block w-full rounded-xl border-0 py-2.5 px-4 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary transition-shadow sm:text-sm sm:leading-6"
-          placeholder="seu@email.com"
-        />
+        <div className="relative">
+          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+            <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
+            </svg>
+          </div>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            autoComplete="email"
+            required
+            className="block w-full rounded-2xl border-0 py-4 pl-12 pr-4 text-gray-900 shadow-lg ring-1 ring-inset ring-gray-200 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 sm:text-sm sm:leading-6 bg-white/80 backdrop-blur-sm"
+            placeholder="seu@email.com"
+          />
+        </div>
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-3">
         <label
           htmlFor="password"
-          className="block text-sm font-medium leading-6 text-gray-900"
+          className="block text-sm font-bold leading-6 text-gray-900"
         >
           Senha
         </label>
-        <input
-          id="password"
-          name="password"
-          type="password"
-          autoComplete="new-password"
-          required
-          className="block w-full rounded-xl border-0 py-2.5 px-4 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary transition-shadow sm:text-sm sm:leading-6"
-        />
+        <div className="relative">
+          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+            <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+          </div>
+          <input
+            id="password"
+            name="password"
+            type="password"
+            autoComplete="new-password"
+            required
+            className="block w-full rounded-2xl border-0 py-4 pl-12 pr-4 text-gray-900 shadow-lg ring-1 ring-inset ring-gray-200 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 sm:text-sm sm:leading-6 bg-white/80 backdrop-blur-sm"
+          />
+        </div>
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-3">
         <label
           htmlFor="confirmPassword"
-          className="block text-sm font-medium leading-6 text-gray-900"
+          className="block text-sm font-bold leading-6 text-gray-900"
         >
           Confirmar Senha
         </label>
-        <input
-          id="confirmPassword"
-          name="confirmPassword"
-          type="password"
-          autoComplete="new-password"
-          required
-          className="block w-full rounded-xl border-0 py-2.5 px-4 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary transition-shadow sm:text-sm sm:leading-6"
-        />
+        <div className="relative">
+          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+            <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+          </div>
+          <input
+            id="confirmPassword"
+            name="confirmPassword"
+            type="password"
+            autoComplete="new-password"
+            required
+            className="block w-full rounded-2xl border-0 py-4 pl-12 pr-4 text-gray-900 shadow-lg ring-1 ring-inset ring-gray-200 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 sm:text-sm sm:leading-6 bg-white/80 backdrop-blur-sm"
+          />
+        </div>
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-3">
         <label
           htmlFor="teamName"
-          className="block text-sm font-medium leading-6 text-gray-900"
+          className="block text-sm font-bold leading-6 text-gray-900"
         >
           Nome do Time
         </label>
-        <input
-          id="teamName"
-          name="teamName"
-          type="text"
-          required
-          className="block w-full rounded-xl border-0 py-2.5 px-4 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary transition-shadow sm:text-sm sm:leading-6"
-          placeholder="Ex: Real Madrid"
-        />
+        <div className="relative">
+          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+            <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+          </div>
+          <input
+            id="teamName"
+            name="teamName"
+            type="text"
+            required
+            className="block w-full rounded-2xl border-0 py-4 pl-12 pr-4 text-gray-900 shadow-lg ring-1 ring-inset ring-gray-200 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 sm:text-sm sm:leading-6 bg-white/80 backdrop-blur-sm"
+            placeholder="Ex: Real Madrid"
+          />
+        </div>
+      </div>
+
+      <div className="space-y-3">
+        <label
+          htmlFor="whatsapp"
+          className="block text-sm font-bold leading-6 text-gray-900"
+        >
+          WhatsApp para Contato
+        </label>
+        <div className="relative">
+          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+            <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+            </svg>
+          </div>
+          <input
+            id="whatsapp"
+            name="whatsapp"
+            type="tel"
+            required
+            className="block w-full rounded-2xl border-0 py-4 pl-12 pr-4 text-gray-900 shadow-lg ring-1 ring-inset ring-gray-200 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 sm:text-sm sm:leading-6 bg-white/80 backdrop-blur-sm"
+            placeholder="(11) 99999-9999"
+          />
+        </div>
       </div>
 
       <div className="space-y-2">
@@ -329,9 +387,35 @@ export default function RegisterForm() {
         <button
           type="submit"
           disabled={loading}
-          className="flex w-full justify-center rounded-xl bg-primary px-3 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-primary/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="relative w-full rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 py-4 px-6 text-sm font-bold text-white shadow-xl hover:shadow-2xl hover:scale-105 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
         >
-          {loading ? 'Criando conta...' : 'Criar conta'}
+          {loading ? (
+            <>
+              <svg
+                className="absolute left-1/2 top-1/2 h-5 w-5 -translate-x-1/2 -translate-y-1/2 animate-spin text-white"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                ></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
+              </svg>
+              <span className="opacity-0">Criando conta...</span>
+            </>
+          ) : (
+            'Criar conta'
+          )}
         </button>
       </div>
     </form>

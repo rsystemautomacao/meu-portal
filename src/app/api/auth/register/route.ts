@@ -5,6 +5,7 @@ import { Prisma } from '@prisma/client'
 
 interface TeamData {
   name: string
+  whatsapp?: string
   primaryColor: string
   secondaryColor: string
   logo?: string
@@ -65,6 +66,7 @@ export async function POST(req: Request) {
         const newTeam = await tx.team.create({
           data: {
             name: team.name,
+            whatsapp: team.whatsapp,
             primaryColor: team.primaryColor,
             secondaryColor: team.secondaryColor,
             logo: team.logo

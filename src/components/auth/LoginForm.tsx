@@ -39,66 +39,78 @@ export default function LoginForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-8">
       {error && (
-        <div className="rounded-xl bg-red-50 p-4 border border-red-100">
-          <div className="flex">
+        <div className="rounded-2xl bg-gradient-to-r from-red-50 to-red-100 p-6 border border-red-200 shadow-lg">
+          <div className="flex items-center">
             <div className="flex-shrink-0">
-              <svg
-                className="h-5 w-5 text-red-400"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-                aria-hidden="true"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z"
-                  clipRule="evenodd"
-                />
-              </svg>
+              <div className="bg-red-500 p-2 rounded-full">
+                <svg
+                  className="h-5 w-5 text-white"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                  aria-hidden="true"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </div>
             </div>
-            <div className="ml-3">
-              <h3 className="text-sm font-medium text-red-800">{error}</h3>
+            <div className="ml-4">
+              <h3 className="text-sm font-bold text-red-800">{error}</h3>
             </div>
           </div>
         </div>
       )}
 
-      <div className="space-y-2">
+      <div className="space-y-3">
         <label
           htmlFor="email"
-          className="block text-sm font-medium leading-6 text-gray-900"
+          className="block text-sm font-bold leading-6 text-gray-900"
         >
           E-mail
         </label>
-        <div className="mt-2">
+        <div className="relative">
+          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+            <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
+            </svg>
+          </div>
           <input
             id="email"
             name="email"
             type="email"
             autoComplete="email"
             required
-            className="block w-full rounded-xl border-0 py-2.5 px-4 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary transition-shadow sm:text-sm sm:leading-6"
+            className="block w-full rounded-2xl border-0 py-4 pl-12 pr-4 text-gray-900 shadow-lg ring-1 ring-inset ring-gray-200 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 sm:text-sm sm:leading-6 bg-white/80 backdrop-blur-sm"
             placeholder="seu@email.com"
           />
         </div>
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-3">
         <label
           htmlFor="password"
-          className="block text-sm font-medium leading-6 text-gray-900"
+          className="block text-sm font-bold leading-6 text-gray-900"
         >
           Senha
         </label>
-        <div className="mt-2">
+        <div className="relative">
+          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+            <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+          </div>
           <input
             id="password"
             name="password"
             type="password"
             autoComplete="current-password"
             required
-            className="block w-full rounded-xl border-0 py-2.5 px-4 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary transition-shadow sm:text-sm sm:leading-6"
+            className="block w-full rounded-2xl border-0 py-4 pl-12 pr-4 text-gray-900 shadow-lg ring-1 ring-inset ring-gray-200 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 sm:text-sm sm:leading-6 bg-white/80 backdrop-blur-sm"
             placeholder="••••••••"
           />
         </div>
@@ -108,7 +120,7 @@ export default function LoginForm() {
         <button
           type="submit"
           disabled={loading}
-          className="relative w-full rounded-xl bg-gradient-to-r from-primary to-secondary py-3 px-4 text-sm font-semibold text-white shadow-sm hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          className="relative w-full rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 py-4 px-6 text-sm font-bold text-white shadow-xl hover:shadow-2xl hover:scale-105 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
         >
           {loading ? (
             <>
