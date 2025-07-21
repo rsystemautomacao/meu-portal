@@ -6,7 +6,6 @@ export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
-  const [resetLink, setResetLink] = useState('')
   const [error, setError] = useState('')
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -14,19 +13,15 @@ export default function ForgotPasswordPage() {
     setLoading(true)
     setError('')
     setSuccess(false)
-    setResetLink('')
     try {
-      const response = await fetch('/api/auth/forgot-password', {
+      await fetch('/api/auth/forgot-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email })
       })
-      const data = await response.json()
-      if (!response.ok) throw new Error(data.error || 'Erro ao solicitar reset')
       setSuccess(true)
-      setResetLink(data.resetLink)
     } catch (err: any) {
-      setError(err.message)
+      setError('Ocorreu um erro ao solicitar recuperação de senha.')
     } finally {
       setLoading(false)
     }
@@ -57,9 +52,7 @@ export default function ForgotPasswordPage() {
         {error && <p className="mt-4 text-red-600 text-center">{error}</p>}
         {success && (
           <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
-            <p className="text-green-700 font-semibold mb-2">E-mail de recuperação enviado!</p>
-            <p className="text-xs text-gray-500 mb-2">(Simulação: use o link abaixo para redefinir sua senha)</p>
-            <a href={resetLink} className="break-all text-blue-700 underline">{resetLink}</a>
+            <p className="text-green-700 font-semibold mb-2">Se o e-mail informado existir, enviaremos instruções para redefinir sua senha.</p>
           </div>
         )}
       </div>

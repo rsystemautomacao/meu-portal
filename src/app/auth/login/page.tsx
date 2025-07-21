@@ -45,9 +45,6 @@ export default function LoginPage() {
               crie sua conta gratuitamente
             </Link>
           </p>
-          <p className="mt-4 text-center text-sm text-gray-500">
-            <a href="/auth/forgot-password" className="text-blue-600 hover:underline">Esqueci minha senha?</a>
-          </p>
         </div>
 
         <div className="mt-8">

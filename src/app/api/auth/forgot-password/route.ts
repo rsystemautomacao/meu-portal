@@ -9,24 +9,22 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'E-mail obrigatório' }, { status: 400 })
     }
     const user = await prisma.user.findUnique({ where: { email } })
-    if (!user) {
-      return NextResponse.json({ error: 'Usuário não encontrado' }, { status: 404 })
+    if (user) {
+      // Gerar token único
+      const token = crypto.randomBytes(32).toString('hex')
+      const expires = new Date(Date.now() + 1000 * 60 * 60) // 1 hora
+      // Salvar token no banco
+      await prisma.verificationToken.create({
+        data: {
+          identifier: email,
+          token,
+          expires
+        }
+      })
+      // Aqui seria o envio real de e-mail
     }
-    // Gerar token único
-    const token = crypto.randomBytes(32).toString('hex')
-    const expires = new Date(Date.now() + 1000 * 60 * 60) // 1 hora
-    // Salvar token no banco
-    await prisma.verificationToken.create({
-      data: {
-        identifier: email,
-        token,
-        expires
-      }
-    })
-    // Montar link de reset
-    const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000'
-    const resetLink = `${baseUrl}/auth/reset-password/${token}`
-    return NextResponse.json({ resetLink })
+    // Sempre retornar sucesso genérico
+    return NextResponse.json({ ok: true })
   } catch (error) {
     console.error('Erro ao gerar token de reset:', error)
     return NextResponse.json({ error: 'Erro ao solicitar reset' }, { status: 500 })
