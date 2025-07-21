@@ -324,6 +324,44 @@ export default function MatchSheetPage() {
   // Filtrar eventos do quadro atual
   const eventosQuadroAtual = events.filter(ev => ev.quadro === quadroSelecionado)
 
+  const [isLandscape, setIsLandscape] = useState(true)
+  const [showOrientationBanner, setShowOrientationBanner] = useState(false)
+  const [fullscreenError, setFullscreenError] = useState('')
+
+  // Função para checar orientação
+  function checkOrientation() {
+    const landscape = window.innerWidth > window.innerHeight
+    setIsLandscape(landscape)
+    setShowOrientationBanner(!landscape)
+  }
+
+  // Checar orientação ao carregar e ao redimensionar
+  useEffect(() => {
+    checkOrientation()
+    window.addEventListener('resize', checkOrientation)
+    window.addEventListener('orientationchange', checkOrientation)
+    return () => {
+      window.removeEventListener('resize', checkOrientation)
+      window.removeEventListener('orientationchange', checkOrientation)
+    }
+  }, [])
+
+  // Função para forçar fullscreen e landscape
+  async function handleFullscreenAndLandscape() {
+    setFullscreenError('')
+    try {
+      if (document.documentElement.requestFullscreen) {
+        await document.documentElement.requestFullscreen()
+      }
+      if ('orientation' in screen && (screen.orientation as any).lock) {
+        await (screen.orientation as any).lock('landscape')
+      }
+      setTimeout(checkOrientation, 500)
+    } catch (err: any) {
+      setFullscreenError('Não foi possível forçar a orientação. Gire o celular manualmente.')
+    }
+  }
+
   if (!restaurado) return <div className="p-6 text-center">Carregando...</div>
   if (loading) {
     return (
@@ -364,6 +402,19 @@ export default function MatchSheetPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex flex-col items-center px-4 py-6">
+      {/* Banner de orientação */}
+      {showOrientationBanner && (
+        <div className="fixed top-0 left-0 w-full z-50 bg-yellow-100 border-b-2 border-yellow-300 text-yellow-900 text-center py-3 font-bold flex flex-col items-center shadow-lg animate-pulse">
+          <span className="text-lg">Para melhor experiência, use o app na horizontal (paisagem).</span>
+          <button
+            className="mt-2 px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold shadow hover:bg-blue-700 transition"
+            onClick={handleFullscreenAndLandscape}
+          >
+            Ativar Tela Cheia e Horizontal
+          </button>
+          {fullscreenError && <span className="text-red-600 text-sm mt-1">{fullscreenError}</span>}
+        </div>
+      )}
       {/* Seleção inicial do quadro */}
       {quadroSelecionado === null && !sumulaCompleta && !finalizado && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
