@@ -110,13 +110,36 @@ export async function DELETE(
       return NextResponse.json({ error: 'Time não encontrado ou já foi excluído' }, { status: 404 })
     }
 
-    // Excluir time e todos os dados relacionados (cascade)
-    await prisma.team.delete({
-      where: { id: teamId }
-    })
+    // Excluir todos os dados relacionados ao time
+    // Excluir jogadores e pagamentos
+    const players = await prisma.player.findMany({ where: { teamId } })
+    for (const player of players) {
+      await prisma.payment.deleteMany({ where: { playerId: player.id } })
+    }
+    await prisma.player.deleteMany({ where: { teamId } })
+    await prisma.transaction.deleteMany({ where: { teamId } })
+    await prisma.matchEvent.deleteMany({ where: { match: { teamId } } })
+    await prisma.match.deleteMany({ where: { teamId } })
+    await prisma.monthlyFeeException.deleteMany({ where: { teamId } })
+    await prisma.monthlyFeeConfig.deleteMany({ where: { teamId } })
+    await prisma.historicalDebt.deleteMany({ where: { teamId } })
+    await prisma.notification.deleteMany({ where: { teamId } })
+    await prisma.teamUser.deleteMany({ where: { teamId } })
+
+    // Excluir o time
+    await prisma.team.delete({ where: { id: teamId } })
+
+    // Excluir usuário dono se não estiver em outros times
+    const owners = await prisma.teamUser.findMany({ where: { teamId, role: 'owner' }, include: { user: true } })
+    for (const owner of owners) {
+      const otherTeams = await prisma.teamUser.findMany({ where: { userId: owner.userId, teamId: { not: teamId } } })
+      if (otherTeams.length === 0) {
+        await prisma.user.delete({ where: { id: owner.userId } })
+      }
+    }
 
     return NextResponse.json({ 
-      message: 'Time excluído com sucesso' 
+      message: 'Time e dados relacionados excluídos com sucesso' 
     })
   } catch (error) {
     console.error('Erro ao excluir time:', error)
