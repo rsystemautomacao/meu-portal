@@ -91,14 +91,14 @@ export default function FinancialPage() {
       {/* Navegação por abas */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="border-b border-gray-200">
-          <nav className="-mb-px flex space-x-8">
+          <nav className="-mb-px flex space-x-2 sm:space-x-4 lg:space-x-8 overflow-x-auto">
             <button
               onClick={() => setActiveTab('overview')}
               className={`${
                 activeTab === 'overview'
                   ? 'border-indigo-500 text-indigo-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+              } whitespace-nowrap py-4 px-2 sm:px-4 border-b-2 font-medium text-xs sm:text-sm flex-shrink-0`}
             >
               Visão Geral
             </button>
@@ -108,7 +108,7 @@ export default function FinancialPage() {
                 activeTab === 'players'
                   ? 'border-indigo-500 text-indigo-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+              } whitespace-nowrap py-4 px-2 sm:px-4 border-b-2 font-medium text-xs sm:text-sm flex-shrink-0`}
             >
               Jogadores
             </button>
@@ -118,7 +118,7 @@ export default function FinancialPage() {
                 activeTab === 'transactions'
                   ? 'border-indigo-500 text-indigo-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+              } whitespace-nowrap py-4 px-2 sm:px-4 border-b-2 font-medium text-xs sm:text-sm flex-shrink-0`}
             >
               Transações
             </button>
@@ -128,7 +128,7 @@ export default function FinancialPage() {
                 activeTab === 'reports'
                   ? 'border-indigo-500 text-indigo-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+              } whitespace-nowrap py-4 px-2 sm:px-4 border-b-2 font-medium text-xs sm:text-sm flex-shrink-0`}
             >
               Relatórios
             </button>
@@ -153,13 +153,13 @@ export default function FinancialPage() {
               <Suspense fallback={<div>Carregando alertas...</div>}>
                 <PaymentAlerts />
               </Suspense>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <div className="space-y-6 order-2 lg:order-1">
                   {/* Ocultar MonthlyFeeConfig e MonthlyFeeExceptions */}
                   {/* <MonthlyFeeConfig onConfigUpdate={() => {}} /> */}
                   {/* <MonthlyFeeExceptions /> */}
                 </div>
-                <div className="space-y-6">
+                <div className="space-y-6 order-1 lg:order-2">
                   <TransactionForm onTransactionCreated={() => setTransactionsRefresh(r => r + 1)} />
                   <TransactionList refresh={transactionsRefresh} />
                 </div>

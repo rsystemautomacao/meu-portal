@@ -101,85 +101,45 @@ export default function TransactionForm({ onTransactionCreated }: TransactionFor
         return total + (player?.monthlyFee || 0)
       }, 0)
     }
-    return 0
+    return parseFloat(formData.amount) || 0
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
-    // Validações mais robustas
-    if (formData.type === 'INCOME' && !formData.incomeType) {
-      toast.error('Selecione uma categoria para entrada')
-      return
-    }
-
-    if (formData.type === 'EXPENSE' && !formData.expenseType) {
-      toast.error('Selecione uma categoria para saída')
-      return
-    }
-
-    if (formData.type === 'INCOME' && formData.incomeType === 'MONTHLY_FEE' && selectedPlayers.length === 0) {
-      toast.error('Selecione pelo menos um jogador para mensalidade')
-      return
-    }
-
-    if (formData.type === 'INCOME' && formData.incomeType !== 'MONTHLY_FEE' && (!formData.amount || parseFloat(formData.amount) <= 0)) {
-      toast.error('Informe um valor válido para entrada')
-      return
-    }
-
-    if (formData.type === 'EXPENSE' && (!formData.amount || parseFloat(formData.amount) <= 0)) {
-      toast.error('Informe um valor válido para saída')
-      return
-    }
-
-    if (formData.type === 'INCOME' && formData.incomeType === 'OTHER' && !formData.description.trim()) {
-      toast.error('Informe a descrição para outros tipos de entrada')
-      return
-    }
-
-    if (formData.type === 'EXPENSE' && formData.expenseType === 'OTHER' && !formData.description.trim()) {
-      toast.error('Informe a descrição para outros tipos de saída')
-      return
-    }
+    setLoading(true)
 
     try {
-      setLoading(true)
-      toast.loading('Registrando transação...')
-      console.log('Enviando dados:', formData)
-
-      const requestData = {
-        ...formData,
-        amount: formData.type === 'INCOME' && formData.incomeType === 'MONTHLY_FEE'
-          ? calculateTotalAmount()
-          : parseFloat(formData.amount),
-        playerIds: formData.type === 'INCOME' && formData.incomeType === 'MONTHLY_FEE'
-          ? selectedPlayers
-          : [],
-        description: formData.description.trim() || getCategoryLabel(formData.type === 'INCOME' ? formData.incomeType : formData.expenseType)
+      const amount = calculateTotalAmount()
+      if (amount <= 0) {
+        toast.error('Valor deve ser maior que zero')
+        return
       }
 
-      console.log('Dados formatados:', requestData)
+      const transactionData = {
+        type: formData.type,
+        category: formData.type === 'INCOME' ? formData.incomeType : formData.expenseType,
+        amount,
+        date: formData.date,
+        description: formData.description,
+        playerIds: formData.type === 'INCOME' && formData.incomeType === 'MONTHLY_FEE' ? selectedPlayers : [],
+      }
 
       const response = await fetch('/api/dashboard/financial/transactions', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(requestData)
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(transactionData),
       })
 
-      const responseData = await response.json()
-      console.log('Resposta da API:', responseData)
-
       if (!response.ok) {
-        toast.dismiss()
-        throw new Error(responseData.error || responseData.message || 'Erro ao criar transação')
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Erro ao criar transação')
       }
 
-      toast.dismiss()
-      toast.success('✅ Transação registrada com sucesso!')
-      onTransactionCreated?.()
+      toast.success('Transação criada com sucesso!')
       
-      // Limpar o formulário
+      // Reset form
       setFormData({
         type: 'INCOME',
         incomeType: '',
@@ -189,11 +149,11 @@ export default function TransactionForm({ onTransactionCreated }: TransactionFor
         amount: '',
       })
       setSelectedPlayers([])
+      
+      onTransactionCreated?.()
     } catch (error) {
       console.error('Erro ao criar transação:', error)
-      toast.dismiss()
-      const errorMessage = error instanceof Error ? error.message : 'Erro ao registrar transação'
-      toast.error(`❌ Erro: ${errorMessage}`)
+      toast.error(error instanceof Error ? error.message : 'Erro ao criar transação')
     } finally {
       setLoading(false)
     }
@@ -210,11 +170,11 @@ export default function TransactionForm({ onTransactionCreated }: TransactionFor
           <label className="block text-sm font-medium text-gray-700">
             Tipo de Transação
           </label>
-          <div className="mt-1 flex space-x-4">
+          <div className="mt-1 flex flex-wrap gap-2">
             <button
               type="button"
               onClick={() => handleTypeChange('INCOME')}
-              className={`px-4 py-2 rounded-md ${
+              className={`px-3 py-2 rounded-md text-sm ${
                 formData.type === 'INCOME'
                   ? 'bg-green-100 text-green-800'
                   : 'bg-gray-100 text-gray-800'
@@ -225,7 +185,7 @@ export default function TransactionForm({ onTransactionCreated }: TransactionFor
             <button
               type="button"
               onClick={() => handleTypeChange('EXPENSE')}
-              className={`px-4 py-2 rounded-md ${
+              className={`px-3 py-2 rounded-md text-sm ${
                 formData.type === 'EXPENSE'
                   ? 'bg-red-100 text-red-800'
                   : 'bg-gray-100 text-gray-800'
@@ -240,13 +200,13 @@ export default function TransactionForm({ onTransactionCreated }: TransactionFor
           <label className="block text-sm font-medium text-gray-700">
             Categoria
           </label>
-          <div className="mt-1 grid grid-cols-2 gap-2">
+          <div className="mt-1 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 gap-2">
             {formData.type === 'INCOME' ? (
               <>
                 <button
                   type="button"
                   onClick={() => handleCategoryChange('DONATION')}
-                  className={`px-4 py-2 rounded-md ${
+                  className={`px-2 py-2 rounded-md text-xs sm:text-sm ${
                     formData.incomeType === 'DONATION'
                       ? 'bg-green-100 text-green-800'
                       : 'bg-gray-100 text-gray-800'
@@ -257,7 +217,7 @@ export default function TransactionForm({ onTransactionCreated }: TransactionFor
                 <button
                   type="button"
                   onClick={() => handleCategoryChange('FESTIVAL')}
-                  className={`px-4 py-2 rounded-md ${
+                  className={`px-2 py-2 rounded-md text-xs sm:text-sm ${
                     formData.incomeType === 'FESTIVAL'
                       ? 'bg-green-100 text-green-800'
                       : 'bg-gray-100 text-gray-800'
@@ -268,7 +228,7 @@ export default function TransactionForm({ onTransactionCreated }: TransactionFor
                 <button
                   type="button"
                   onClick={() => handleCategoryChange('MONTHLY_FEE')}
-                  className={`px-4 py-2 rounded-md ${
+                  className={`px-2 py-2 rounded-md text-xs sm:text-sm ${
                     formData.incomeType === 'MONTHLY_FEE'
                       ? 'bg-green-100 text-green-800'
                       : 'bg-gray-100 text-gray-800'
@@ -279,7 +239,7 @@ export default function TransactionForm({ onTransactionCreated }: TransactionFor
                 <button
                   type="button"
                   onClick={() => handleCategoryChange('RAFFLE')}
-                  className={`px-4 py-2 rounded-md ${
+                  className={`px-2 py-2 rounded-md text-xs sm:text-sm ${
                     formData.incomeType === 'RAFFLE'
                       ? 'bg-green-100 text-green-800'
                       : 'bg-gray-100 text-gray-800'
@@ -290,7 +250,7 @@ export default function TransactionForm({ onTransactionCreated }: TransactionFor
                 <button
                   type="button"
                   onClick={() => handleCategoryChange('OTHER')}
-                  className={`px-4 py-2 rounded-md ${
+                  className={`px-2 py-2 rounded-md text-xs sm:text-sm ${
                     formData.incomeType === 'OTHER'
                       ? 'bg-green-100 text-green-800'
                       : 'bg-gray-100 text-gray-800'
@@ -304,7 +264,7 @@ export default function TransactionForm({ onTransactionCreated }: TransactionFor
                 <button
                   type="button"
                   onClick={() => handleCategoryChange('CHAMPIONSHIP')}
-                  className={`px-4 py-2 rounded-md ${
+                  className={`px-2 py-2 rounded-md text-xs sm:text-sm ${
                     formData.expenseType === 'CHAMPIONSHIP'
                       ? 'bg-red-100 text-red-800'
                       : 'bg-gray-100 text-gray-800'
@@ -315,7 +275,7 @@ export default function TransactionForm({ onTransactionCreated }: TransactionFor
                 <button
                   type="button"
                   onClick={() => handleCategoryChange('CLEANING')}
-                  className={`px-4 py-2 rounded-md ${
+                  className={`px-2 py-2 rounded-md text-xs sm:text-sm ${
                     formData.expenseType === 'CLEANING'
                       ? 'bg-red-100 text-red-800'
                       : 'bg-gray-100 text-gray-800'
@@ -326,7 +286,7 @@ export default function TransactionForm({ onTransactionCreated }: TransactionFor
                 <button
                   type="button"
                   onClick={() => handleCategoryChange('GAME_MATERIALS')}
-                  className={`px-4 py-2 rounded-md ${
+                  className={`px-2 py-2 rounded-md text-xs sm:text-sm ${
                     formData.expenseType === 'GAME_MATERIALS'
                       ? 'bg-red-100 text-red-800'
                       : 'bg-gray-100 text-gray-800'
@@ -337,7 +297,7 @@ export default function TransactionForm({ onTransactionCreated }: TransactionFor
                 <button
                   type="button"
                   onClick={() => handleCategoryChange('LEAGUE_MONTHLY')}
-                  className={`px-4 py-2 rounded-md ${
+                  className={`px-2 py-2 rounded-md text-xs sm:text-sm ${
                     formData.expenseType === 'LEAGUE_MONTHLY'
                       ? 'bg-red-100 text-red-800'
                       : 'bg-gray-100 text-gray-800'
@@ -348,7 +308,7 @@ export default function TransactionForm({ onTransactionCreated }: TransactionFor
                 <button
                   type="button"
                   onClick={() => handleCategoryChange('COURT_MONTHLY')}
-                  className={`px-4 py-2 rounded-md ${
+                  className={`px-2 py-2 rounded-md text-xs sm:text-sm ${
                     formData.expenseType === 'COURT_MONTHLY'
                       ? 'bg-red-100 text-red-800'
                       : 'bg-gray-100 text-gray-800'
@@ -359,7 +319,7 @@ export default function TransactionForm({ onTransactionCreated }: TransactionFor
                 <button
                   type="button"
                   onClick={() => handleCategoryChange('UNIFORMS')}
-                  className={`px-4 py-2 rounded-md ${
+                  className={`px-2 py-2 rounded-md text-xs sm:text-sm ${
                     formData.expenseType === 'UNIFORMS'
                       ? 'bg-red-100 text-red-800'
                       : 'bg-gray-100 text-gray-800'
@@ -370,7 +330,7 @@ export default function TransactionForm({ onTransactionCreated }: TransactionFor
                 <button
                   type="button"
                   onClick={() => handleCategoryChange('OTHER')}
-                  className={`px-4 py-2 rounded-md ${
+                  className={`px-2 py-2 rounded-md text-xs sm:text-sm ${
                     formData.expenseType === 'OTHER'
                       ? 'bg-red-100 text-red-800'
                       : 'bg-gray-100 text-gray-800'
@@ -385,15 +345,12 @@ export default function TransactionForm({ onTransactionCreated }: TransactionFor
 
         {formData.type === 'INCOME' && formData.incomeType === 'MONTHLY_FEE' && (
           <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Selecionar Jogadores
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Jogadores
             </label>
-            <div className="mt-1 max-h-60 overflow-y-auto border rounded-md">
+            <div className="max-h-40 overflow-y-auto border rounded-md p-2">
               {players.map((player) => (
-                <div
-                  key={player.id}
-                  className="flex items-center p-2 hover:bg-gray-50"
-                >
+                <label key={player.id} className="flex items-center space-x-2 py-1">
                   <input
                     type="checkbox"
                     checked={selectedPlayers.includes(player.id)}
@@ -404,97 +361,71 @@ export default function TransactionForm({ onTransactionCreated }: TransactionFor
                         setSelectedPlayers(selectedPlayers.filter(id => id !== player.id))
                       }
                     }}
-                    className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                    className="rounded"
                   />
-                  <label className="ml-2 block text-sm text-gray-900">
-                    {player.name} - R$ {player.monthlyFee.toFixed(2)}
-                  </label>
-                </div>
+                  <span className="text-sm">{player.name}</span>
+                </label>
               ))}
-            </div>
-            <div className="mt-2 text-sm text-gray-500">
-              Total: R$ {calculateTotalAmount().toFixed(2)}
-            </div>
-          </div>
-        )}
-
-        {formData.type === 'INCOME' && formData.incomeType !== 'MONTHLY_FEE' && (
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Valor
-            </label>
-            <div className="relative mt-1 rounded-md shadow-sm">
-              <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                <span className="text-gray-500 sm:text-sm">R$</span>
-              </div>
-              <input
-                type="number"
-                step="0.01"
-                value={formData.amount}
-                onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                required
-                className="block w-full rounded-md border-gray-300 pl-10 focus:border-blue-500 focus:ring-blue-500"
-                placeholder="0.00"
-              />
-            </div>
-          </div>
-        )}
-
-        {formData.type === 'EXPENSE' && (
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Valor
-            </label>
-            <div className="relative mt-1 rounded-md shadow-sm">
-              <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                <span className="text-gray-500 sm:text-sm">R$</span>
-              </div>
-              <input
-                type="number"
-                step="0.01"
-                value={formData.amount}
-                onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                required
-                className="block w-full rounded-md border-gray-300 pl-10 focus:border-blue-500 focus:ring-blue-500"
-                placeholder="0.00"
-              />
             </div>
           </div>
         )}
 
         {showDescription && (
           <div>
-            <label htmlFor="description" className="block text-sm font-medium text-gray-700">
+            <label className="block text-sm font-medium text-gray-700">
               Descrição
             </label>
             <input
               type="text"
-              id="description"
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              required
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              placeholder="Descreva a transação"
             />
           </div>
         )}
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Data
-          </label>
-          <input
-            type="date"
-            value={formData.date}
-            onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-            required
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-          />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Valor
+            </label>
+            <input
+              type="number"
+              step="0.01"
+              value={formData.amount}
+              onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              placeholder="R$ 0,00"
+              disabled={formData.type === 'INCOME' && formData.incomeType === 'MONTHLY_FEE'}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Data
+            </label>
+            <input
+              type="date"
+              value={formData.date}
+              onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+            />
+          </div>
         </div>
+
+        {formData.type === 'INCOME' && formData.incomeType === 'MONTHLY_FEE' && (
+          <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
+            <p className="text-sm text-blue-800">
+              <strong>Total:</strong> R$ {calculateTotalAmount().toFixed(2)}
+            </p>
+          </div>
+        )}
 
         <button
           type="submit"
           disabled={loading}
-          className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+          className="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {loading ? 'Registrando...' : 'Registrar Transação'}
         </button>

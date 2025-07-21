@@ -71,10 +71,23 @@ export default function PlayersPage() {
     try {
       setError(null)
       const response = await fetch('/api/players')
+      
+      console.log('Response status:', response.status)
+      console.log('Response headers:', response.headers)
+      
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.message || 'Erro ao buscar jogadores')
+        // Tentar ler como JSON primeiro
+        try {
+          const errorData = await response.json()
+          throw new Error(errorData.error || errorData.message || 'Erro ao buscar jogadores')
+        } catch (jsonError) {
+          // Se não for JSON, ler como texto
+          const textError = await response.text()
+          console.error('Resposta não-JSON:', textError)
+          throw new Error('Erro de comunicação com o servidor')
+        }
       }
+      
       const data = await response.json()
       console.log('Jogadores carregados:', data)
       setPlayers(data)

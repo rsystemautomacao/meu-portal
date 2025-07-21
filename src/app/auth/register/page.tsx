@@ -58,14 +58,12 @@ export default function RegisterPage() {
           </p>
           <div className="flex items-center space-x-2">
             <span className="text-sm text-gray-500">Desenvolvido por</span>
-            <a
-              href="https://rsystem.com.br"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sm font-medium text-primary hover:text-secondary transition-colors duration-200"
+            <Link
+              href="/admin/login"
+              className="text-sm font-medium text-primary hover:text-secondary transition-colors duration-200 cursor-pointer"
             >
               RSystem
-            </a>
+            </Link>
           </div>
         </div>
       </footer>

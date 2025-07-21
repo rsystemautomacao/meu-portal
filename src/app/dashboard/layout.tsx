@@ -4,6 +4,7 @@ import { useSession } from 'next-auth/react'
 import { redirect } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import Sidebar from '@/components/dashboard/Sidebar'
+import NotificationBell from '@/components/NotificationBell'
 
 interface TeamColors {
   primaryColor: string
@@ -100,6 +101,18 @@ export default function DashboardLayout({
 
       {/* Main content */}
       <div className="flex-1 overflow-auto">
+        {/* Header com notificações */}
+        <header className="bg-white shadow-sm border-b border-gray-200 px-4 py-3">
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-lg font-semibold text-gray-900">Meu Portal</h1>
+            </div>
+            <div className="flex items-center space-x-4">
+              <NotificationBell />
+            </div>
+          </div>
+        </header>
+        
         <main className="py-4 px-2 sm:px-6 lg:px-8">
           {children}
         </main>

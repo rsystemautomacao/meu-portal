@@ -29,6 +29,7 @@ model Team {
   primaryColor    String      @default("#000000")
   secondaryColor  String      @default("#FFFFFF")
   logo            String?
+  status          String      @default("ACTIVE") // ACTIVE, PAUSED, BLOCKED
   users           TeamUser[]
   players         Player[]
   matches         Match[]
@@ -36,6 +37,7 @@ model Team {
   monthlyFees     MonthlyFeeConfig[]
   monthlyFeeExceptions MonthlyFeeException[]
   historicalDebts HistoricalDebt[]
+  notifications   Notification[]
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
 }
@@ -220,4 +222,15 @@ model HistoricalDebt {
   @@index([playerId])
   @@index([teamId])
   @@unique([playerId, month, year, teamId])
+}
+
+model Notification {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  teamId      String   @db.ObjectId
+  title       String
+  message     String
+  type        String   // 'payment_reminder', 'payment_overdue', 'access_blocked', 'system'
+  isRead      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  team        Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
 } 
