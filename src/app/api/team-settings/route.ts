@@ -107,13 +107,31 @@ export async function DELETE(request: NextRequest) {
             return NextResponse.json({ error: 'Time não encontrado ou você não é o dono' }, { status: 404 });
         }
 
+        // Buscar o usuário dono do time
+        const teamUser = await prisma.teamUser.findFirst({
+            where: { teamId, role: 'owner' },
+            include: { user: true }
+        });
+
+        // Excluir o time (cascade)
         await prisma.team.delete({
             where: { id: teamId },
         });
 
-        return NextResponse.json({ message: 'Time excluído com sucesso' });
+        // Excluir o usuário dono (e todas as suas associações)
+        if (teamUser && teamUser.user) {
+            // Excluir todas as associações restantes
+            await prisma.teamUser.deleteMany({ where: { userId: teamUser.user.id } });
+            // Excluir o usuário
+            await prisma.user.delete({ where: { id: teamUser.user.id } });
+            console.log('Usuário dono excluído:', teamUser.user.email);
+        } else {
+            console.warn('Usuário dono não encontrado para exclusão.');
+        }
+
+        return NextResponse.json({ message: 'Time e usuário excluídos com sucesso' });
     } catch (error) {
-        console.error("Erro ao excluir o time:", error);
+        console.error("Erro ao excluir o time e usuário:", error);
         return NextResponse.json({ error: 'Erro interno do servidor' }, { status: 500 });
     }
 } 

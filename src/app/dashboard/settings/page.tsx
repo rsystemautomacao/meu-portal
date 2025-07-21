@@ -6,6 +6,7 @@ import { toast } from 'react-hot-toast'
 import { useRouter } from 'next/navigation'
 import { PhotoIcon, UserCircleIcon, Cog6ToothIcon, ShieldExclamationIcon, ArrowPathIcon, LockClosedIcon } from '@heroicons/react/24/outline'
 import HistoricalDebts from '@/components/financial/HistoricalDebts'
+import { signOut } from 'next-auth/react'
 
 // Interface para os dados do time e configurações
 interface TeamSettings {
@@ -247,7 +248,8 @@ export default function SettingsPage() {
           duration: 4000
       })
       // Forçar o signOut para limpar a sessão e redirecionar
-      router.push('/auth/login?deleted=true')
+      await signOut({ callbackUrl: '/auth/login?deleted=true' })
+      // router.push('/auth/login?deleted=true') // não precisa mais
 
     } catch (error) {
       toast.dismiss()
