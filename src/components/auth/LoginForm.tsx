@@ -23,6 +23,15 @@ export default function LoginForm() {
     setLoading(true)
     setError('')
 
+    // Remover o parâmetro blocked=1 da URL ao tentar novo login
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href)
+      if (url.searchParams.has('blocked')) {
+        url.searchParams.delete('blocked')
+        window.history.replaceState({}, document.title, url.pathname + url.search)
+      }
+    }
+
     const formData = new FormData(e.currentTarget)
     const email = formData.get('email') as string
     const password = formData.get('password') as string

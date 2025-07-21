@@ -72,6 +72,62 @@ export default function MatchModal({ isOpen, onClose, onSave, match }: MatchModa
   const [playerStats1, setPlayerStats1] = useState<Record<string, { gols: number, assist: number, amarelo: number, vermelho: number, golsSofridos: number }>>({})
   const [presentes2, setPresentes2] = useState<any[]>([])
   const [playerStats2, setPlayerStats2] = useState<Record<string, { gols: number, assist: number, amarelo: number, vermelho: number, golsSofridos: number }>>({})
+  const [isLandscape, setIsLandscape] = useState(true)
+  const [showOrientationBanner, setShowOrientationBanner] = useState(false)
+  const [fullscreenError, setFullscreenError] = useState('')
+
+  // Função para checar orientação
+  function checkOrientation() {
+    const landscape = window.innerWidth > window.innerHeight
+    setIsLandscape(landscape)
+    setShowOrientationBanner(!landscape)
+  }
+
+  // Checar orientação ao carregar e ao redimensionar
+  useEffect(() => {
+    checkOrientation()
+    window.addEventListener('resize', checkOrientation)
+    window.addEventListener('orientationchange', checkOrientation)
+    return () => {
+      window.removeEventListener('resize', checkOrientation)
+      window.removeEventListener('orientationchange', checkOrientation)
+    }
+  }, [])
+
+  // Tentar forçar fullscreen e landscape automaticamente ao abrir
+  useEffect(() => {
+    async function tryFullscreenAndLandscape() {
+      setFullscreenError('')
+      try {
+        if (isOpen && document.documentElement.requestFullscreen) {
+          await document.documentElement.requestFullscreen()
+        }
+        if (isOpen && 'orientation' in screen && (screen.orientation as any).lock) {
+          await (screen.orientation as any).lock('landscape')
+        }
+        setTimeout(checkOrientation, 500)
+      } catch (err: any) {
+        setFullscreenError('Não foi possível forçar a orientação. Toque no botão abaixo ou gire o celular manualmente.')
+      }
+    }
+    if (isOpen) tryFullscreenAndLandscape()
+  }, [isOpen])
+
+  // Função para forçar fullscreen e landscape manualmente
+  async function handleFullscreenAndLandscape() {
+    setFullscreenError('')
+    try {
+      if (document.documentElement.requestFullscreen) {
+        await document.documentElement.requestFullscreen()
+      }
+      if ('orientation' in screen && (screen.orientation as any).lock) {
+        await (screen.orientation as any).lock('landscape')
+      }
+      setTimeout(checkOrientation, 500)
+    } catch (err: any) {
+      setFullscreenError('Não foi possível forçar a orientação. Gire o celular manualmente.')
+    }
+  }
 
   useEffect(() => {
     if (match) {
@@ -226,6 +282,20 @@ export default function MatchModal({ isOpen, onClose, onSave, match }: MatchModa
         >
           <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
         </Transition.Child>
+
+        {/* Banner de orientação */}
+        {showOrientationBanner && (
+          <div className="fixed top-0 left-0 w-full z-50 bg-yellow-100 border-b-2 border-yellow-300 text-yellow-900 text-center py-3 font-bold flex flex-col items-center shadow-lg animate-pulse">
+            <span className="text-lg">Para melhor experiência, use o app na horizontal (paisagem).</span>
+            <button
+              className="mt-2 px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold shadow hover:bg-blue-700 transition"
+              onClick={handleFullscreenAndLandscape}
+            >
+              Ativar Tela Cheia e Horizontal
+            </button>
+            {fullscreenError && <span className="text-red-600 text-sm mt-1">{fullscreenError}</span>}
+          </div>
+        )}
 
         <div className="fixed inset-0 z-10 overflow-y-auto">
           <div className="flex min-h-full items-end justify-center p-2 text-center sm:items-center sm:p-0">
