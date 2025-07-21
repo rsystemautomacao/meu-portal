@@ -40,6 +40,7 @@ model Team {
   notifications   Notification[]
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
+  deletedAt       DateTime?   // Soft delete
 }
 
 model TeamUser {

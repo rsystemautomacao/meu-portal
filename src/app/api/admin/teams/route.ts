@@ -2,10 +2,13 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
 // GET - Buscar todos os times com estatísticas
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    // Buscar todos os times com relacionamentos
+    const url = new URL(request.url, 'http://localhost');
+    const showDeleted = url.searchParams.get('showDeleted') === 'true';
+    // Buscar todos os times, filtrando se necessário
     const teams = await prisma.team.findMany({
+      where: showDeleted ? {} : ({ deletedAt: null } as any),
       include: {
         users: {
           include: {
@@ -29,7 +32,7 @@ export async function GET() {
       const userCount = team.users.length
       const playerCount = team.players.length
       const totalRevenue = team.transactions.reduce((sum: number, transaction: any) => sum + transaction.amount, 0)
-
+      const isDeleted = !!team.deletedAt
       return {
         id: team.id,
         name: team.name,
@@ -41,7 +44,8 @@ export async function GET() {
         userCount,
         playerCount,
         totalRevenue,
-        status: 'ACTIVE' // Por enquanto, depois implementaremos status
+        status: isDeleted ? 'EXCLUIDO' : (team.status || 'ACTIVE'),
+        deletedAt: team.deletedAt ? team.deletedAt.toISOString() : null
       }
     })
 

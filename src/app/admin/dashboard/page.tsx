@@ -16,12 +16,14 @@ interface Team {
   playerCount: number
   totalRevenue?: number
   status: string
+  deletedAt?: string | null
 }
 
 export default function AdminDashboard() {
   const router = useRouter()
   const [teams, setTeams] = useState<Team[]>([])
   const [loading, setLoading] = useState(true)
+  const [showDeleted, setShowDeleted] = useState(false)
   const [stats, setStats] = useState({
     totalTeams: 0,
     totalUsers: 0,
@@ -43,13 +45,13 @@ export default function AdminDashboard() {
     }
 
     fetchTeams()
-  }, [router])
+  }, [router, showDeleted])
 
   const fetchTeams = async () => {
     try {
       setLoading(true)
       
-      const response = await fetch('/api/admin/teams')
+      const response = await fetch(`/api/admin/teams${showDeleted ? '?showDeleted=true' : ''}`)
       if (!response.ok) {
         throw new Error('Erro ao buscar times')
       }
@@ -204,12 +206,17 @@ export default function AdminDashboard() {
         return 'text-yellow-600 bg-yellow-100'
       case 'BLOCKED':
         return 'text-red-600 bg-red-100'
+      case 'EXCLUIDO':
+        return 'text-gray-400 bg-gray-200 border border-gray-400'
       default:
         return 'text-gray-600 bg-gray-100'
     }
   }
 
-  const getStatusText = (status: string) => {
+  const getStatusText = (status: string, deletedAt?: string | null) => {
+    if (status === 'EXCLUIDO') {
+      return deletedAt ? `Excluído em ${formatDate(deletedAt)}` : 'Excluído'
+    }
     switch (status) {
       case 'ACTIVE':
         return 'Ativo'
@@ -351,6 +358,19 @@ export default function AdminDashboard() {
           </div>
         </div>
 
+        {/* Filtro de times excluídos */}
+        <div className="flex items-center gap-4 mb-2">
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={showDeleted}
+              onChange={e => setShowDeleted(e.target.checked)}
+              className="form-checkbox h-4 w-4 text-indigo-600"
+            />
+            Mostrar times excluídos
+          </label>
+        </div>
+
         {/* Teams List */}
         <div className="bg-white rounded-xl shadow-lg overflow-hidden">
           <div className="px-4 sm:px-6 py-4 border-b border-gray-200">
@@ -380,7 +400,7 @@ export default function AdminDashboard() {
 
           <div className="divide-y divide-gray-200">
             {teams.map((team) => (
-              <div key={team.id} className="px-4 sm:px-6 py-4 hover:bg-gray-50 transition-colors">
+              <div key={team.id} className={`px-4 sm:px-6 py-4 hover:bg-gray-50 transition-colors ${team.status === 'EXCLUIDO' ? 'opacity-60' : ''}`}>
                 {/* Desktop Layout */}
                 <div className="hidden lg:flex items-center justify-between">
                   <div className="flex items-center space-x-4">
@@ -396,7 +416,7 @@ export default function AdminDashboard() {
                         <span>📞 {team.whatsapp || 'Não informado'}</span>
                         <span>📅 {formatDate(team.createdAt)}</span>
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(team.status)}`}>
-                          {getStatusText(team.status)}
+                          {getStatusText(team.status, team.deletedAt)}
                         </span>
                       </div>
                     </div>
@@ -420,6 +440,7 @@ export default function AdminDashboard() {
                         onClick={() => handleSendMessage(team.id, 'payment_reminder')}
                         className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                         title="Enviar lembrete de pagamento"
+                        disabled={team.status === 'EXCLUIDO'}
                       >
                         <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
@@ -433,6 +454,7 @@ export default function AdminDashboard() {
                             : 'text-green-600 hover:bg-green-50'
                         }`}
                         title={team.status === 'ACTIVE' ? 'Pausar acesso' : 'Ativar acesso'}
+                        disabled={team.status === 'EXCLUIDO'}
                       >
                         <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
@@ -443,6 +465,7 @@ export default function AdminDashboard() {
                         onClick={() => handleTeamAction(team.id, 'block')}
                         className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                         title="Bloquear acesso"
+                        disabled={team.status === 'EXCLUIDO'}
                       >
                         <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
@@ -457,6 +480,7 @@ export default function AdminDashboard() {
                         }}
                         className="p-2 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
                         title="Resetar senha"
+                        disabled={team.status === 'EXCLUIDO'}
                       >
                         <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -466,6 +490,7 @@ export default function AdminDashboard() {
                         onClick={() => handleDeleteTeam(team.id)}
                         className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                         title="Excluir time"
+                        disabled={team.status === 'EXCLUIDO'}
                       >
                         <TrashIcon className="h-5 w-5" />
                       </button>
@@ -488,7 +513,7 @@ export default function AdminDashboard() {
                         <span>📞 {team.whatsapp || 'Não informado'}</span>
                         <span>📅 {formatDate(team.createdAt)}</span>
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(team.status)}`}>
-                          {getStatusText(team.status)}
+                          {getStatusText(team.status, team.deletedAt)}
                         </span>
                       </div>
                     </div>
@@ -516,6 +541,7 @@ export default function AdminDashboard() {
                       onClick={() => handleSendMessage(team.id, 'payment_reminder')}
                       className="flex items-center justify-center space-x-1 px-3 py-2 text-xs bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors"
                       title="Enviar lembrete de pagamento"
+                      disabled={team.status === 'EXCLUIDO'}
                     >
                       <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
@@ -530,6 +556,7 @@ export default function AdminDashboard() {
                           : 'bg-green-50 text-green-600 hover:bg-green-100'
                       }`}
                       title={team.status === 'ACTIVE' ? 'Pausar acesso' : 'Ativar acesso'}
+                      disabled={team.status === 'EXCLUIDO'}
                     >
                       <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
@@ -541,6 +568,7 @@ export default function AdminDashboard() {
                       onClick={() => handleTeamAction(team.id, 'block')}
                       className="flex items-center justify-center space-x-1 px-3 py-2 text-xs bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors"
                       title="Bloquear acesso"
+                      disabled={team.status === 'EXCLUIDO'}
                     >
                       <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
@@ -556,6 +584,7 @@ export default function AdminDashboard() {
                       }}
                       className="flex items-center justify-center space-x-1 px-3 py-2 text-xs bg-purple-50 text-purple-600 rounded-lg hover:bg-purple-100 transition-colors"
                       title="Resetar senha"
+                      disabled={team.status === 'EXCLUIDO'}
                     >
                       <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -566,6 +595,7 @@ export default function AdminDashboard() {
                       onClick={() => handleDeleteTeam(team.id)}
                       className="flex items-center justify-center space-x-1 px-3 py-2 text-xs bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors"
                       title="Excluir time"
+                      disabled={team.status === 'EXCLUIDO'}
                     >
                       <TrashIcon className="h-4 w-4" />
                       <span>Excluir</span>

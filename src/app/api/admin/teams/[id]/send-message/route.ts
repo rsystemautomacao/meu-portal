@@ -11,8 +11,14 @@ export async function POST(
     const { messageType } = await request.json()
     const teamId = params.id
 
+    // Buscar o time
+    const team = await prisma.team.findUnique({ where: { id: teamId } })
+    if (!team || (team as any).deletedAt) {
+      return NextResponse.json({ error: 'Time não encontrado ou já foi excluído' }, { status: 404 })
+    }
+
     // Buscar dados do time
-    const team = await prisma.team.findUnique({
+    const teamData = await prisma.team.findUnique({
       where: { id: teamId },
       include: {
         users: {
@@ -23,7 +29,7 @@ export async function POST(
       }
     })
 
-    if (!team) {
+    if (!teamData) {
       return NextResponse.json(
         { error: 'Time não encontrado' },
         { status: 404 }
@@ -37,7 +43,7 @@ export async function POST(
     switch (messageType) {
       case 'payment_reminder':
         subject = 'Mensalidade Pendente - Meu Portal'
-        message = `Olá ${team.name}!
+        message = `Olá ${teamData.name}!
 
 Este é um lembrete amigável sobre sua mensalidade do Meu Portal que está pendente.
 
@@ -56,7 +62,7 @@ Equipe RSystem`
 
       case 'payment_overdue':
         subject = 'Mensalidade em Atraso - Meu Portal'
-        message = `Olá ${team.name}!
+        message = `Olá ${teamData.name}!
 
 Sua mensalidade do Meu Portal está em atraso há mais de 10 dias.
 
@@ -76,7 +82,7 @@ Equipe RSystem`
 
       case 'access_blocked':
         subject = 'Acesso Bloqueado - Meu Portal'
-        message = `Olá ${team.name}!
+        message = `Olá ${teamData.name}!
 
 Devido ao não pagamento da mensalidade, seu acesso ao Meu Portal foi bloqueado.
 
@@ -101,9 +107,9 @@ Equipe RSystem`
 
     // Preparar dados para envio
     const messageData = {
-      teamId: team.id,
-      teamName: team.name,
-      whatsapp: (team as any).whatsapp,
+      teamId: teamData.id,
+      teamName: teamData.name,
+      whatsapp: (teamData as any).whatsapp,
       subject,
       message,
       messageType,
@@ -117,7 +123,7 @@ Equipe RSystem`
     try {
       await (prisma as any).notification.create({
         data: {
-          teamId: team.id,
+          teamId: teamData.id,
           title: subject,
           message: message,
           type: messageType,

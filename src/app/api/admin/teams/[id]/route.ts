@@ -11,6 +11,11 @@ export async function PUT(
     const { action, newPassword } = await request.json()
     const teamId = params.id
 
+    const team = await prisma.team.findUnique({ where: { id: teamId } })
+    if (!team || (team as any).deletedAt) {
+      return NextResponse.json({ error: 'Time não encontrado ou já foi excluído' }, { status: 404 })
+    }
+
     switch (action) {
       case 'block':
         // Bloquear time (marcar como bloqueado)
@@ -99,6 +104,11 @@ export async function DELETE(
 ) {
   try {
     const teamId = params.id
+
+    const team = await prisma.team.findUnique({ where: { id: teamId } })
+    if (!team || (team as any).deletedAt) {
+      return NextResponse.json({ error: 'Time não encontrado ou já foi excluído' }, { status: 404 })
+    }
 
     // Excluir time e todos os dados relacionados (cascade)
     await prisma.team.delete({
