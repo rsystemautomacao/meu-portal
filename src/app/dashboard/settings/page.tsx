@@ -93,6 +93,11 @@ export default function SettingsPage() {
         const response = await fetch('/api/team-settings')
         if (!response.ok) throw new Error('Falha ao buscar configurações')
         const data = await response.json()
+        // Checagem de status do time
+        if (data.status === 'BLOCKED' || data.status === 'PAUSED') {
+          router.push('/acesso-bloqueado')
+          return
+        }
         setSettings({
           name: data.name || '',
           primaryColor: data.primaryColor || '#000000',

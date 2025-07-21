@@ -54,6 +54,7 @@ interface DashboardData {
   totalPlayers: number;
   recentMatches: Match[];
   recentTransactions: Transaction[];
+  teamStatus: 'ACTIVE' | 'BLOCKED' | 'PAUSED'; // Adicionado para checar o status do time
 }
 
 export default function DashboardPage() {
@@ -87,6 +88,11 @@ export default function DashboardPage() {
         const res = await fetch('/api/dashboard/summary')
         if (res.ok) {
           const data = await res.json()
+          // Checagem de status do time
+          if (data.teamStatus === 'BLOCKED' || data.teamStatus === 'PAUSED') {
+            router.push('/acesso-bloqueado')
+            return
+          }
           setDashboardData(data)
         } else {
           console.error('Erro ao buscar dados do dashboard:', res.status)
