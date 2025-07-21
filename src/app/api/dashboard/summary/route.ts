@@ -19,6 +19,13 @@ export async function GET() {
       return NextResponse.json({ error: 'Time não encontrado' }, { status: 404 })
     }
 
+    // Buscar status do time
+    const team = await prisma.team.findUnique({
+      where: { id: teamUser.teamId },
+      select: { status: true }
+    })
+    const teamStatus = team?.status || 'ACTIVE'
+
     // Saldo em caixa
     const transactions = await prisma.transaction.findMany({
       where: { teamId: teamUser.teamId },
@@ -78,7 +85,8 @@ export async function GET() {
       activePlayers,
       totalPlayers,
       recentMatches,
-      recentTransactions
+      recentTransactions,
+      teamStatus
     })
   } catch (error) {
     console.error('Erro ao buscar resumo do dashboard:', error)
