@@ -1,26 +1,19 @@
-<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="512" height="512" rx="128" fill="url(#gradient)"/>
-  
-  <!-- Círculo central representando uma bola -->
-  <circle cx="256" cy="256" r="120" fill="white" opacity="0.9"/>
-  
-  <!-- Linhas da bola de futebol -->
-  <path d="M256 136 L256 376" stroke="#1a365d" stroke-width="8" stroke-linecap="round"/>
-  <path d="M136 256 L376 256" stroke="#1a365d" stroke-width="8" stroke-linecap="round"/>
-  <path d="M180 180 L332 332" stroke="#2b6cb0" stroke-width="6" stroke-linecap="round"/>
-  <path d="M332 180 L180 332" stroke="#2b6cb0" stroke-width="6" stroke-linecap="round"/>
-  
-  <!-- Pequenos círculos nos pontos de interseção -->
-  <circle cx="256" cy="256" r="12" fill="#1a365d"/>
-  <circle cx="256" cy="136" r="8" fill="#2b6cb0"/>
-  <circle cx="256" cy="376" r="8" fill="#2b6cb0"/>
-  <circle cx="136" cy="256" r="8" fill="#2b6cb0"/>
-  <circle cx="376" cy="256" r="8" fill="#2b6cb0"/>
-  
+<svg width="192" height="192" viewBox="0 0 192 192" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#1a365d;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#2b6cb0;stop-opacity:1" />
-    </linearGradient>
+    <radialGradient id="bg" cx="50%" cy="50%" r="80%">
+      <stop offset="0%" stop-color="#4F8DFD"/>
+      <stop offset="100%" stop-color="#1E3A8A"/>
+    </radialGradient>
   </defs>
+  <circle cx="96" cy="96" r="92" fill="url(#bg)" stroke="#fff" stroke-width="8"/>
+  <!-- Bola de futebol estilizada -->
+  <circle cx="96" cy="96" r="38" fill="#fff" opacity="0.95"/>
+  <polygon points="96,70 110,90 96,110 82,90" fill="#4F8DFD" opacity="0.7"/>
+  <polygon points="96,82 104,96 96,110 88,96" fill="#1E3A8A" opacity="0.7"/>
+  <!-- Iniciais MP -->
+  <text x="50%" y="150" text-anchor="middle" font-family="Montserrat, Arial, sans-serif" font-size="56" font-weight="bold" fill="#fff" stroke="#1E3A8A" stroke-width="2" paint-order="stroke" letter-spacing="-4">MP</text>
+  <!-- Detalhes de comunidade/organização -->
+  <circle cx="60" cy="120" r="8" fill="#4F8DFD" stroke="#fff" stroke-width="3"/>
+  <circle cx="132" cy="120" r="8" fill="#4F8DFD" stroke="#fff" stroke-width="3"/>
+  <rect x="80" y="128" width="32" height="8" rx="4" fill="#1E3A8A" opacity="0.7"/>
 </svg> 
