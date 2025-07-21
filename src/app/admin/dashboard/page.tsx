@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { ArrowRightOnRectangleIcon, TrashIcon, ShieldCheckIcon, UsersIcon, UserIcon, CurrencyDollarIcon } from '@heroicons/react/24/outline'
+import AdminSendMessageModal from '@/components/admin/AdminSendMessageModal'
 
 interface Team {
   id: string
@@ -30,6 +31,7 @@ export default function AdminDashboard() {
     totalPlayers: 0,
     totalRevenue: 0
   })
+  const [messageModal, setMessageModal] = useState<{ open: boolean; teamId: string; teamName: string }>({ open: false, teamId: '', teamName: '' })
 
   useEffect(() => {
     // Verificar se está logado como admin
@@ -160,42 +162,9 @@ export default function AdminDashboard() {
     }
   }
 
-  const handleSendMessage = async (teamId: string, messageType: string) => {
-    try {
-      console.log('Enviando mensagem:', { teamId, messageType })
-      
-      const response = await fetch(`/api/admin/teams/${teamId}/send-message`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ messageType })
-      })
-
-      console.log('Response status:', response.status)
-      
-      if (!response.ok) {
-        const errorData = await response.json()
-        console.error('Erro na resposta:', errorData)
-        throw new Error(`Erro ao enviar mensagem: ${errorData.error || response.statusText}`)
-      }
-
-      const result = await response.json()
-      console.log('Mensagem enviada com sucesso:', result)
-      
-      if (result.success) {
-        const channels = []
-        if (result.data.notificationResult.whatsapp) channels.push('WhatsApp')
-        if (result.data.notificationResult.email) channels.push('Email')
-        
-        alert(`✅ Mensagem enviada com sucesso!\n\nCanais: ${channels.join(', ')}\n\nTime: ${result.data.teamName}`)
-      } else {
-        alert('❌ Falha no envio da mensagem. Tente novamente.')
-      }
-    } catch (error) {
-      console.error('Erro ao enviar mensagem:', error)
-      alert(`Erro ao enviar mensagem: ${error instanceof Error ? error.message : 'Erro desconhecido'}`)
-    }
+  // Substituir handleSendMessage para abrir o modal
+  const handleOpenMessageModal = (teamId: string, teamName: string) => {
+    setMessageModal({ open: true, teamId, teamName })
   }
 
   const getStatusColor = (status: string) => {
@@ -437,9 +406,9 @@ export default function AdminDashboard() {
                     </div>
                     <div className="flex items-center space-x-2">
                       <button 
-                        onClick={() => handleSendMessage(team.id, 'payment_reminder')}
+                        onClick={() => handleOpenMessageModal(team.id, team.name)}
                         className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                        title="Enviar lembrete de pagamento"
+                        title="Enviar mensagem"
                         disabled={team.status === 'EXCLUIDO'}
                       >
                         <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -538,9 +507,9 @@ export default function AdminDashboard() {
                   {/* Action Buttons */}
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                     <button 
-                      onClick={() => handleSendMessage(team.id, 'payment_reminder')}
+                      onClick={() => handleOpenMessageModal(team.id, team.name)}
                       className="flex items-center justify-center space-x-1 px-3 py-2 text-xs bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors"
-                      title="Enviar lembrete de pagamento"
+                      title="Enviar mensagem"
                       disabled={team.status === 'EXCLUIDO'}
                     >
                       <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -607,6 +576,13 @@ export default function AdminDashboard() {
           </div>
         </div>
       </div>
+      <AdminSendMessageModal
+        isOpen={messageModal.open}
+        onClose={() => setMessageModal({ open: false, teamId: '', teamName: '' })}
+        teamId={messageModal.teamId}
+        teamName={messageModal.teamName}
+        onMessageSent={fetchTeams}
+      />
     </div>
   )
 } 
