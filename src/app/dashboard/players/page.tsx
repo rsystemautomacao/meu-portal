@@ -19,6 +19,7 @@ import {
 import PlayerModal from '@/components/players/PlayerModal'
 import PlayerPhotoModal from '@/components/players/PlayerPhotoModal'
 import { useRouter } from 'next/navigation'
+import { toast } from 'react-hot-toast'
 
 // Desabilitar pré-renderização estática
 export const dynamic = 'force-dynamic'
@@ -69,31 +70,49 @@ export default function PlayersPage() {
 
   const fetchPlayers = async () => {
     try {
+      setIsLoading(true)
       setError(null)
+      
+      console.log('🔄 Buscando jogadores...')
       const response = await fetch('/api/players')
       
       console.log('Response status:', response.status)
       console.log('Response headers:', response.headers)
       
       if (!response.ok) {
+        let errorMessage = 'Erro ao buscar jogadores'
+        
         // Tentar ler como JSON primeiro
         try {
           const errorData = await response.json()
-          throw new Error(errorData.error || errorData.message || 'Erro ao buscar jogadores')
+          errorMessage = errorData.error || errorData.message || errorMessage
         } catch (jsonError) {
           // Se não for JSON, ler como texto
           const textError = await response.text()
-          console.error('Resposta não-JSON:', textError)
-          throw new Error('Erro de comunicação com o servidor')
+          console.error('❌ Resposta não-JSON:', textError)
+          errorMessage = 'Erro de comunicação com o servidor'
         }
+        
+        throw new Error(errorMessage)
       }
       
-      const data = await response.json()
-      console.log('Jogadores carregados:', data)
+      let data
+      try {
+        data = await response.json()
+        console.log('✅ Jogadores carregados:', data.length)
+      } catch (jsonError) {
+        console.error('❌ Erro ao parsear resposta JSON:', jsonError)
+        const textResponse = await response.text()
+        console.log('📄 Resposta (texto):', textResponse)
+        throw new Error('Resposta inválida do servidor')
+      }
+      
       setPlayers(data)
     } catch (error) {
-      console.error('Erro ao buscar jogadores:', error)
-      setError(error instanceof Error ? error.message : 'Erro ao buscar jogadores')
+      console.error('❌ Erro ao buscar jogadores:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido'
+      setError(errorMessage)
+      toast.error(`Erro ao carregar jogadores: ${errorMessage}`)
     } finally {
       setIsLoading(false)
     }

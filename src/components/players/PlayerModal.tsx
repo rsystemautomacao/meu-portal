@@ -5,6 +5,7 @@ import { PhotoIcon } from '@heroicons/react/24/solid'
 import { Fragment, useRef, useState, useEffect } from 'react'
 import { format, parse } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
+import { toast } from 'react-hot-toast'
 
 const PLAYER_POSITIONS = [
   'Goleiro',
@@ -78,30 +79,96 @@ export default function PlayerModal({ isOpen, onClose, onSave, player }: PlayerM
     }
   }, [player, isOpen])
 
-  const handlePhotoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
-    if (file) {
+    if (!file) return
+
+    try {
+      // Validações de arquivo
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
+      const maxSize = 10 * 1024 * 1024 // 10MB
+
       // Validar tipo de arquivo
-      if (!file.type.startsWith('image/')) {
-        alert('Por favor, selecione apenas arquivos de imagem')
+      if (!allowedTypes.includes(file.type)) {
+        toast.error('Tipo de arquivo não suportado. Use apenas JPG, PNG ou WebP.')
         return
       }
       
-      // Validar tamanho (máximo 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        alert('A imagem deve ter no máximo 5MB')
+      // Validar tamanho
+      if (file.size > maxSize) {
+        toast.error('Arquivo muito grande. Tamanho máximo: 10MB.')
         return
       }
-      
+
+      // Validar se arquivo não está corrompido
+      if (file.size === 0) {
+        toast.error('Arquivo corrompido ou vazio. Tente selecionar outra imagem.')
+        return
+      }
+
+      console.log('📸 Processando imagem:', {
+        name: file.name,
+        size: `${(file.size / 1024 / 1024).toFixed(2)}MB`,
+        type: file.type
+      })
+
+      // Mostrar preview imediato
       const reader = new FileReader()
       reader.onloadend = () => {
         setPhotoPreview(reader.result as string)
-        setFormData({ ...formData, photoUrl: reader.result as string })
       }
       reader.onerror = () => {
-        alert('Erro ao ler o arquivo. Tente novamente.')
+        toast.error('Erro ao ler o arquivo. Tente novamente.')
       }
       reader.readAsDataURL(file)
+
+      // Upload para o Cloudinary
+      const formData = new FormData()
+      formData.append('file', file)
+
+      toast.loading('Fazendo upload da imagem...')
+
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.message || 'Erro no upload')
+      }
+
+      // Atualizar com URL do Cloudinary
+      setFormData(prev => ({ ...prev, photoUrl: result.secure_url }))
+      setPhotoPreview(result.secure_url)
+      
+      toast.dismiss()
+      toast.success('Imagem enviada com sucesso!')
+
+    } catch (error) {
+      console.error('❌ Erro no upload da foto:', error)
+      toast.dismiss()
+      
+      let errorMessage = 'Erro ao fazer upload da imagem'
+      
+      if (error instanceof Error) {
+        if (error.message.includes('Timeout')) {
+          errorMessage = 'Upload cancelado - arquivo muito grande. Tente uma imagem menor.'
+        } else if (error.message.includes('network')) {
+          errorMessage = 'Erro de conexão. Verifique sua internet.'
+        } else if (error.message.includes('format')) {
+          errorMessage = 'Formato não suportado. Use JPG, PNG ou WebP.'
+        } else {
+          errorMessage = error.message
+        }
+      }
+      
+      toast.error(errorMessage)
+      
+      // Limpar preview em caso de erro
+      setPhotoPreview(null)
+      setFormData(prev => ({ ...prev, photoUrl: '' }))
     }
   }
 
