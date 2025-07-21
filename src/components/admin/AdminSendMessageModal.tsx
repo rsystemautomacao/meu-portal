@@ -54,10 +54,17 @@ export default function AdminSendMessageModal({ isOpen, onClose, teamName, teamI
     return customText
   }
 
+  const getApiMessageType = (type: MessageType) => {
+    if (type === 'late') return 'payment_reminder'
+    if (type === 'block') return 'access_blocked'
+    if (type === 'custom') return 'custom'
+    return type
+  }
+
   const handleSend = async () => {
     setSending(true)
     try {
-      let messageType = selectedType
+      let messageType = getApiMessageType(selectedType)
       let message = getMessageValue()
       if (!message.trim()) {
         toast.error('A mensagem não pode ser vazia.')
@@ -65,10 +72,12 @@ export default function AdminSendMessageModal({ isOpen, onClose, teamName, teamI
         return
       }
       // Enviar para a API
+      const body: any = { messageType }
+      if (messageType === 'custom') body.customMessage = message
       const response = await fetch(`/api/admin/teams/${teamId}/send-message`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messageType, customMessage: message })
+        body: JSON.stringify(body)
       })
       if (!response.ok) {
         const errorData = await response.json()

@@ -63,6 +63,7 @@ export default function DashboardPage() {
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState(true)
   const [selectedMatch, setSelectedMatch] = useState<Match | null>(null)
+  const [paused, setPaused] = useState(false)
 
   // Estado para ordenação
   const [sortField, setSortField] = useState<'presencas' | 'gols' | 'assist' | 'amarelo' | 'vermelho' | 'golsSofridos' | null>('gols');
@@ -88,10 +89,16 @@ export default function DashboardPage() {
         const res = await fetch('/api/dashboard/summary')
         if (res.ok) {
           const data = await res.json()
-          // Checagem de status do time
-          if (data.teamStatus === 'BLOCKED' || data.teamStatus === 'PAUSED') {
-            router.push('/acesso-bloqueado')
+          if (data.teamStatus === 'BLOCKED') {
+            // Forçar signOut e redirecionar
+            await fetch('/api/auth/logout')
+            router.push('/auth/login?blocked=1')
             return
+          }
+          if (data.teamStatus === 'PAUSED') {
+            setPaused(true)
+          } else {
+            setPaused(false)
           }
           setDashboardData(data)
         } else {
@@ -284,6 +291,13 @@ export default function DashboardPage() {
           Aqui está um resumo do seu time
         </p>
       </div>
+
+      {/* Banner de aviso para PAUSED */}
+      {paused && (
+        <div className="w-full bg-yellow-100 border-b border-yellow-300 text-yellow-900 text-center py-2 font-semibold">
+          Seu time está <span className="font-bold">pausado</span>. Não serão geradas novas mensalidades até reativação.
+        </div>
+      )}
 
       {/* Cards de resumo */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-8">

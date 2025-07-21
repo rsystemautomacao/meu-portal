@@ -53,6 +53,7 @@ export default function ForgotPasswordPage() {
         {success && (
           <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
             <p className="text-green-700 font-semibold mb-2">Se o e-mail informado existir, enviaremos instruções para redefinir sua senha.</p>
+            <a href="/auth/login" className="inline-block mt-4 px-4 py-2 rounded bg-blue-600 text-white font-semibold shadow hover:bg-blue-700 transition-colors">Voltar para o login</a>
           </div>
         )}
       </div>

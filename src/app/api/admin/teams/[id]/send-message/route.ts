@@ -49,23 +49,30 @@ export async function POST(
       }
     } else {
       switch (messageType) {
-        case 'payment_reminder':
+        case 'payment_reminder': {
           subject = 'Mensalidade Pendente - Meu Portal'
+          const now = new Date()
+          const mes = String(now.getMonth() + 1).padStart(2, '0')
+          const ano = now.getFullYear()
+          message = `Olá ${teamData.name}! Este é um lembrete de que sua mensalidade do Meu Portal que está pendente.\n📅 Data de Vencimento: 10/${mes}/${ano}\n💰 Valor: R$ 29,90/mês\nPara continuar aproveitando todos os recursos do sistema, por favor, regularize seu pagamento.\n📞 Dúvidas? Entre em contato conosco.\n📧 Email: rsautomacao2000@gmail.com / Whatsapp: (11) 94832-1756\n\nAgradecemos sua confiança!\nEquipe Meu Portal`
+          break
+        }
+        case 'access_blocked':
+          subject = 'Acesso Bloqueado - Meu Portal'
           message = `Olá ${teamData.name}!
 
-Este é um lembrete amigável sobre sua mensalidade do Meu Portal que está pendente.
+Devido ao não pagamento da mensalidade, seu acesso ao Meu Portal foi bloqueado.
 
-📅 Data de Vencimento: ${new Date().toLocaleDateString('pt-BR')}
+🔒 Status: ACESSO BLOQUEADO
+📅 Data de Vencimento: 10/${(new Date().getMonth() + 1).toString().padStart(2, '0')}/${new Date().getFullYear()}
 💰 Valor: R$ 29,90/mês
 
-Para continuar aproveitando todos os recursos do sistema, por favor, regularize seu pagamento.
+Para reativar seu acesso, efetue o pagamento da mensalidade em atraso.
 
 📞 Dúvidas? Entre em contato conosco.
-📧 Email: rsautomacao2000@gmail.com
+📧 Email: rsautomacao2000@gmail.com / Whatsapp: (11) 94832-1756
 
-Agradecemos sua confiança!
-
-Equipe RSystem`
+Equipe Meu Portal`
           break
         case 'payment_overdue':
           subject = 'Mensalidade em Atraso - Meu Portal'
@@ -75,33 +82,16 @@ Sua mensalidade do Meu Portal está em atraso há mais de 10 dias.
 
 ⚠️ ATENÇÃO: Seu acesso será bloqueado em breve.
 
-📅 Data de Vencimento: ${new Date().toLocaleDateString('pt-BR')}
+📅 Data de Vencimento: 10/${(new Date().getMonth() + 1).toString().padStart(2, '0')}/${new Date().getFullYear()}
 💰 Valor: R$ 29,90/mês
 ⏰ Dias em Atraso: 10+ dias
 
 Para evitar o bloqueamento do acesso, regularize seu pagamento imediatamente.
 
 📞 Dúvidas? Entre em contato conosco.
-📧 Email: rsautomacao2000@gmail.com
+📧 Email: rsautomacao2000@gmail.com / Whatsapp: (11) 94832-1756
 
-Equipe RSystem`
-          break
-        case 'access_blocked':
-          subject = 'Acesso Bloqueado - Meu Portal'
-          message = `Olá ${teamData.name}!
-
-Devido ao não pagamento da mensalidade, seu acesso ao Meu Portal foi bloqueado.
-
-🔒 Status: ACESSO BLOQUEADO
-📅 Data de Vencimento: ${new Date().toLocaleDateString('pt-BR')}
-💰 Valor: R$ 29,90/mês
-
-Para reativar seu acesso, efetue o pagamento da mensalidade em atraso.
-
-📞 Dúvidas? Entre em contato conosco.
-📧 Email: rsautomacao2000@gmail.com
-
-Equipe RSystem`
+Equipe Meu Portal`
           break
         default:
           console.error('[SEND-MESSAGE] Tipo de mensagem inválido:', messageType)

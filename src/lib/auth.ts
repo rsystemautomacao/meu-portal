@@ -41,6 +41,16 @@ export const authOptions: NextAuthOptions = {
           return null
         }
 
+        // Buscar o time do usuário
+        const teamUser = await prisma.teamUser.findFirst({
+          where: { userId: user.id },
+          include: { team: true }
+        })
+        if (teamUser && teamUser.team && teamUser.team.status === 'BLOCKED') {
+          // Retornar erro específico para bloqueio
+          throw new Error('blocked')
+        }
+
         return {
           id: user.id,
           email: user.email,

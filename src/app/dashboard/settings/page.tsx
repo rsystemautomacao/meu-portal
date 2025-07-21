@@ -83,6 +83,7 @@ export default function SettingsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [logoFile, setLogoFile] = useState<File | null>(null)
   const [logoPreview, setLogoPreview] = useState<string | null>(null)
+  const [paused, setPaused] = useState(false)
 
 
   useEffect(() => {
@@ -93,10 +94,15 @@ export default function SettingsPage() {
         const response = await fetch('/api/team-settings')
         if (!response.ok) throw new Error('Falha ao buscar configurações')
         const data = await response.json()
-        // Checagem de status do time
-        if (data.status === 'BLOCKED' || data.status === 'PAUSED') {
-          router.push('/acesso-bloqueado')
+        if (data.status === 'BLOCKED') {
+          await fetch('/api/auth/logout')
+          router.push('/auth/login?blocked=1')
           return
+        }
+        if (data.status === 'PAUSED') {
+          setPaused(true)
+        } else {
+          setPaused(false)
         }
         setSettings({
           name: data.name || '',
@@ -282,6 +288,13 @@ export default function SettingsPage() {
                 Gerencie as informações, aparência e outras configurações do seu time.
             </p>
         </div>
+
+        {/* Banner de aviso para PAUSED */}
+        {paused && (
+          <div className="w-full bg-yellow-100 border-b border-yellow-300 text-yellow-900 text-center py-2 font-semibold">
+            Seu time está <span className="font-bold">pausado</span>. Não serão geradas novas mensalidades até reativação.
+          </div>
+        )}
 
         {/* Débitos Históricos - PRIMEIRA SEÇÃO */}
         <HistoricalDebts onDebtsChange={() => {}} />
