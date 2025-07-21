@@ -216,7 +216,7 @@ export default function AdminDashboard() {
         await handleTeamAction(teamId, 'block')
         
         // Enviar mensagem de bloqueio
-        await handleSendMessage(teamId, 'access_blocked')
+        await sendMessageDirect(teamId, 'access_blocked')
         
         alert(`🔒 Time ${data.teamName} foi bloqueado automaticamente por atraso de ${data.paymentStatus.daysOverdue} dias`)
       }
@@ -225,7 +225,7 @@ export default function AdminDashboard() {
         console.log(`⚠️ Time ${data.teamName} em atraso há ${data.paymentStatus.daysOverdue} dias`)
         
         // Enviar mensagem de atraso
-        await handleSendMessage(teamId, 'payment_overdue')
+        await sendMessageDirect(teamId, 'payment_overdue')
         
         alert(`⚠️ Aviso enviado para ${data.teamName} - ${data.paymentStatus.daysOverdue} dias em atraso`)
       }
@@ -236,6 +236,25 @@ export default function AdminDashboard() {
       return null
     }
   }
+
+  // Função utilitária para envio direto de mensagem (sem modal)
+  const sendMessageDirect = async (teamId: string, messageType: string) => {
+    try {
+      const response = await fetch(`/api/admin/teams/${teamId}/send-message`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messageType })
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Erro ao enviar mensagem');
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Erro ao enviar mensagem:', error);
+      return null;
+    }
+  };
 
   if (loading) {
     return (
