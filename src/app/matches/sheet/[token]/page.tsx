@@ -51,6 +51,72 @@ export default function MatchSheetPage() {
 
   const STORAGE_KEY = token ? `sumula-online-${token}` : 'sumula-online-temp'
 
+  // Proteção contra reload/refresh
+  const [showReloadModal, setShowReloadModal] = useState(false)
+  const reloadCallback = useRef<(() => void) | null>(null)
+
+  // Proteção contra reload/refresh
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      // Só bloquear se houver dados não salvos (ex: eventos, presentes, timers em andamento)
+      if ((events.length > 0 || presentes.length > 0 || timerRunning[1] || timerRunning[2]) && !showReloadModal) {
+        e.preventDefault()
+        e.returnValue = ''
+        setShowReloadModal(true)
+        return ''
+      }
+    }
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload)
+    }
+  }, [events, presentes, timerRunning, showReloadModal])
+
+  // Interceptar F5, Ctrl+R, etc.
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.key === 'F5' || (e.ctrlKey && e.key === 'r')) && (events.length > 0 || presentes.length > 0 || timerRunning[1] || timerRunning[2])) {
+        e.preventDefault()
+        setShowReloadModal(true)
+        reloadCallback.current = () => window.location.reload()
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [events, presentes, timerRunning])
+
+  // Modal customizado de confirmação de reload
+  {/* Modal de confirmação de reload/refresh */}
+  {showReloadModal && (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60">
+      <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center border-2 border-red-300">
+        <div className="text-3xl mb-4">⚠️</div>
+        <div className="font-bold text-xl text-red-700 mb-2">Atenção!</div>
+        <div className="text-gray-700 mb-6">Se você atualizar ou sair da página agora, poderá perder todos os dados não salvos da súmula em andamento.</div>
+        <div className="flex gap-4 justify-center">
+          <button
+            className="bg-gradient-to-r from-red-600 to-pink-600 text-white rounded-xl px-6 py-3 font-bold text-lg shadow-lg hover:from-red-700 hover:to-pink-700 transition-all duration-200"
+            onClick={() => {
+              setShowReloadModal(false)
+              if (reloadCallback.current) reloadCallback.current()
+              else window.removeEventListener('beforeunload', () => {})
+            }}
+          >
+            Atualizar mesmo assim
+          </button>
+          <button
+            className="bg-gradient-to-r from-gray-300 to-gray-400 text-gray-800 rounded-xl px-6 py-3 font-bold text-lg shadow-lg hover:from-gray-400 hover:to-gray-500 transition-all duration-200"
+            onClick={() => setShowReloadModal(false)}
+          >
+            Cancelar atualização
+          </button>
+        </div>
+      </div>
+    </div>
+  )}
+
   // Forçar orientação landscape em dispositivos móveis
   useEffect(() => {
     const forceLandscape = async () => {
@@ -360,6 +426,18 @@ export default function MatchSheetPage() {
     } catch (err: any) {
       setFullscreenError('Não foi possível forçar a orientação. Gire o celular manualmente.')
     }
+  }
+
+  // Estado para controle de fechamento
+  const [showCloseInfo, setShowCloseInfo] = useState(false)
+
+  // Função para fechar a aba/janela da súmula
+  function closeSheetPage() {
+    window.close()
+    // Se não fechar, mostrar orientação
+    setTimeout(() => {
+      if (!window.closed) setShowCloseInfo(true)
+    }, 300)
   }
 
   if (!restaurado) return <div className="p-6 text-center">Carregando...</div>
@@ -752,10 +830,7 @@ export default function MatchSheetPage() {
       {finalizado && (
         <button
           className="w-full max-w-6xl bg-gradient-to-r from-green-700 to-emerald-700 text-white rounded-2xl py-6 font-bold text-xl shadow-xl mb-6"
-          onClick={() => {
-            setFinalizado(true)
-            router.push('/dashboard/matches')
-          }}
+          onClick={closeSheetPage}
         >
           🎉 Súmula finalizada e salva!
         </button>
@@ -763,10 +838,27 @@ export default function MatchSheetPage() {
 
       <button
         className="w-full max-w-6xl bg-gradient-to-r from-gray-200 to-gray-300 text-gray-700 rounded-2xl py-4 text-center font-bold shadow-lg mb-2 hover:from-gray-300 hover:to-gray-400 transition-all duration-200 transform hover:scale-105"
-        onClick={() => router.push('/dashboard/matches')}
+        onClick={closeSheetPage}
       >
         ← Voltar
       </button>
+
+      {/* Modal/mensagem de orientação caso não consiga fechar: */}
+      {showCloseInfo && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60">
+          <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center border-2 border-blue-300">
+            <div className="text-3xl mb-4">ℹ️</div>
+            <div className="font-bold text-xl text-blue-700 mb-2">Feche esta aba</div>
+            <div className="text-gray-700 mb-6">Por favor, feche esta aba manualmente para retornar ao app ou à tela anterior.</div>
+            <button
+              className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl px-6 py-3 font-bold text-lg shadow-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200"
+              onClick={() => setShowCloseInfo(false)}
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 } 

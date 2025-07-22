@@ -40,6 +40,14 @@ const statusOptions = [
   { value: 'INACTIVE', label: 'Inativo' }
 ]
 
+// Função utilitária para aplicar máscara DD/MM/AAAA
+function maskDate(value: string) {
+  value = value.replace(/\D/g, '').slice(0, 8)
+  if (value.length >= 5) return value.replace(/(\d{2})(\d{2})(\d{0,4})/, '$1/$2/$3')
+  if (value.length >= 3) return value.replace(/(\d{2})(\d{0,2})/, '$1/$2')
+  return value
+}
+
 export default function PlayerModal({ isOpen, onClose, onSave, player }: PlayerModalProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [photoPreview, setPhotoPreview] = useState<string | null>(null)
@@ -383,9 +391,10 @@ export default function PlayerModal({ isOpen, onClose, onSave, player }: PlayerM
                             name="birthDate"
                             id="birthDate"
                             value={formData.birthDate}
-                            onChange={e => setFormData({ ...formData, birthDate: e.target.value.replace(/[^\d\/]/g, '').slice(0, 10) })}
+                            onChange={e => setFormData({ ...formData, birthDate: maskDate(e.target.value) })}
                             placeholder="DD/MM/AAAA"
                             maxLength={10}
+                            inputMode="numeric"
                             className="mt-1 block w-full rounded-md border-blue-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm bg-white/80 text-blue-900 font-semibold placeholder:text-blue-300"
                           />
                         </div>
@@ -397,9 +406,10 @@ export default function PlayerModal({ isOpen, onClose, onSave, player }: PlayerM
                             name="joinDate"
                             id="joinDate"
                             value={formData.joinDate}
-                            onChange={e => setFormData({ ...formData, joinDate: e.target.value.replace(/[^\d\/]/g, '').slice(0, 10) })}
+                            onChange={e => setFormData({ ...formData, joinDate: maskDate(e.target.value) })}
                             placeholder="DD/MM/AAAA"
                             maxLength={10}
+                            inputMode="numeric"
                             className="mt-1 block w-full rounded-md border-blue-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm bg-white/80 text-blue-900 font-semibold placeholder:text-blue-300"
                           />
                         </div>

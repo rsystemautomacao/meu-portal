@@ -82,6 +82,49 @@ export default function StatsModal({ isOpen, onClose, events }: StatsModalProps)
     events: events.filter(ev => ev.quadro === q)
   }))
 
+  const [copied, setCopied] = useState(false)
+
+  // Função para copiar estatísticas formatadas para WhatsApp
+  function handleCopyStats() {
+    let text = '📊 *Estatísticas da Súmula*\n\n'
+    for (const quadro of [1, 2]) {
+      text += `*${quadro}º Quadro*\n`
+      const evs = events.filter(ev => ev.quadro === quadro)
+      if (evs.length === 0) {
+        text += '_Nenhum evento registrado._\n'
+      } else {
+        for (const ev of evs) {
+          let line = ''
+          switch (ev.type) {
+            case 'goal':
+              line += '⚽ *Gol* ' + ev.player
+              if (ev.assist) line += ` (🅰️ ${ev.assist})`
+              break
+            case 'assist':
+              line += '🅰️ *Assistência* ' + ev.player
+              break
+            case 'yellow_card':
+              line += '🟨 *Amarelo* ' + ev.player
+              break
+            case 'red_card':
+              line += '🟥 *Vermelho* ' + ev.player
+              break
+            default:
+              line += ev.type + ' ' + ev.player
+          }
+          if (ev.minute) line += ` ${ev.minute}'`
+          if (ev.team === 'home') line += ' (🏠)'
+          if (ev.team === 'away') line += ' (⚔️)'
+          text += line + '\n'
+        }
+      }
+      text += '\n'
+    }
+    navigator.clipboard.writeText(text)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
   return (
     <Transition.Root show={isOpen} as={Fragment}>
       <Dialog as="div" className="relative z-10" onClose={onClose}>
@@ -116,6 +159,16 @@ export default function StatsModal({ isOpen, onClose, events }: StatsModalProps)
                   >
                     <span className="sr-only">Fechar</span>
                     <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                  </button>
+                </div>
+                <div className="flex justify-end mb-2">
+                  <button
+                    onClick={handleCopyStats}
+                    className={`inline-flex items-center gap-2 px-3 py-1 rounded font-semibold text-sm shadow transition-colors duration-200 ${copied ? 'bg-green-600 text-white' : 'bg-blue-600 text-white hover:bg-blue-700'}`}
+                    title="Copiar estatísticas para WhatsApp"
+                  >
+                    {copied ? <CheckCircleIcon className="h-5 w-5" /> : <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16h8M8 12h8m-8-4h8m-2-4v16m-4-16v16" /></svg>}
+                    {copied ? 'Copiado!' : 'Copiar' }
                   </button>
                 </div>
                 <Dialog.Title as="h3" className="text-lg font-semibold leading-6 text-gray-900 mb-4">

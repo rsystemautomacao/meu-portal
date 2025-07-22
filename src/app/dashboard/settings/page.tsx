@@ -155,18 +155,18 @@ export default function SettingsPage() {
     try {
       let logoUrl = settings.logo;
       if (logoFile) {
-        // Upload da imagem para o Cloudinary
+        // Upload da imagem para o backend (API /api/upload)
         const formData = new FormData();
         formData.append('file', logoFile);
-        formData.append('upload_preset', 'my-uploads'); // Substitua pelo seu upload preset
 
-        const uploadResponse = await fetch(`https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`, {
-            method: 'POST',
-            body: formData,
+        const uploadResponse = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData,
         });
 
         if (!uploadResponse.ok) {
-            throw new Error('Falha no upload da imagem.');
+          const errorData = await uploadResponse.json();
+          throw new Error(errorData.message || 'Falha no upload da imagem.');
         }
 
         const uploadData = await uploadResponse.json();

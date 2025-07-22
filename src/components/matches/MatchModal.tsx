@@ -208,6 +208,8 @@ export default function MatchModal({ isOpen, onClose, onSave, match }: MatchModa
     const events: any[] = []
     // 1º quadro - nosso time
     presentes1.forEach(j => {
+      // Evento de presença
+      events.push({ type: 'presenca', player: j.name, minute: 0, team: 'home', quadro: 1 })
       const stats = playerStats1[j.id] || {}
       for (let i = 0; i < (stats.gols || 0); i++) {
         events.push({ type: 'goal', player: j.name, minute: 0, team: 'home', quadro: 1, assist: stats.assist > 0 ? presentes1.find(p => p.id !== j.id && playerStats1[p.id]?.assist > 0)?.name : null })
@@ -233,6 +235,8 @@ export default function MatchModal({ isOpen, onClose, onSave, match }: MatchModa
 
     // 2º quadro - nosso time
     presentes2.forEach(j => {
+      // Evento de presença
+      events.push({ type: 'presenca', player: j.name, minute: 0, team: 'home', quadro: 2 })
       const stats = playerStats2[j.id] || {}
       for (let i = 0; i < (stats.gols || 0); i++) {
         events.push({ type: 'goal', player: j.name, minute: 0, team: 'home', quadro: 2, assist: stats.assist > 0 ? presentes2.find(p => p.id !== j.id && playerStats2[p.id]?.assist > 0)?.name : null })
@@ -256,7 +260,7 @@ export default function MatchModal({ isOpen, onClose, onSave, match }: MatchModa
       events.push({ type: 'goal', player: 'Adversário', minute: 0, team: 'away', quadro: 2 })
     }
 
-    onSave({
+    const matchData = {
       ...formData,
       date: formData.date ? formData.date.toISOString() : '',
       ourScore1,
@@ -265,7 +269,12 @@ export default function MatchModal({ isOpen, onClose, onSave, match }: MatchModa
       opponentScore2,
       location: formData.location,
       events
-    })
+    }
+    // Remover shareToken se existir (por segurança)
+    if ('shareToken' in matchData) {
+      delete (matchData as any).shareToken
+    }
+    onSave(matchData)
   }
 
   return (

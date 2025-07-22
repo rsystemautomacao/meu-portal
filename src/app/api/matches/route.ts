@@ -91,9 +91,16 @@ export async function POST(request: NextRequest) {
     if (data.shareToken) {
       matchData.shareToken = data.shareToken
     }
-    if (typeof matchData.shareToken !== 'undefined' && (!matchData.shareToken || matchData.shareToken === '')) {
+    // Se não houver shareToken, gerar um valor único para evitar erro de constraint
+    if (!matchData.shareToken) {
+      matchData.shareToken = 'manual-' + Date.now() + '-' + Math.floor(Math.random() * 1000000)
+    }
+    // Remover shareToken do objeto se for undefined, null ou string vazia
+    if (!matchData.shareToken) {
       delete matchData.shareToken;
     }
+    // Log para depuração
+    console.log('[MATCH CREATE] Valor de shareToken recebido:', matchData.shareToken)
     const match = await prisma.match.create({
       data: matchData,
       include: {
