@@ -440,6 +440,15 @@ export default function MatchSheetPage() {
     }, 300)
   }
 
+  // Detectar se é Safari/iOS
+  const isSafari = typeof window !== 'undefined' &&
+    /Safari/.test(navigator.userAgent) &&
+    !/Chrome/.test(navigator.userAgent)
+  const isIOS = typeof window !== 'undefined' &&
+    (/iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1))
+
+  const showBanner = (events.length > 0 || presentes.length > 0 || timerRunning[1] || timerRunning[2]) && !finalizado
+
   if (!restaurado) return <div className="p-6 text-center">Carregando...</div>
   if (loading) {
     return (
@@ -480,6 +489,14 @@ export default function MatchSheetPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex flex-col items-center px-4 py-6">
+      {showBanner && (
+        <div className="fixed top-0 left-0 w-full z-50 bg-red-100 border-b-2 border-red-300 text-red-900 text-center py-2 font-bold flex flex-col items-center shadow-lg animate-pulse">
+          <span className="text-base">⚠️ Não recarregue ou feche esta página durante o preenchimento da súmula. Você pode perder dados não salvos.</span>
+          {(isSafari || isIOS) && (
+            <span className="text-xs text-red-700 mt-1">No Safari/iPhone, não é possível exibir alerta de confirmação ao recarregar. Salve a súmula antes de sair!</span>
+          )}
+        </div>
+      )}
       {/* Banner de orientação */}
       {showOrientationBanner && (
         <div className="fixed top-0 left-0 w-full z-50 bg-yellow-100 border-b-2 border-yellow-300 text-yellow-900 text-center py-3 font-bold flex flex-col items-center shadow-lg animate-pulse">

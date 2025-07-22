@@ -67,6 +67,7 @@ export default function PlayerModal({ isOpen, onClose, onSave, player }: PlayerM
     if (player) {
       setFormData({
         ...player,
+        isExempt: !!player.isExempt,
         birthDate: player.birthDate ? format(new Date(player.birthDate), 'dd/MM/yyyy') : '',
         joinDate: player.joinDate ? format(new Date(player.joinDate), 'dd/MM/yyyy') : '',
       })

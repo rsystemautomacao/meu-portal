@@ -29,7 +29,12 @@ export async function GET(request: NextRequest) {
       },
       orderBy: { name: 'asc' }
     })
-    return NextResponse.json(players)
+    // Adicionar isExempt ao retorno
+    const playersWithIsExempt = players.map(player => ({
+      ...player,
+      isExempt: !!player.isExempt
+    }))
+    return NextResponse.json(playersWithIsExempt)
   } catch (error) {
     console.error('Erro ao listar jogadores:', error)
     return NextResponse.json({ error: 'Erro ao listar jogadores' }, { status: 500 })
@@ -44,7 +49,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
     }
     const data = await request.json()
-    const { name, position, number, photoUrl, birthDate, status, monthlyFee } = data
+    const { name, position, number, photoUrl, birthDate, status, monthlyFee, isExempt } = data
     if (!name || !position) {
       return NextResponse.json({ error: 'Nome e posição são obrigatórios' }, { status: 400 })
     }
@@ -66,6 +71,7 @@ export async function POST(request: NextRequest) {
         birthDate: birthDate ? new Date(birthDate) : null,
         status: status || 'ACTIVE',
         monthlyFee: monthlyFee ? Number(monthlyFee) : 0,
+        isExempt: !!isExempt,
         teamId: teamUser.teamId
       }
     })

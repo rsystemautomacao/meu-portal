@@ -341,11 +341,13 @@ export default function PlayersPage() {
 
         {/* Lista de Jogadores */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {players.map((player) => (
-            <div
-              key={player.id}
-              className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden transition-all duration-200 hover:shadow-xl hover:scale-105"
-            >
+          {players.map((player) => {
+            console.log('Player:', player.name, 'isExempt:', player.isExempt)
+            return (
+              <div
+                key={player.id}
+                className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden transition-all duration-200 hover:shadow-xl hover:scale-105"
+              >
               {/* Header do Card */}
               <div className="relative p-6">
                 <div className="flex items-center space-x-4">
@@ -415,9 +417,21 @@ export default function PlayersPage() {
                   
                   <div className="flex items-center space-x-2">
                     <CurrencyDollarIcon className="h-4 w-4 text-orange-500" />
-                    <span className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${getPaymentStatusColor(player.monthlyFeeStatus)}`}>
-                      {getPaymentStatusText(player.monthlyFeeStatus)}
-                    </span>
+                    {player.isExempt ? (
+                      <span className="inline-flex rounded-full px-2 text-xs font-semibold leading-5 bg-gray-100 text-gray-800">
+                        R$ 0,00 (Isento)
+                      </span>
+                    ) : (
+                      typeof player.monthlyFee === 'number' && !isNaN(player.monthlyFee) && player.monthlyFee !== null && player.monthlyFee !== undefined && player.monthlyFee !== 0 ? (
+                        <span className="inline-flex rounded-full px-2 text-xs font-semibold leading-5 bg-blue-100 text-blue-800">
+                          {`R$ ${Number(player.monthlyFee).toFixed(2)}`}
+                        </span>
+                      ) : (
+                        <span className="inline-flex rounded-full px-2 text-xs font-semibold leading-5 bg-gray-100 text-gray-800">
+                          Não definido
+                        </span>
+                      )
+                    )}
                   </div>
                 </div>
 
@@ -447,7 +461,7 @@ export default function PlayersPage() {
                 </div>
               </div>
             </div>
-          ))}
+          )})}
         </div>
 
         {/* Mensagem quando não há jogadores */}
@@ -483,7 +497,7 @@ export default function PlayersPage() {
           photoUrl: selectedPlayer.photoUrl,
           birthDate: selectedPlayer.birthDate,
           joinDate: selectedPlayer.joinDate,
-          isExempt: selectedPlayer.isExempt || false,
+          isExempt: !!selectedPlayer.isExempt,
           monthlyFee: selectedPlayer.monthlyFee?.toString() || ''
         } : undefined}
       />

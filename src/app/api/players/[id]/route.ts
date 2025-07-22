@@ -160,7 +160,8 @@ export async function PUT(
         photoUrl: photoUrl || null,
         birthDate: birthDate ? new Date(birthDate) : undefined,
         joinDate: joinDate ? new Date(joinDate) : undefined,
-        monthlyFee: monthlyFee ? Number(monthlyFee) : 0
+        monthlyFee: monthlyFee ? Number(monthlyFee) : 0,
+        isExempt: !!isExempt
       },
       include: {
         monthlyFeeExceptions: {

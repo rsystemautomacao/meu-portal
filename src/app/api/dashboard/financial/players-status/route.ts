@@ -111,15 +111,20 @@ export async function GET(req: Request) {
     })
 
     const playersWithStatus = players.map(player => {
-      const { status, lastPaymentDate } = getPaymentStatus(player, dueDay, today)
-      
+      // Jogador isento global (no cadastro)
+      const isGloballyExempt = player.isExempt === true
+      const { status, lastPaymentDate } = isGloballyExempt
+        ? { status: 'exempt', lastPaymentDate: null }
+        : getPaymentStatus(player, dueDay, today)
+      const isExempt = status === 'exempt' || isGloballyExempt
       return {
         id: player.id,
         name: player.name,
         monthlyFee: player.monthlyFee,
         dueDay,
         lastPaymentDate: lastPaymentDate || null,
-        status
+        status,
+        isExempt
       }
     })
 

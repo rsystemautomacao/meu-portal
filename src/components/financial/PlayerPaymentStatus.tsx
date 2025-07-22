@@ -108,7 +108,13 @@ export default function PlayerPaymentStatus({ onPlayerSelect, onTransactionsChan
           })
         })
       } else {
+        // Validação extra: garantir que o valor da mensalidade está definido e é maior que zero
+        if (typeof player.monthlyFee !== 'number' || isNaN(player.monthlyFee) || player.monthlyFee <= 0) {
+          toast.error('Defina o valor da mensalidade do jogador antes de registrar o pagamento.')
+          return
+        }
         // Criar novo pagamento
+        const isIsento = paymentData.status === 'isento' || paymentData.status === 'exempt'
         response = await fetch('/api/financial/generate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -116,8 +122,8 @@ export default function PlayerPaymentStatus({ onPlayerSelect, onTransactionsChan
             playerIds: [player.id],
             month,
             year,
-            amount: player.monthlyFee,
-            status: paymentData.status
+            amount: isIsento ? 0 : player.monthlyFee,
+            status: isIsento ? 'exempt' : paymentData.status
           })
         })
       }
@@ -302,8 +308,8 @@ export default function PlayerPaymentStatus({ onPlayerSelect, onTransactionsChan
                 return (
                   <tr
                     key={player.id}
-                    onClick={() => handleOpenPaymentModal(player)}
-                    className="hover:bg-gray-50 cursor-pointer"
+                    onClick={() => !player.isExempt && handleOpenPaymentModal(player)}
+                    className={`hover:bg-gray-50 cursor-pointer ${player.isExempt ? 'opacity-60 cursor-not-allowed' : ''}`}
                   >
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900">{player.name}</div>
@@ -337,7 +343,7 @@ export default function PlayerPaymentStatus({ onPlayerSelect, onTransactionsChan
                           player.status
                         )}`}
                       >
-                        {getStatusText(player.status)}
+                        {player.isExempt ? 'Isento' : getStatusText(player.status)}
                       </span>
                     </td>
                   </tr>
