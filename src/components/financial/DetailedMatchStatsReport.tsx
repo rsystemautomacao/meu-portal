@@ -97,7 +97,7 @@ export default function DetailedMatchStatsReport() {
     if (!Array.isArray(match.events)) return
     // Presenças: para cada quadro, se o jogador tem evento 'home' naquele quadro, conta presença
     for (const quadro of [1, 2]) {
-      const presentesQuadro = new Set(
+      const presentesQuadro = new Set<string>(
         (match.events || [])
           .filter((ev: any) =>
             ev.team === 'home' &&
