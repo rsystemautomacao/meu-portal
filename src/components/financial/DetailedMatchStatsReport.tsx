@@ -109,7 +109,7 @@ export default function DetailedMatchStatsReport() {
           )
           .map((ev: any) => ev.player)
       )
-      presentesQuadro.forEach((playerName: string) => {
+      presentesQuadro.forEach(playerName => {
         allPlayers.add(playerName)
         if (!presencas[playerName]) presencas[playerName] = 0
         presencas[playerName]++
