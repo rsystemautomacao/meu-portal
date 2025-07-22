@@ -75,7 +75,9 @@ export async function GET(req: Request) {
     })
 
     // Processar dados dos jogadores
-    const playersWithHistory = players.map((player: any) => {
+    const playersWithHistory = players
+      .filter((player: any) => !player.isExempt)
+      .map((player: any) => {
       // Calcular total em aberto (pagamentos + débitos históricos)
       const outstandingPayments = player.payments.filter((p: any) => 
         p.status === 'PENDING' || p.status === 'LATE'

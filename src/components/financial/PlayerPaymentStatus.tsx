@@ -5,6 +5,7 @@ import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import PaymentModal from './PaymentModal'
 import { toast } from 'react-hot-toast'
+import { UserGroupIcon } from '@heroicons/react/24/outline'
 
 interface Player {
   id: string
@@ -219,6 +220,13 @@ export default function PlayerPaymentStatus({ onPlayerSelect, onTransactionsChan
 
   return (
     <div className="bg-white shadow rounded-lg p-6">
+      <div className="flex items-center gap-3 mb-6">
+        <span className="bg-blue-100 p-2 rounded-full"><UserGroupIcon className="h-7 w-7 text-blue-500" /></span>
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">Status dos Pagamentos</h2>
+          <p className="text-gray-600 text-sm">Acompanhe a situação de pagamento dos jogadores</p>
+        </div>
+      </div>
       <div className="flex justify-between items-center mb-6 flex-wrap gap-2">
         <h2 className="text-lg font-medium text-gray-900">Status dos Pagamentos</h2>
         <div className="flex gap-2 bg-gray-100 rounded-lg p-1 overflow-x-auto">
@@ -275,7 +283,7 @@ export default function PlayerPaymentStatus({ onPlayerSelect, onTransactionsChan
         </div>
       </div>
 
-      <div className="overflow-x-auto w-full">
+      <div className="overflow-x-auto w-full max-h-[420px] md:max-h-[520px] overflow-y-auto rounded-xl border border-gray-100 shadow-sm">
         <table className="min-w-full divide-y divide-gray-200 text-xs sm:text-sm">
           <thead className="bg-gray-50">
             <tr>
@@ -308,8 +316,8 @@ export default function PlayerPaymentStatus({ onPlayerSelect, onTransactionsChan
                 return (
                   <tr
                     key={player.id}
-                    onClick={() => !player.isExempt && handleOpenPaymentModal(player)}
-                    className={`hover:bg-gray-50 cursor-pointer ${player.isExempt ? 'opacity-60 cursor-not-allowed' : ''}`}
+                    onClick={() => handleOpenPaymentModal(player)}
+                    className={`hover:bg-gray-50 cursor-pointer${player.isExempt ? ' opacity-60' : ''}`}
                   >
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900">{player.name}</div>

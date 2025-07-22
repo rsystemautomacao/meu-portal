@@ -27,6 +27,7 @@ import MonthlyFeeConfig from '@/components/financial/MonthlyFeeConfig'
 import MonthlyFeeExceptions from '@/components/financial/MonthlyFeeExceptions'
 import PaymentAlerts from '@/components/financial/PaymentAlerts'
 import { useRouter } from 'next/navigation'
+import DetailedMatchStatsReport from '@/components/financial/DetailedMatchStatsReport'
 
 // Desabilitar pré-renderização estática
 export const dynamic = 'force-dynamic'
@@ -90,15 +91,15 @@ export default function FinancialPage() {
 
       {/* Navegação por abas */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="border-b border-gray-200">
-          <nav className="-mb-px flex space-x-2 sm:space-x-4 lg:space-x-8 overflow-x-auto">
+        <div className="border-b border-gray-200 bg-white rounded-t-xl shadow-sm">
+          <nav className="flex space-x-2 sm:space-x-4 lg:space-x-8 overflow-x-auto px-2 py-2">
             <button
               onClick={() => setActiveTab('overview')}
               className={`${
                 activeTab === 'overview'
-                  ? 'border-indigo-500 text-indigo-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              } whitespace-nowrap py-4 px-2 sm:px-4 border-b-2 font-medium text-xs sm:text-sm flex-shrink-0`}
+                  ? 'border-b-4 border-blue-600 text-blue-700 font-bold bg-blue-50 shadow'
+                  : 'border-b-4 border-transparent text-gray-500 hover:text-blue-600 hover:bg-blue-50'
+              } whitespace-nowrap py-3 px-4 rounded-t-lg transition-all duration-150`}
             >
               Visão Geral
             </button>
@@ -106,9 +107,9 @@ export default function FinancialPage() {
               onClick={() => setActiveTab('players')}
               className={`${
                 activeTab === 'players'
-                  ? 'border-indigo-500 text-indigo-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              } whitespace-nowrap py-4 px-2 sm:px-4 border-b-2 font-medium text-xs sm:text-sm flex-shrink-0`}
+                  ? 'border-b-4 border-blue-600 text-blue-700 font-bold bg-blue-50 shadow'
+                  : 'border-b-4 border-transparent text-gray-500 hover:text-blue-600 hover:bg-blue-50'
+              } whitespace-nowrap py-3 px-4 rounded-t-lg transition-all duration-150`}
             >
               Jogadores
             </button>
@@ -116,9 +117,9 @@ export default function FinancialPage() {
               onClick={() => setActiveTab('transactions')}
               className={`${
                 activeTab === 'transactions'
-                  ? 'border-indigo-500 text-indigo-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              } whitespace-nowrap py-4 px-2 sm:px-4 border-b-2 font-medium text-xs sm:text-sm flex-shrink-0`}
+                  ? 'border-b-4 border-blue-600 text-blue-700 font-bold bg-blue-50 shadow'
+                  : 'border-b-4 border-transparent text-gray-500 hover:text-blue-600 hover:bg-blue-50'
+              } whitespace-nowrap py-3 px-4 rounded-t-lg transition-all duration-150`}
             >
               Transações
             </button>
@@ -126,9 +127,9 @@ export default function FinancialPage() {
               onClick={() => setActiveTab('reports')}
               className={`${
                 activeTab === 'reports'
-                  ? 'border-indigo-500 text-indigo-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              } whitespace-nowrap py-4 px-2 sm:px-4 border-b-2 font-medium text-xs sm:text-sm flex-shrink-0`}
+                  ? 'border-b-4 border-blue-600 text-blue-700 font-bold bg-blue-50 shadow'
+                  : 'border-b-4 border-transparent text-gray-500 hover:text-blue-600 hover:bg-blue-50'
+              } whitespace-nowrap py-3 px-4 rounded-t-lg transition-all duration-150`}
             >
               Relatórios
             </button>
@@ -149,20 +150,17 @@ export default function FinancialPage() {
           )}
 
           {activeTab === 'transactions' && (
-            <div className="space-y-6">
+            <div className="flex flex-col items-center w-full space-y-8">
               <Suspense fallback={<div>Carregando alertas...</div>}>
                 <PaymentAlerts />
               </Suspense>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <div className="space-y-6 order-2 lg:order-1">
-                  {/* Ocultar MonthlyFeeConfig e MonthlyFeeExceptions */}
-                  {/* <MonthlyFeeConfig onConfigUpdate={() => {}} /> */}
-                  {/* <MonthlyFeeExceptions /> */}
-                </div>
-                <div className="space-y-6 order-1 lg:order-2">
+              <div className="w-full flex flex-col items-center">
+                <div className="w-full max-w-xl">
                   <TransactionForm onTransactionCreated={() => setTransactionsRefresh(r => r + 1)} />
-                  <TransactionList refresh={transactionsRefresh} />
                 </div>
+              </div>
+              <div className="w-full">
+                <TransactionList refresh={transactionsRefresh} />
               </div>
             </div>
           )}
@@ -170,6 +168,7 @@ export default function FinancialPage() {
           {activeTab === 'reports' && (
             <div className="space-y-6">
               <MonthlyReport />
+              <DetailedMatchStatsReport />
               <DetailedPaymentReport />
             </div>
           )}

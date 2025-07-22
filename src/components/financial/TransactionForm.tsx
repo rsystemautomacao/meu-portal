@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { toast } from 'react-hot-toast'
+import { CurrencyDollarIcon } from '@heroicons/react/24/solid'
 
 type IncomeType = 'DONATION' | 'FESTIVAL' | 'MONTHLY_FEE' | 'RAFFLE' | 'OTHER'
 type ExpenseType = 'CHAMPIONSHIP' | 'CLEANING' | 'GAME_MATERIALS' | 'LEAGUE_MONTHLY' | 'COURT_MONTHLY' | 'UNIFORMS' | 'OTHER'
@@ -162,10 +163,13 @@ export default function TransactionForm({ onTransactionCreated }: TransactionFor
   const showDescription = formData.type === 'INCOME' && formData.incomeType === 'OTHER'
 
   return (
-    <div className="bg-white rounded-lg shadow p-6">
-      <h2 className="text-xl font-semibold mb-4">Registrar Transação</h2>
+    <div className="bg-gradient-to-br from-indigo-50 via-white to-blue-50 rounded-2xl shadow-2xl border border-indigo-100 p-8 w-full max-w-xl mx-auto animate-fade-in">
+      <div className="flex items-center gap-3 mb-6">
+        <span className="bg-indigo-100 p-2 rounded-full"><CurrencyDollarIcon className="h-7 w-7 text-indigo-500" /></span>
+        <h2 className="text-2xl font-bold text-indigo-900 drop-shadow">Registrar Transação</h2>
+      </div>
       
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-6">
         <div>
           <label className="block text-sm font-medium text-gray-700">
             Tipo de Transação
@@ -174,10 +178,10 @@ export default function TransactionForm({ onTransactionCreated }: TransactionFor
             <button
               type="button"
               onClick={() => handleTypeChange('INCOME')}
-              className={`px-3 py-2 rounded-md text-sm ${
+              className={`px-3 py-2 rounded-md text-sm font-semibold shadow transition-colors duration-200 ${
                 formData.type === 'INCOME'
-                  ? 'bg-green-100 text-green-800'
-                  : 'bg-gray-100 text-gray-800'
+                  ? 'bg-green-100 text-green-800 ring-2 ring-green-200'
+                  : 'bg-gray-100 text-gray-800 hover:bg-green-50'
               }`}
             >
               Entrada
@@ -185,10 +189,10 @@ export default function TransactionForm({ onTransactionCreated }: TransactionFor
             <button
               type="button"
               onClick={() => handleTypeChange('EXPENSE')}
-              className={`px-3 py-2 rounded-md text-sm ${
+              className={`px-3 py-2 rounded-md text-sm font-semibold shadow transition-colors duration-200 ${
                 formData.type === 'EXPENSE'
-                  ? 'bg-red-100 text-red-800'
-                  : 'bg-gray-100 text-gray-800'
+                  ? 'bg-red-100 text-red-800 ring-2 ring-red-200'
+                  : 'bg-gray-100 text-gray-800 hover:bg-red-50'
               }`}
             >
               Saída
@@ -200,16 +204,16 @@ export default function TransactionForm({ onTransactionCreated }: TransactionFor
           <label className="block text-sm font-medium text-gray-700">
             Categoria
           </label>
-          <div className="mt-1 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 gap-2">
+          <div className="mt-1 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 gap-3">
             {formData.type === 'INCOME' ? (
               <>
                 <button
                   type="button"
                   onClick={() => handleCategoryChange('DONATION')}
-                  className={`px-2 py-2 rounded-md text-xs sm:text-sm ${
+                  className={`px-2 py-2 rounded-lg text-xs sm:text-sm font-semibold shadow transition-colors duration-200 ${
                     formData.incomeType === 'DONATION'
-                      ? 'bg-green-100 text-green-800'
-                      : 'bg-gray-100 text-gray-800'
+                      ? 'bg-green-100 text-green-800 ring-2 ring-green-200'
+                      : 'bg-gray-100 text-gray-800 hover:bg-green-50'
                   }`}
                 >
                   Doação
@@ -217,10 +221,10 @@ export default function TransactionForm({ onTransactionCreated }: TransactionFor
                 <button
                   type="button"
                   onClick={() => handleCategoryChange('FESTIVAL')}
-                  className={`px-2 py-2 rounded-md text-xs sm:text-sm ${
+                  className={`px-2 py-2 rounded-lg text-xs sm:text-sm font-semibold shadow transition-colors duration-200 ${
                     formData.incomeType === 'FESTIVAL'
-                      ? 'bg-green-100 text-green-800'
-                      : 'bg-gray-100 text-gray-800'
+                      ? 'bg-green-100 text-green-800 ring-2 ring-green-200'
+                      : 'bg-gray-100 text-gray-800 hover:bg-green-50'
                   }`}
                 >
                   Festival
@@ -228,10 +232,10 @@ export default function TransactionForm({ onTransactionCreated }: TransactionFor
                 <button
                   type="button"
                   onClick={() => handleCategoryChange('MONTHLY_FEE')}
-                  className={`px-2 py-2 rounded-md text-xs sm:text-sm ${
+                  className={`px-2 py-2 rounded-lg text-xs sm:text-sm font-semibold shadow transition-colors duration-200 ${
                     formData.incomeType === 'MONTHLY_FEE'
-                      ? 'bg-green-100 text-green-800'
-                      : 'bg-gray-100 text-gray-800'
+                      ? 'bg-green-100 text-green-800 ring-2 ring-green-200'
+                      : 'bg-gray-100 text-gray-800 hover:bg-green-50'
                   }`}
                 >
                   Mensalidade
@@ -239,10 +243,10 @@ export default function TransactionForm({ onTransactionCreated }: TransactionFor
                 <button
                   type="button"
                   onClick={() => handleCategoryChange('RAFFLE')}
-                  className={`px-2 py-2 rounded-md text-xs sm:text-sm ${
+                  className={`px-2 py-2 rounded-lg text-xs sm:text-sm font-semibold shadow transition-colors duration-200 ${
                     formData.incomeType === 'RAFFLE'
-                      ? 'bg-green-100 text-green-800'
-                      : 'bg-gray-100 text-gray-800'
+                      ? 'bg-green-100 text-green-800 ring-2 ring-green-200'
+                      : 'bg-gray-100 text-gray-800 hover:bg-green-50'
                   }`}
                 >
                   Rifa
@@ -250,10 +254,10 @@ export default function TransactionForm({ onTransactionCreated }: TransactionFor
                 <button
                   type="button"
                   onClick={() => handleCategoryChange('OTHER')}
-                  className={`px-2 py-2 rounded-md text-xs sm:text-sm ${
+                  className={`px-2 py-2 rounded-lg text-xs sm:text-sm font-semibold shadow transition-colors duration-200 ${
                     formData.incomeType === 'OTHER'
-                      ? 'bg-green-100 text-green-800'
-                      : 'bg-gray-100 text-gray-800'
+                      ? 'bg-green-100 text-green-800 ring-2 ring-green-200'
+                      : 'bg-gray-100 text-gray-800 hover:bg-green-50'
                   }`}
                 >
                   Outros
@@ -264,10 +268,10 @@ export default function TransactionForm({ onTransactionCreated }: TransactionFor
                 <button
                   type="button"
                   onClick={() => handleCategoryChange('CHAMPIONSHIP')}
-                  className={`px-2 py-2 rounded-md text-xs sm:text-sm ${
+                  className={`px-2 py-2 rounded-lg text-xs sm:text-sm font-semibold shadow transition-colors duration-200 ${
                     formData.expenseType === 'CHAMPIONSHIP'
-                      ? 'bg-red-100 text-red-800'
-                      : 'bg-gray-100 text-gray-800'
+                      ? 'bg-red-100 text-red-800 ring-2 ring-red-200'
+                      : 'bg-gray-100 text-gray-800 hover:bg-red-50'
                   }`}
                 >
                   Campeonato
@@ -275,10 +279,10 @@ export default function TransactionForm({ onTransactionCreated }: TransactionFor
                 <button
                   type="button"
                   onClick={() => handleCategoryChange('CLEANING')}
-                  className={`px-2 py-2 rounded-md text-xs sm:text-sm ${
+                  className={`px-2 py-2 rounded-lg text-xs sm:text-sm font-semibold shadow transition-colors duration-200 ${
                     formData.expenseType === 'CLEANING'
-                      ? 'bg-red-100 text-red-800'
-                      : 'bg-gray-100 text-gray-800'
+                      ? 'bg-red-100 text-red-800 ring-2 ring-red-200'
+                      : 'bg-gray-100 text-gray-800 hover:bg-red-50'
                   }`}
                 >
                   Itens de limpeza
@@ -286,10 +290,10 @@ export default function TransactionForm({ onTransactionCreated }: TransactionFor
                 <button
                   type="button"
                   onClick={() => handleCategoryChange('GAME_MATERIALS')}
-                  className={`px-2 py-2 rounded-md text-xs sm:text-sm ${
+                  className={`px-2 py-2 rounded-lg text-xs sm:text-sm font-semibold shadow transition-colors duration-200 ${
                     formData.expenseType === 'GAME_MATERIALS'
-                      ? 'bg-red-100 text-red-800'
-                      : 'bg-gray-100 text-gray-800'
+                      ? 'bg-red-100 text-red-800 ring-2 ring-red-200'
+                      : 'bg-gray-100 text-gray-800 hover:bg-red-50'
                   }`}
                 >
                   Materiais de jogo
@@ -297,10 +301,10 @@ export default function TransactionForm({ onTransactionCreated }: TransactionFor
                 <button
                   type="button"
                   onClick={() => handleCategoryChange('LEAGUE_MONTHLY')}
-                  className={`px-2 py-2 rounded-md text-xs sm:text-sm ${
+                  className={`px-2 py-2 rounded-lg text-xs sm:text-sm font-semibold shadow transition-colors duration-200 ${
                     formData.expenseType === 'LEAGUE_MONTHLY'
-                      ? 'bg-red-100 text-red-800'
-                      : 'bg-gray-100 text-gray-800'
+                      ? 'bg-red-100 text-red-800 ring-2 ring-red-200'
+                      : 'bg-gray-100 text-gray-800 hover:bg-red-50'
                   }`}
                 >
                   Mensal Liga
@@ -308,10 +312,10 @@ export default function TransactionForm({ onTransactionCreated }: TransactionFor
                 <button
                   type="button"
                   onClick={() => handleCategoryChange('COURT_MONTHLY')}
-                  className={`px-2 py-2 rounded-md text-xs sm:text-sm ${
+                  className={`px-2 py-2 rounded-lg text-xs sm:text-sm font-semibold shadow transition-colors duration-200 ${
                     formData.expenseType === 'COURT_MONTHLY'
-                      ? 'bg-red-100 text-red-800'
-                      : 'bg-gray-100 text-gray-800'
+                      ? 'bg-red-100 text-red-800 ring-2 ring-red-200'
+                      : 'bg-gray-100 text-gray-800 hover:bg-red-50'
                   }`}
                 >
                   Mensal Quadra
@@ -319,10 +323,10 @@ export default function TransactionForm({ onTransactionCreated }: TransactionFor
                 <button
                   type="button"
                   onClick={() => handleCategoryChange('UNIFORMS')}
-                  className={`px-2 py-2 rounded-md text-xs sm:text-sm ${
+                  className={`px-2 py-2 rounded-lg text-xs sm:text-sm font-semibold shadow transition-colors duration-200 ${
                     formData.expenseType === 'UNIFORMS'
-                      ? 'bg-red-100 text-red-800'
-                      : 'bg-gray-100 text-gray-800'
+                      ? 'bg-red-100 text-red-800 ring-2 ring-red-200'
+                      : 'bg-gray-100 text-gray-800 hover:bg-red-50'
                   }`}
                 >
                   Uniformes
@@ -330,10 +334,10 @@ export default function TransactionForm({ onTransactionCreated }: TransactionFor
                 <button
                   type="button"
                   onClick={() => handleCategoryChange('OTHER')}
-                  className={`px-2 py-2 rounded-md text-xs sm:text-sm ${
+                  className={`px-2 py-2 rounded-lg text-xs sm:text-sm font-semibold shadow transition-colors duration-200 ${
                     formData.expenseType === 'OTHER'
-                      ? 'bg-red-100 text-red-800'
-                      : 'bg-gray-100 text-gray-800'
+                      ? 'bg-red-100 text-red-800 ring-2 ring-red-200'
+                      : 'bg-gray-100 text-gray-800 hover:bg-red-50'
                   }`}
                 >
                   Outros
@@ -425,7 +429,7 @@ export default function TransactionForm({ onTransactionCreated }: TransactionFor
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full bg-gradient-to-r from-indigo-500 to-blue-500 text-white py-3 px-4 rounded-xl font-bold shadow-lg hover:from-indigo-600 hover:to-blue-600 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-lg mt-4"
         >
           {loading ? 'Registrando...' : 'Registrar Transação'}
         </button>

@@ -128,14 +128,14 @@ export default function MonthlyReport() {
   return (
     <div className="bg-gradient-to-br from-white to-gray-50 shadow-xl rounded-2xl p-8 w-full border border-gray-100">
       <div className="flex justify-between items-center mb-8">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-1">Resumo Financeiro</h2>
-          <p className="text-gray-600 text-sm">Análise detalhada das finanças do time</p>
+        <div className="flex items-center gap-3">
+          <span className="bg-indigo-100 p-2 rounded-full"><ChartBarIcon className="h-7 w-7 text-indigo-500" /></span>
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-1">Resumo Financeiro</h2>
+            <p className="text-gray-600 text-sm">Análise detalhada das finanças do time</p>
+          </div>
         </div>
         <div className="flex items-center space-x-3">
-          <div className="bg-indigo-100 p-2 rounded-full">
-            <CalendarIcon className="h-5 w-5 text-indigo-600" />
-          </div>
           <input
             type="month"
             value={format(selectedMonth, 'yyyy-MM')}

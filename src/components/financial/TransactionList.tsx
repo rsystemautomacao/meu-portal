@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { toast } from 'react-hot-toast'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
+import { CurrencyDollarIcon } from '@heroicons/react/24/outline'
 
 interface Transaction {
   id: string
@@ -74,62 +75,71 @@ export default function TransactionList({ onTransactionDeleted, refresh }: Trans
   }
 
   return (
-    <div className="overflow-x-auto w-full">
-      <table className="min-w-full divide-y divide-gray-200 text-xs sm:text-sm">
-        <thead className="bg-gray-50">
-          <tr>
-            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Data
-            </th>
-            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Descrição
-            </th>
-            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Valor
-            </th>
-            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Tipo
-            </th>
-            <th scope="col" className="relative px-6 py-3">
-              <span className="sr-only">Ações</span>
-            </th>
-          </tr>
-        </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
-          {transactions.map((transaction) => (
-            <tr key={transaction.id}>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                {format(new Date(transaction.date), 'dd/MM/yyyy', { locale: ptBR })}
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                {transaction.description}
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm">
-                <span className={transaction.type === 'INCOME' ? 'text-green-600' : 'text-red-600'}>
-                  {transaction.type === 'INCOME' ? '+' : '-'} R$ {transaction.amount.toFixed(2)}
-                </span>
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm">
-                <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                  transaction.type === 'INCOME' 
-                    ? 'bg-green-100 text-green-800' 
-                    : 'bg-red-100 text-red-800'
-                }`}>
-                  {transaction.type === 'INCOME' ? 'Entrada' : 'Saída'}
-                </span>
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                <button
-                  onClick={() => handleDelete(transaction.id)}
-                  className="text-red-600 hover:text-red-900"
-                >
-                  Excluir
-                </button>
-              </td>
+    <div>
+      <div className="flex items-center gap-3 mb-6">
+        <span className="bg-green-100 p-2 rounded-full"><CurrencyDollarIcon className="h-7 w-7 text-green-500" /></span>
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">Transações Financeiras</h2>
+          <p className="text-gray-600 text-sm">Histórico detalhado das movimentações do time</p>
+        </div>
+      </div>
+      <div className="overflow-x-auto w-full max-h-[420px] md:max-h-[520px] overflow-y-auto rounded-xl border border-gray-100 shadow-sm">
+        <table className="min-w-full divide-y divide-gray-200 text-xs sm:text-sm">
+          <thead className="bg-gray-50">
+            <tr>
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Data
+              </th>
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Descrição
+              </th>
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Valor
+              </th>
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Tipo
+              </th>
+              <th scope="col" className="relative px-6 py-3">
+                <span className="sr-only">Ações</span>
+              </th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {transactions.map((transaction) => (
+              <tr key={transaction.id}>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {format(new Date(transaction.date), 'dd/MM/yyyy', { locale: ptBR })}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  {transaction.description}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm">
+                  <span className={transaction.type === 'INCOME' ? 'text-green-600' : 'text-red-600'}>
+                    {transaction.type === 'INCOME' ? '+' : '-'} R$ {transaction.amount.toFixed(2)}
+                  </span>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm">
+                  <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                    transaction.type === 'INCOME' 
+                      ? 'bg-green-100 text-green-800' 
+                      : 'bg-red-100 text-red-800'
+                  }`}>
+                    {transaction.type === 'INCOME' ? 'Entrada' : 'Saída'}
+                  </span>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                  <button
+                    onClick={() => handleDelete(transaction.id)}
+                    className="text-red-600 hover:text-red-900"
+                  >
+                    Excluir
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   )
 } 

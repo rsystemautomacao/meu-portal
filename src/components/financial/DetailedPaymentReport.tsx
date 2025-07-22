@@ -11,7 +11,8 @@ import {
   ArrowDownTrayIcon,
   ChatBubbleLeftRightIcon,
   ChevronDownIcon,
-  ChevronUpIcon
+  ChevronUpIcon,
+  FunnelIcon
 } from '@heroicons/react/24/outline'
 import { toast } from 'react-hot-toast'
 
@@ -59,6 +60,7 @@ export default function DetailedPaymentReport() {
   const [monthsBack, setMonthsBack] = useState(12)
   const [statusFilter, setStatusFilter] = useState<'all' | 'outstanding' | 'paid'>('all')
   const [expandedPlayers, setExpandedPlayers] = useState<Set<string>>(new Set())
+  const [showFilterMenu, setShowFilterMenu] = useState(false)
 
   useEffect(() => {
     fetchPaymentHistory()
@@ -232,56 +234,71 @@ export default function DetailedPaymentReport() {
   return (
     <div className="bg-white shadow rounded-lg p-6">
       <div className="flex justify-between items-center mb-6">
-        <h3 className="text-lg font-medium text-gray-900">Relatório de Mensalidades</h3>
-        
+        <div className="flex items-center gap-3">
+          <span className="bg-blue-100 p-2 rounded-full"><DocumentTextIcon className="h-7 w-7 text-blue-500" /></span>
+          <div>
+            <h3 className="text-2xl font-bold text-gray-900">Relatório de Mensalidades</h3>
+            <p className="text-gray-600 text-sm">Acompanhe os débitos e pagamentos dos jogadores</p>
+          </div>
+        </div>
         {/* Filtros */}
-        <div className="flex gap-2 flex-wrap">
-          <select
-            value={filterType}
-            onChange={(e) => {
-              setFilterType(e.target.value as 'all' | 'individual')
-              if (e.target.value === 'all') setSelectedPlayer('')
-            }}
-            className="rounded-md border-gray-300 text-sm"
+        <div className="relative">
+          <button
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold shadow hover:bg-blue-700 transition"
+            onClick={() => setShowFilterMenu(v => !v)}
           >
-            <option value="all">Todos os Jogadores</option>
-            <option value="individual">Jogador Específico</option>
-          </select>
-
-          {filterType === 'individual' && (
-            <select
-              value={selectedPlayer}
-              onChange={(e) => setSelectedPlayer(e.target.value)}
-              className="rounded-md border-gray-300 text-sm"
-            >
-              <option value="">Selecione o jogador</option>
-              {data.players.map(player => (
-                <option key={player.id} value={player.id}>
-                  {player.name} - {formatCurrency(player.totalOutstanding)}
-                </option>
-              ))}
-            </select>
+            <FunnelIcon className="h-5 w-5" />
+            Filtros
+            <ChevronDownIcon className="h-4 w-4" />
+          </button>
+          {showFilterMenu && (
+            <div className="absolute z-10 mt-2 bg-white border border-blue-200 rounded-lg shadow-lg p-2 flex flex-col gap-2 min-w-[220px]">
+              <label className="font-semibold text-blue-700 text-sm">Tipo</label>
+              <select
+                value={filterType}
+                onChange={e => { setFilterType(e.target.value as 'all' | 'individual'); if (e.target.value === 'all') setSelectedPlayer(''); }}
+                className="rounded-md border-gray-300 text-sm mb-2"
+              >
+                <option value="all">Todos os Jogadores</option>
+                <option value="individual">Jogador Específico</option>
+              </select>
+              {filterType === 'individual' && (
+                <select
+                  value={selectedPlayer}
+                  onChange={e => setSelectedPlayer(e.target.value)}
+                  className="rounded-md border-gray-300 text-sm mb-2"
+                >
+                  <option value="">Selecione o jogador</option>
+                  {data.players.map(player => (
+                    <option key={player.id} value={player.id}>
+                      {player.name} - {formatCurrency(player.totalOutstanding)}
+                    </option>
+                  ))}
+                </select>
+              )}
+              <label className="font-semibold text-blue-700 text-sm">Período</label>
+              <select
+                value={monthsBack}
+                onChange={e => setMonthsBack(parseInt(e.target.value))}
+                className="rounded-md border-gray-300 text-sm mb-2"
+              >
+                <option value={3}>Últimos 3 meses</option>
+                <option value={6}>Últimos 6 meses</option>
+                <option value={12}>Últimos 12 meses</option>
+              </select>
+              <label className="font-semibold text-blue-700 text-sm">Status</label>
+              <select
+                value={statusFilter}
+                onChange={e => setStatusFilter(e.target.value as 'all' | 'outstanding' | 'paid')}
+                className="rounded-md border-gray-300 text-sm"
+              >
+                <option value="all">Todos</option>
+                <option value="outstanding">Apenas em aberto</option>
+                <option value="paid">Apenas pagos</option>
+              </select>
+              <button className="mt-2 px-3 py-1 bg-blue-600 text-white rounded" onClick={() => setShowFilterMenu(false)}>OK</button>
+            </div>
           )}
-
-          <select
-            value={monthsBack}
-            onChange={(e) => setMonthsBack(parseInt(e.target.value))}
-            className="rounded-md border-gray-300 text-sm"
-          >
-            <option value={3}>Últimos 3 meses</option>
-            <option value={6}>Últimos 6 meses</option>
-            <option value={12}>Últimos 12 meses</option>
-          </select>
-
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value as 'all' | 'outstanding' | 'paid')}
-            className="rounded-md border-gray-300 text-sm"
-          >
-            <option value="all">Todos</option>
-            <option value="outstanding">Apenas em aberto</option>
-            <option value="paid">Apenas pagos</option>
-          </select>
         </div>
       </div>
 
