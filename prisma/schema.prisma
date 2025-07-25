@@ -255,4 +255,21 @@ model SharedReport {
   enabledReports  String[] // Array de relatórios habilitados
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+}
+
+model TeamSystemPayment {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  teamId    String   @db.ObjectId
+  month     Int
+  year      Int
+  amount    Float
+  status    String   @default("PENDING") // PENDING, PAID, OVERDUE
+  dueDate   DateTime
+  paidDate  DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([teamId])
+  @@index([status])
+  @@index([month, year])
 } 
