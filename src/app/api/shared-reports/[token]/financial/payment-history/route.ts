@@ -90,9 +90,9 @@ export async function GET(
       }
     })
 
-    // Calcular meses em aberto
+        // Calcular meses em aberto
     const players = Array.from(playersMap.values()).map(player => {
-      const outstandingPayments = player.payments.filter(p => 
+      const outstandingPayments = player.payments.filter((p: any) =>
         p.status === 'pending' || p.status === 'late'
       )
       player.monthsOutstanding = outstandingPayments.length
