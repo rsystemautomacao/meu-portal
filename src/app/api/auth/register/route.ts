@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import bcrypt from 'bcrypt'
 import { prisma } from '@/lib/prisma'
 import { Prisma } from '@prisma/client'
+import { MessagingService } from '@/lib/messaging'
 
 interface TeamData {
   name: string
@@ -88,6 +89,44 @@ export async function POST(req: Request) {
       })
 
       console.log('Usuário e time criados com sucesso')
+
+      // Enviar mensagem de boas-vindas automaticamente
+      try {
+        const systemConfig = await prisma.systemConfig.findFirst()
+        if (systemConfig?.welcomeMessage) {
+          const welcomeMessage = systemConfig.welcomeMessage
+            .replace(/{team}/g, team.name)
+            .replace(/{user}/g, team.name)
+
+          const messageData = {
+            teamId: result.team.id,
+            teamName: result.team.name,
+            whatsapp: result.team.whatsapp,
+            subject: 'Bem-vindo ao Meu Portal! 🎉',
+            message: welcomeMessage,
+            messageType: 'welcome',
+            sentAt: new Date().toISOString()
+          }
+
+          await MessagingService.sendNotification(messageData)
+
+          // Criar notificação no banco
+          await prisma.notification.create({
+            data: {
+              teamId: result.team.id,
+              title: 'Bem-vindo ao Meu Portal! 🎉',
+              message: welcomeMessage,
+              type: 'welcome',
+              isRead: false
+            }
+          })
+
+          console.log('✅ Mensagem de boas-vindas enviada com sucesso')
+        }
+      } catch (welcomeError) {
+        console.error('❌ Erro ao enviar mensagem de boas-vindas:', welcomeError)
+        // Não falha o registro se a mensagem não for enviada
+      }
 
       return NextResponse.json(
         { message: 'Usuário e time criados com sucesso' },

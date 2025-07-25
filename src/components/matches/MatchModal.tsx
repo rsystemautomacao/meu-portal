@@ -449,7 +449,7 @@ export default function MatchModal({ isOpen, onClose, onSave, match }: MatchModa
                               Jogadores presentes 1º Quadro
                             </h5>
                             <div className="flex flex-wrap gap-3 mb-4">
-                              {players.map(j => (
+                              {Array.isArray(players) && players.map(j => (
                                 <label key={j.id} className="flex items-center gap-2 text-sm cursor-pointer bg-gray-50 hover:bg-gray-100 px-3 py-2 rounded-lg transition-colors">
                                   <input
                                     type="checkbox"
@@ -465,14 +465,14 @@ export default function MatchModal({ isOpen, onClose, onSave, match }: MatchModa
                               ))}
                             </div>
                             
-                            {presentes1.length > 0 && (
+                            {Array.isArray(presentes1) && presentes1.length > 0 && (
                               <div className="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg p-4 border border-blue-200">
                                 <h6 className="font-semibold text-blue-900 mb-3 flex items-center">
                                   <ChartBarIcon className="h-4 w-4 mr-2" />
                                   Estatísticas dos jogadores 1º Quadro
                                 </h6>
                                 <div className="space-y-3">
-                                  {presentes1.map(j => (
+                                  {Array.isArray(presentes1) && presentes1.map(j => (
                                     <div key={j.id} className="flex items-center gap-3 bg-white rounded-lg px-4 py-3 border border-blue-200 shadow-sm">
                                       <span className="w-24 text-sm font-semibold text-gray-800">{j.name}</span>
                                       <div className="flex items-center gap-2 flex-wrap">
@@ -602,14 +602,14 @@ export default function MatchModal({ isOpen, onClose, onSave, match }: MatchModa
                               ))}
                             </div>
                             
-                            {presentes2.length > 0 && (
+                            {Array.isArray(presentes2) && presentes2.length > 0 && (
                               <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-4 border border-green-200">
                                 <h6 className="font-semibold text-green-900 mb-3 flex items-center">
                                   <ChartBarIcon className="h-4 w-4 mr-2" />
                                   Estatísticas dos jogadores 2º Quadro
                                 </h6>
                                 <div className="space-y-3">
-                                  {presentes2.map(j => (
+                                  {Array.isArray(presentes2) && presentes2.map(j => (
                                     <div key={j.id} className="flex items-center gap-3 bg-white rounded-lg px-4 py-3 border border-green-200 shadow-sm">
                                       <span className="w-24 text-sm font-semibold text-gray-800">{j.name}</span>
                                       <div className="flex items-center gap-2 flex-wrap">

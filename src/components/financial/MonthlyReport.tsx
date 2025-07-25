@@ -9,6 +9,7 @@ import {
   ArrowDownIcon,
   CalendarIcon,
 } from '@heroicons/react/24/outline'
+import { toast } from 'react-hot-toast'
 
 interface MonthlySummary {
   totalIncome: number
@@ -33,15 +34,28 @@ export default function MonthlyReport() {
 
   const fetchMonthlySummary = async () => {
     try {
+      setLoading(true)
+      // Verificar se estamos em um relatório compartilhado
+      const isSharedReport = window.location.pathname.includes('/shared-reports/')
+      const token = window.location.pathname.split('/shared-reports/')[1]?.split('/')[0]
+      
+      // Formatar a data corretamente como YYYY-MM
       const monthParam = format(selectedMonth, 'yyyy-MM')
       
-      const response = await fetch(
-        `/api/dashboard/financial/monthly-summary?month=${monthParam}`
-      )
+      let url = `/api/dashboard/financial/monthly-summary?month=${monthParam}`
+      if (isSharedReport && token) {
+        url = `/api/shared-reports/${token}/financial/monthly-summary?month=${monthParam}`
+      }
+      
+      const response = await fetch(url)
+      if (!response.ok) {
+        throw new Error('Erro ao carregar dados')
+      }
       const data = await response.json()
       setSummary(data)
     } catch (error) {
-      console.error('Erro ao carregar resumo mensal:', error)
+      console.error('Erro ao carregar dados:', error)
+      toast.error('Erro ao carregar dados')
     } finally {
       setLoading(false)
     }

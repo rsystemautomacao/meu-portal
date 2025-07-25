@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react'
-import { format, isWithinInterval, parseISO, subDays, startOfYear } from 'date-fns'
+import { useState, useEffect } from 'react'
+import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { ChartBarIcon, ClipboardIcon, CheckCircleIcon, ChevronDownIcon, ChevronUpIcon, FunnelIcon } from '@heroicons/react/24/outline'
+import { toast } from 'react-hot-toast'
 
 const PERIODS = [
   { label: 'Mês atual', value: 'month' },
@@ -41,17 +42,55 @@ export default function DetailedMatchStatsReport() {
   }, [])
 
   async function fetchMatches() {
-    setLoading(true)
-    const res = await fetch('/api/matches')
-    const data = await res.json()
-    setMatches(data)
-    setLoading(false)
+    try {
+      setLoading(true)
+      // Verificar se estamos em um relatório compartilhado
+      const isSharedReport = window.location.pathname.includes('/shared-reports/')
+      const token = window.location.pathname.split('/shared-reports/')[1]?.split('/')[0]
+      
+      let url = '/api/matches'
+      if (isSharedReport && token) {
+        url = `/api/shared-reports/${token}/matches`
+      }
+      
+      const response = await fetch(url)
+      if (!response.ok) {
+        throw new Error('Falha ao buscar partidas')
+      }
+      const data = await response.json()
+      setMatches(data)
+    } catch (error) {
+      console.error('Erro ao carregar partidas:', error)
+      toast.error('Erro ao carregar partidas')
+    } finally {
+      setLoading(false)
+    }
   }
 
   async function fetchPlayers() {
-    const res = await fetch('/api/players')
-    const data = await res.json()
-    setPlayers(data)
+    try {
+      setLoading(true)
+      // Verificar se estamos em um relatório compartilhado
+      const isSharedReport = window.location.pathname.includes('/shared-reports/')
+      const token = window.location.pathname.split('/shared-reports/')[1]?.split('/')[0]
+      
+      let url = '/api/players'
+      if (isSharedReport && token) {
+        url = `/api/shared-reports/${token}/players`
+      }
+      
+      const response = await fetch(url)
+      if (!response.ok) {
+        throw new Error('Falha ao buscar jogadores')
+      }
+      const data = await response.json()
+      setPlayers(data)
+    } catch (error) {
+      console.error('Erro ao carregar jogadores:', error)
+      toast.error('Erro ao carregar jogadores')
+    } finally {
+      setLoading(false)
+    }
   }
 
   // Lista de nomes dos jogadores do time
@@ -64,25 +103,25 @@ export default function DetailedMatchStatsReport() {
     start = new Date(now.getFullYear(), now.getMonth(), 1)
     end = now
   } else if (period === '90') {
-    start = subDays(now, 90)
+    start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 90)
     end = now
   } else if (period === '180') {
-    start = subDays(now, 180)
+    start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 180)
     end = now
   } else if (period === '360') {
-    start = subDays(now, 360)
+    start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 360)
     end = now
   } else if (period === 'year') {
-    start = startOfYear(now)
+    start = new Date(now.getFullYear(), 0, 1)
     end = now
   } else {
-    start = customStart ? parseISO(customStart) : new Date(2000,0,1)
-    end = customEnd ? parseISO(customEnd) : now
+    start = customStart ? new Date(customStart) : new Date(2000,0,1)
+    end = customEnd ? new Date(customEnd) : now
   }
 
   const filteredMatches = matches.filter(m => {
-    const d = typeof m.date === 'string' ? parseISO(m.date) : new Date(m.date)
-    return isWithinInterval(d, { start, end })
+    const d = typeof m.date === 'string' ? new Date(m.date) : new Date(m.date)
+    return d >= start && d <= end
   })
 
   // Estatísticas agregadas (espelhando a lógica do dashboard)
@@ -366,7 +405,7 @@ export default function DetailedMatchStatsReport() {
                   </tr>
                 </thead>
                 <tbody>
-                  {sortedPlayers.map(([name, s]) => (
+                  {Array.isArray(sortedPlayers) && sortedPlayers.map(([name, s]) => (
                     <tr key={name} className="border-b">
                       <td className="px-2 py-1 font-semibold text-blue-900">{name}</td>
                       <td className="px-2 py-1 text-center font-bold">{s.presencas}</td>
@@ -403,7 +442,7 @@ export default function DetailedMatchStatsReport() {
                   </tr>
                 </thead>
                 <tbody>
-                  {sortedGoalies.map(([name, s]) => (
+                  {Array.isArray(sortedGoalies) && sortedGoalies.map(([name, s]) => (
                     <tr key={name} className="border-b">
                       <td className="px-2 py-1 font-semibold text-blue-900">{name}</td>
                       <td className="px-2 py-1 text-center font-bold">{s.presencas}</td>

@@ -353,7 +353,7 @@ export default function TransactionForm({ onTransactionCreated }: TransactionFor
               Jogadores
             </label>
             <div className="max-h-40 overflow-y-auto border rounded-md p-2">
-              {players.map((player) => (
+              {Array.isArray(players) && players.map((player) => (
                 <label key={player.id} className="flex items-center space-x-2 py-1">
                   <input
                     type="checkbox"

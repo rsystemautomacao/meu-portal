@@ -47,7 +47,16 @@ export default function PlayerPaymentStatus({ onPlayerSelect, onTransactionsChan
 
   const fetchPlayers = async () => {
     try {
-      const response = await fetch('/api/dashboard/financial/players-status')
+      // Verificar se estamos em um relatório compartilhado
+      const isSharedReport = window.location.pathname.includes('/shared-reports/')
+      const token = window.location.pathname.split('/shared-reports/')[1]?.split('/')[0]
+      
+      let url = '/api/dashboard/financial/players-status'
+      if (isSharedReport && token) {
+        url = `/api/shared-reports/${token}/financial/players-status`
+      }
+      
+      const response = await fetch(url)
       if (!response.ok) {
         throw new Error('Falha ao buscar dados dos jogadores')
       }
@@ -305,14 +314,14 @@ export default function PlayerPaymentStatus({ onPlayerSelect, onTransactionsChan
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {filteredPlayers.length === 0 ? (
+            {Array.isArray(filteredPlayers) && filteredPlayers.length === 0 ? (
               <tr>
                 <td colSpan={5} className="text-center py-10 text-gray-500">
                   Nenhum jogador encontrado para este filtro.
                 </td>
               </tr>
             ) : (
-              filteredPlayers.map((player) => {
+              Array.isArray(filteredPlayers) && filteredPlayers.map((player) => {
                 return (
                   <tr
                     key={player.id}

@@ -38,6 +38,7 @@ model Team {
   monthlyFeeExceptions MonthlyFeeException[]
   historicalDebts HistoricalDebt[]
   notifications   Notification[]
+  sharedReports  SharedReport[]
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
   deletedAt       DateTime?   // Soft delete
@@ -235,4 +236,23 @@ model Notification {
   isRead      Boolean  @default(false)
   createdAt   DateTime @default(now())
   team        Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+}
+
+model SystemConfig {
+  id             String  @id @default(auto()) @map("_id") @db.ObjectId
+  paymentMessage String
+  paymentLink    String
+  welcomeMessage String
+  monthlyValue   Float   @default(0)
+}
+
+model SharedReport {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  team            Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  teamId          String   @db.ObjectId
+  shareToken      String   @unique
+  isActive        Boolean  @default(true)
+  enabledReports  String[] // Array de relatórios habilitados
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 } 

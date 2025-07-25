@@ -4,11 +4,8 @@ import { prisma } from '@/lib/prisma'
 // GET - Buscar todos os times com estatísticas
 export async function GET(request: Request) {
   try {
-    const url = new URL(request.url, 'http://localhost');
-    const showDeleted = url.searchParams.get('showDeleted') === 'true';
-    // Buscar todos os times, filtrando se necessário
+    // Buscar todos os times, sem filtro de exclusão
     const teams = await prisma.team.findMany({
-      where: showDeleted ? {} : ({ OR: [{ deletedAt: null }, { deletedAt: { equals: undefined } }] } as any),
       include: {
         users: {
           include: {

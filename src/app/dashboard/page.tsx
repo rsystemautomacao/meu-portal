@@ -411,7 +411,7 @@ export default function DashboardPage() {
           </button>
         </div>
         <div className="bg-white shadow overflow-hidden sm:rounded-md">
-          {dashboardData?.recentMatches && dashboardData.recentMatches.length > 0 ? (
+          {dashboardData?.recentMatches && Array.isArray(dashboardData.recentMatches) && dashboardData.recentMatches.length > 0 ? (
             <>
               <ul role="list" className="divide-y divide-gray-200">
                 {dashboardData.recentMatches.slice(0, 3).map((match) => {
@@ -459,7 +459,7 @@ export default function DashboardPage() {
       <div className="mt-8">
         <h2 className="text-lg font-medium text-gray-900 mb-4">Estatísticas</h2>
         <div className="bg-white shadow overflow-hidden sm:rounded-md p-4">
-          {dashboardData?.recentMatches && dashboardData.recentMatches.length > 0 ? (() => {
+          {dashboardData?.recentMatches && Array.isArray(dashboardData.recentMatches) && dashboardData.recentMatches.length > 0 ? (() => {
             const { stats, allPlayers, golsPro, golsContra } = getPlayerStats(dashboardData.recentMatches);
             return (
               <>
@@ -494,7 +494,7 @@ export default function DashboardPage() {
                   </thead>
                   <tbody>
                     {/* Ordenar os jogadores conforme o sortField e sortOrder */}
-                    {allPlayers.filter(player => player !== 'Adversário').sort((a, b) => {
+                    {Array.isArray(allPlayers) && allPlayers.filter(player => player !== 'Adversário').sort((a, b) => {
                       if (!sortField) return 0;
                       if (sortOrder === 'asc') return stats[a][sortField] - stats[b][sortField];
                       return stats[b][sortField] - stats[a][sortField];
@@ -529,9 +529,9 @@ export default function DashboardPage() {
           </button>
         </div>
         <div className="bg-white shadow overflow-hidden sm:rounded-md">
-          {dashboardData && dashboardData.recentTransactions && dashboardData.recentTransactions.length > 0 ? (
+          {dashboardData && dashboardData.recentTransactions && Array.isArray(dashboardData.recentTransactions) && dashboardData.recentTransactions.length > 0 ? (
           <ul role="list" className="divide-y divide-gray-200">
-              {dashboardData.recentTransactions.slice(0, 5).map((transaction) => (
+              {Array.isArray(dashboardData.recentTransactions) && dashboardData.recentTransactions.slice(0, 5).map((transaction) => (
               <li key={transaction.id}>
                 <div className="px-4 py-4 sm:px-6">
                   <div className="flex items-center justify-between">

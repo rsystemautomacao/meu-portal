@@ -38,6 +38,23 @@ export default function AdminSendMessageModal({ isOpen, onClose, teamName, teamI
     }
   }, [isOpen])
 
+  // Buscar mensagem de cobrança do sistema ao abrir o modal
+  useEffect(() => {
+    if (isOpen) {
+      fetch('/api/admin/config')
+        .then(res => res.json())
+        .then(data => {
+          if (data && data.paymentMessage) {
+            setCustomMessages(prev => ({ ...prev, late: data.paymentMessage }))
+          }
+          if (data && data.blockMessage) {
+            setCustomMessages(prev => ({ ...prev, block: data.blockMessage }))
+          }
+        })
+        .catch(() => {})
+    }
+  }, [isOpen])
+
   // Salvar mensagens personalizadas
   const saveCustomMessage = (type: MessageType, value: string) => {
     if (type === 'custom') return
@@ -72,8 +89,10 @@ export default function AdminSendMessageModal({ isOpen, onClose, teamName, teamI
         return
       }
       // Enviar para a API
-      const body: any = { messageType }
-      if (messageType === 'custom') body.customMessage = message
+      const body: any = { 
+        messageType,
+        customMessage: message // Sempre enviar a mensagem personalizada
+      }
       const response = await fetch(`/api/admin/teams/${teamId}/send-message`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

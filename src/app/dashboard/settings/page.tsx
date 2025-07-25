@@ -4,8 +4,20 @@ import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { toast } from 'react-hot-toast'
 import { useRouter } from 'next/navigation'
-import { PhotoIcon, UserCircleIcon, Cog6ToothIcon, ShieldExclamationIcon, ArrowPathIcon, LockClosedIcon } from '@heroicons/react/24/outline'
+import { 
+  PhotoIcon, 
+  UserCircleIcon, 
+  Cog6ToothIcon, 
+  ShieldExclamationIcon, 
+  ArrowPathIcon, 
+  LockClosedIcon,
+  UserGroupIcon,
+  SwatchIcon,
+  CreditCardIcon,
+  ExclamationTriangleIcon
+} from '@heroicons/react/24/outline'
 import HistoricalDebts from '@/components/financial/HistoricalDebts'
+import SharedReportsConfig from '@/components/financial/SharedReportsConfig'
 import { signOut } from 'next-auth/react'
 
 // Interface para os dados do time e configurações
@@ -15,6 +27,7 @@ interface TeamSettings {
   secondaryColor: string
   logo?: string
   dueDay: number
+  whatsapp: string
 }
 
 // Interface para alteração de senha
@@ -70,6 +83,7 @@ export default function SettingsPage() {
     secondaryColor: '#ffffff',
     logo: '',
     dueDay: 10,
+    whatsapp: '',
   })
   const [passwordChange, setPasswordChange] = useState<PasswordChange>({
     currentPassword: '',
@@ -85,6 +99,98 @@ export default function SettingsPage() {
   const [logoPreview, setLogoPreview] = useState<string | null>(null)
   const [paused, setPaused] = useState(false)
 
+  // Função para formatar WhatsApp
+  const formatWhatsApp = (value: string) => {
+    // Remove tudo que não é número
+    const numbers = value.replace(/\D/g, '')
+    
+    // Aplica formatação
+    if (numbers.length <= 2) {
+      return numbers
+    } else if (numbers.length <= 6) {
+      return `(${numbers.slice(0, 2)}) ${numbers.slice(2)}`
+    } else if (numbers.length <= 10) {
+      return `(${numbers.slice(0, 2)}) ${numbers.slice(2, 6)}-${numbers.slice(6)}`
+    } else {
+      return `(${numbers.slice(0, 2)}) ${numbers.slice(2, 7)}-${numbers.slice(7, 11)}`
+    }
+  }
+
+  // Função para salvar informações gerais
+  const handleSaveGeneral = async () => {
+    setSaving(true)
+    try {
+      const formData = new FormData()
+      formData.append('name', settings.name)
+      formData.append('whatsapp', settings.whatsapp)
+      
+      if (logoFile) {
+        formData.append('logo', logoFile)
+      }
+
+      const response = await fetch('/api/team-settings', {
+        method: 'PUT',
+        body: formData,
+      })
+
+      if (!response.ok) throw new Error('Falha ao salvar configurações')
+
+      toast.success('Informações gerais salvas com sucesso!')
+      setLogoFile(null)
+    } catch (error) {
+      console.error('Erro ao salvar informações gerais:', error)
+      toast.error('Erro ao salvar informações gerais')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  // Função para salvar aparência
+  const handleSaveAppearance = async () => {
+    setSaving(true)
+    try {
+      const response = await fetch('/api/team-settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          primaryColor: settings.primaryColor,
+          secondaryColor: settings.secondaryColor
+        })
+      })
+
+      if (!response.ok) throw new Error('Falha ao salvar aparência')
+
+      toast.success('Aparência salva com sucesso!')
+    } catch (error) {
+      console.error('Erro ao salvar aparência:', error)
+      toast.error('Erro ao salvar aparência')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  // Função para salvar configurações financeiras
+  const handleSaveFinancial = async () => {
+    setSaving(true)
+    try {
+      const response = await fetch('/api/team-settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          dueDay: settings.dueDay
+        })
+      })
+
+      if (!response.ok) throw new Error('Falha ao salvar configurações financeiras')
+
+      toast.success('Configurações financeiras salvas com sucesso!')
+    } catch (error) {
+      console.error('Erro ao salvar configurações financeiras:', error)
+      toast.error('Erro ao salvar configurações financeiras')
+    } finally {
+      setSaving(false)
+    }
+  }
 
   useEffect(() => {
     // Lógica para buscar os dados do time da API
@@ -99,22 +205,21 @@ export default function SettingsPage() {
           router.push('/auth/login?blocked=1')
           return
         }
-        if (data.status === 'PAUSED') {
-          setPaused(true)
-        } else {
-          setPaused(false)
-        }
         setSettings({
           name: data.name || '',
           primaryColor: data.primaryColor || '#000000',
           secondaryColor: data.secondaryColor || '#ffffff',
           logo: data.logo || '',
-          dueDay: data.monthlyFees[0]?.day || 10,
+          dueDay: data.dueDay || 10,
+          whatsapp: data.whatsapp || '',
         })
-        setLogoPreview(data.logo || null)
+        setPaused(data.status === 'PAUSED')
+        if (data.logo) {
+          setLogoPreview(data.logo)
+        }
       } catch (error) {
-        toast.error('Não foi possível carregar as configurações do time.')
-        console.error(error)
+        console.error('Erro ao buscar configurações:', error)
+        toast.error('Erro ao carregar configurações')
       } finally {
         setLoading(false)
       }
@@ -123,17 +228,15 @@ export default function SettingsPage() {
     if (session) {
       fetchSettings()
     }
-  }, [session])
-
-
+  }, [session, router])
   
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
       setLogoFile(file)
       const reader = new FileReader()
-      reader.onloadend = () => {
-        setLogoPreview(reader.result as string)
+      reader.onload = (e) => {
+        setLogoPreview(e.target?.result as string)
       }
       reader.readAsDataURL(file)
     }
@@ -141,78 +244,30 @@ export default function SettingsPage() {
 
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
-    setPasswordChange(prev => ({
-      ...prev,
-      [name]: value
-    }))
-  }
-
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setSaving(true)
-    toast.loading('Salvando alterações...')
-
-    try {
-      let logoUrl = settings.logo;
-      if (logoFile) {
-        // Upload da imagem para o backend (API /api/upload)
-        const formData = new FormData();
-        formData.append('file', logoFile);
-
-        const uploadResponse = await fetch('/api/upload', {
-          method: 'POST',
-          body: formData,
-        });
-
-        if (!uploadResponse.ok) {
-          const errorData = await uploadResponse.json();
-          throw new Error(errorData.message || 'Falha no upload da imagem.');
-        }
-
-        const uploadData = await uploadResponse.json();
-        logoUrl = uploadData.secure_url;
-      }
-
-      const response = await fetch('/api/team-settings', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...settings, logo: logoUrl }),
-      })
-
-      if (!response.ok) throw new Error('Falha ao salvar as configurações')
-      
-      toast.dismiss()
-      toast.success('Configurações salvas com sucesso!')
-    } catch (error) {
-      toast.dismiss()
-      toast.error(`Erro ao salvar: ${error instanceof Error ? error.message : String(error)}`)
-      console.error(error)
-    } finally {
-      setSaving(false)
-    }
+    setPasswordChange(prev => ({ ...prev, [name]: value }))
   }
 
   const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
-    // Validações
-    if (passwordChange.newPassword.length < 6) {
-      toast.error('A nova senha deve ter pelo menos 6 caracteres')
-      return
-    }
     
     if (passwordChange.newPassword !== passwordChange.confirmPassword) {
       toast.error('As senhas não coincidem')
       return
     }
 
+    if (passwordChange.newPassword.length < 6) {
+      toast.error('A nova senha deve ter pelo menos 6 caracteres')
+      return
+    }
+
     setChangingPassword(true)
-    toast.loading('Alterando senha...')
 
     try {
       const response = await fetch('/api/auth/change-password', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({
           currentPassword: passwordChange.currentPassword,
           newPassword: passwordChange.newPassword,
@@ -220,24 +275,19 @@ export default function SettingsPage() {
       })
 
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Falha ao alterar senha')
+        const error = await response.json()
+        throw new Error(error.message || 'Erro ao alterar senha')
       }
 
-      const result = await response.json();
-      toast.dismiss()
-      toast.success(result.message || 'Senha alterada com sucesso!')
-      
-      // Limpar formulário
+      toast.success('Senha alterada com sucesso!')
       setPasswordChange({
         currentPassword: '',
         newPassword: '',
         confirmPassword: '',
       })
     } catch (error) {
-      toast.dismiss()
-      toast.error(error instanceof Error ? error.message : 'Ocorreu um erro inesperado')
-      console.error(error)
+      console.error('Erro ao alterar senha:', error)
+      toast.error(error instanceof Error ? error.message : 'Erro ao alterar senha')
     } finally {
       setChangingPassword(false)
     }
@@ -299,12 +349,23 @@ export default function SettingsPage() {
         {/* Débitos Históricos - PRIMEIRA SEÇÃO */}
         <HistoricalDebts onDebtsChange={() => {}} />
 
-        <form onSubmit={handleSave} className="space-y-8 bg-white p-8 rounded-lg shadow-md">
+        {/* Relatórios Compartilháveis */}
+        <SharedReportsConfig />
+
           {/* Informações Gerais */}
-          <div className="border-b border-gray-900/10 pb-8">
-            <h2 className="text-base font-semibold leading-7 text-gray-900">Informações Gerais</h2>
-            <p className="mt-1 text-sm leading-6 text-gray-600">Atualize o nome e o logo do seu time.</p>
-            <div className="mt-6 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
+        <div className="mt-8 bg-gradient-to-br from-white to-gray-50 p-8 rounded-xl shadow-lg border border-gray-200">
+          <div className="border-b border-gray-200 pb-6 mb-6">
+            <h2 className="text-2xl font-bold text-gray-900 flex items-center mb-2">
+              <UserGroupIcon className="h-6 w-6 mr-3 text-indigo-600"/>
+              Informações Gerais
+            </h2>
+            <p className="text-gray-600 leading-relaxed">
+              Atualize o nome e o logo do seu time para personalizar sua experiência.
+            </p>
+          </div>
+
+                     <div className="space-y-6">
+            <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
               <div className="sm:col-span-4">
                 <label htmlFor="name" className="block text-sm font-medium leading-6 text-gray-900">Nome do Time</label>
                 <div className="mt-2">
@@ -315,6 +376,20 @@ export default function SettingsPage() {
                     value={settings.name}
                     onChange={(e) => setSettings({ ...settings, name: e.target.value })}
                     className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                  />
+                </div>
+              </div>
+              <div className="sm:col-span-4">
+                <label htmlFor="whatsapp" className="block text-sm font-medium leading-6 text-gray-900">WhatsApp</label>
+                <div className="mt-2">
+                  <input
+                    type="text"
+                    name="whatsapp"
+                    id="whatsapp"
+                    value={settings.whatsapp}
+                    onChange={(e) => setSettings({ ...settings, whatsapp: formatWhatsApp(e.target.value) })}
+                    className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                    placeholder="(11) 99999-9999"
                   />
                 </div>
               </div>
@@ -333,13 +408,36 @@ export default function SettingsPage() {
                 </div>
               </div>
             </div>
+
+                         <div className="flex items-center justify-end gap-x-6">
+               <button type="button" className="text-sm font-semibold leading-6 text-gray-900">
+                 Cancelar
+               </button>
+               <button
+                 onClick={handleSaveGeneral}
+                 disabled={saving}
+                 className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:bg-indigo-400 flex items-center"
+               >
+                 {saving && <ArrowPathIcon className="h-4 w-4 mr-2 animate-spin" />}
+                 Salvar Informações Gerais
+               </button>
+              </div>
+            </div>
           </div>
 
           {/* Aparência */}
-          <div className="border-b border-gray-900/10 pb-8">
-            <h2 className="text-base font-semibold leading-7 text-gray-900">Aparência</h2>
-            <p className="mt-1 text-sm leading-6 text-gray-600">Personalize as cores do seu time.</p>
-            <div className="mt-6 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
+        <div className="mt-8 bg-gradient-to-br from-white to-gray-50 p-8 rounded-xl shadow-lg border border-gray-200">
+          <div className="border-b border-gray-200 pb-6 mb-6">
+            <h2 className="text-2xl font-bold text-gray-900 flex items-center mb-2">
+              <SwatchIcon className="h-6 w-6 mr-3 text-indigo-600"/>
+              Aparência
+            </h2>
+            <p className="text-gray-600 leading-relaxed">
+              Personalize as cores do seu time para criar uma identidade visual única.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
               <div className="sm:col-span-3">
                 <label htmlFor="primaryColor" className="block text-sm font-medium leading-6 text-gray-900">Cor Primária</label>
                 <div className="mt-2 flex items-center gap-x-2">
@@ -369,56 +467,79 @@ export default function SettingsPage() {
                 </div>
               </div>
             </div>
+          <div className="flex items-center justify-end gap-x-6 mt-6">
+            <button type="button" className="text-sm font-semibold leading-6 text-gray-900">
+              Cancelar
+            </button>
+            <button
+              onClick={handleSaveAppearance}
+              disabled={saving}
+              className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:bg-indigo-400 flex items-center"
+            >
+              {saving && <ArrowPathIcon className="h-4 w-4 mr-2 animate-spin" />}
+              Salvar Aparência
+            </button>
+          </div>
           </div>
           
           {/* Configurações Financeiras */}
-          <div className="border-b border-gray-900/10 pb-8">
-            <h2 className="text-base font-semibold leading-7 text-gray-900">Financeiro</h2>
-            <p className="mt-1 text-sm leading-6 text-gray-600">Defina o dia de vencimento das mensalidades.</p>
-            <div className="mt-6">
+        <div className="mt-8 bg-gradient-to-br from-white to-gray-50 p-8 rounded-xl shadow-lg border border-gray-200">
+          <div className="border-b border-gray-200 pb-6 mb-6">
+            <h2 className="text-2xl font-bold text-gray-900 flex items-center mb-2">
+              <CreditCardIcon className="h-6 w-6 mr-3 text-indigo-600"/>
+              Financeiro
+            </h2>
+            <p className="text-gray-600 leading-relaxed">
+              Defina o dia de vencimento das mensalidades para organizar melhor seus pagamentos.
+            </p>
+          </div>
+
+          <div>
                  <label htmlFor="dueDay" className="block text-sm font-medium leading-6 text-gray-900">Dia do Vencimento</label>
                 <input
                     type="number"
                     name="dueDay"
                     id="dueDay"
                     value={settings.dueDay}
-                    onChange={(e) => setSettings({ ...settings, dueDay: parseInt(e.target.value, 10) })}
+                onChange={(e) => {
+                  const value = parseInt(e.target.value, 10)
+                  if (value >= 1 && value <= 31) {
+                    setSettings({ ...settings, dueDay: value })
+                  }
+                }}
                     className="mt-2 block w-full max-w-xs rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm"
                     min="1"
-                    max="28"
+                max="31"
                 />
-            </div>
           </div>
-          
-
-          <div className="mt-6 flex items-center justify-end gap-x-6">
+          <div className="flex items-center justify-end gap-x-6 mt-6">
             <button type="button" className="text-sm font-semibold leading-6 text-gray-900">
               Cancelar
             </button>
             <button
-              type="submit"
+              onClick={handleSaveFinancial}
               disabled={saving}
               className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:bg-indigo-400 flex items-center"
             >
               {saving && <ArrowPathIcon className="h-4 w-4 mr-2 animate-spin" />}
-              Salvar Alterações
+              Salvar Financeiro
             </button>
           </div>
-        </form>
+        </div>
 
         {/* Alteração de Senha */}
-        <div className="mt-8 bg-white p-8 rounded-lg shadow-md">
-          <div className="border-b border-gray-900/10 pb-6">
-            <h2 className="text-base font-semibold leading-7 text-gray-900 flex items-center">
-              <LockClosedIcon className="h-5 w-5 mr-2 text-indigo-600"/>
+        <div className="mt-8 bg-gradient-to-br from-white to-gray-50 p-8 rounded-xl shadow-lg border border-gray-200">
+          <div className="border-b border-gray-200 pb-6 mb-6">
+            <h2 className="text-2xl font-bold text-gray-900 flex items-center mb-2">
+              <LockClosedIcon className="h-6 w-6 mr-3 text-indigo-600"/>
               Alterar Senha
             </h2>
-            <p className="mt-1 text-sm leading-6 text-gray-600">
-              Atualize sua senha de acesso ao sistema.
+            <p className="text-gray-600 leading-relaxed">
+              Atualize sua senha de acesso ao sistema para manter sua conta segura.
             </p>
           </div>
 
-          <form onSubmit={handlePasswordSubmit} className="mt-6 space-y-6">
+          <form onSubmit={handlePasswordSubmit} className="space-y-6">
             <div className="grid grid-cols-1 gap-x-6 gap-y-6 sm:grid-cols-2">
               <div className="sm:col-span-2">
                 <label htmlFor="currentPassword" className="block text-sm font-medium leading-6 text-gray-900">
@@ -487,12 +608,19 @@ export default function SettingsPage() {
           </form>
         </div>
 
-
-
         {/* Zona de Perigo */}
-        <div className="mt-8">
-            <h2 className="text-lg font-semibold text-red-600">Zona de Perigo</h2>
-            <div className="mt-4 bg-red-50 border border-red-200 rounded-lg p-6">
+        <div className="mt-8 bg-gradient-to-br from-red-50 to-red-100 p-8 rounded-xl shadow-lg border border-red-200">
+          <div className="border-b border-red-200 pb-6 mb-6">
+            <h2 className="text-2xl font-bold text-red-900 flex items-center mb-2">
+              <ExclamationTriangleIcon className="h-6 w-6 mr-3 text-red-600"/>
+              Zona de Perigo
+            </h2>
+            <p className="text-red-700 leading-relaxed">
+              Ações irreversíveis que podem resultar na perda permanente de dados.
+            </p>
+          </div>
+
+          <div className="bg-white border border-red-200 rounded-lg p-6">
                 <div className="flex items-center justify-between">
                     <div>
                         <h3 className="font-bold text-gray-800">Excluir Time</h3>

@@ -107,6 +107,12 @@ export default function PlayersPage() {
         throw new Error('Resposta inválida do servidor')
       }
       
+      // Garantir que data seja um array
+      if (!Array.isArray(data)) {
+        console.error('❌ Dados recebidos não são um array:', data)
+        throw new Error('Formato de dados inválido')
+      }
+      
       setPlayers(data)
     } catch (error) {
       console.error('❌ Erro ao buscar jogadores:', error)
@@ -305,7 +311,7 @@ export default function PlayersPage() {
               </div>
               <div>
                 <p className="text-sm font-medium text-green-600">Total de Jogadores</p>
-                <p className="text-2xl font-bold text-green-900">{players.length}</p>
+                <p className="text-2xl font-bold text-green-900">{Array.isArray(players) ? players.length : 0}</p>
               </div>
             </div>
           </div>
@@ -318,7 +324,7 @@ export default function PlayersPage() {
               <div>
                 <p className="text-sm font-medium text-blue-600">Jogadores Ativos</p>
                 <p className="text-2xl font-bold text-blue-900">
-                  {players.filter(p => p.status === 'ACTIVE').length}
+                  {Array.isArray(players) ? players.filter(p => p.status === 'ACTIVE').length : 0}
                 </p>
               </div>
             </div>
@@ -332,7 +338,7 @@ export default function PlayersPage() {
               <div>
                 <p className="text-sm font-medium text-orange-600">Em Atraso</p>
                 <p className="text-2xl font-bold text-orange-900">
-                  {players.filter(p => p.monthlyFeeStatus === 'atrasado').length}
+                  {Array.isArray(players) ? players.filter(p => p.monthlyFeeStatus === 'atrasado').length : 0}
                 </p>
               </div>
             </div>
@@ -341,7 +347,7 @@ export default function PlayersPage() {
 
         {/* Lista de Jogadores */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {players.map((player) => {
+          {Array.isArray(players) && players.map((player) => {
             console.log('Player:', player.name, 'isExempt:', player.isExempt)
             return (
               <div
@@ -465,7 +471,7 @@ export default function PlayersPage() {
         </div>
 
         {/* Mensagem quando não há jogadores */}
-        {players.length === 0 && (
+        {Array.isArray(players) && players.length === 0 && (
           <div className="text-center py-12">
             <div className="text-6xl mb-4">👥</div>
             <h3 className="text-xl font-semibold text-gray-900 mb-2">Nenhum jogador cadastrado</h3>

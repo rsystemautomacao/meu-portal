@@ -27,8 +27,20 @@ export default function TransactionList({ onTransactionDeleted, refresh }: Trans
 
   const fetchTransactions = async () => {
     try {
-      const response = await fetch('/api/dashboard/financial/transactions')
-      if (!response.ok) throw new Error('Erro ao carregar transações')
+      setLoading(true)
+      // Verificar se estamos em um relatório compartilhado
+      const isSharedReport = window.location.pathname.includes('/shared-reports/')
+      const token = window.location.pathname.split('/shared-reports/')[1]?.split('/')[0]
+      
+      let url = '/api/dashboard/financial/transactions'
+      if (isSharedReport && token) {
+        url = `/api/shared-reports/${token}/financial/transactions`
+      }
+      
+      const response = await fetch(url)
+      if (!response.ok) {
+        throw new Error('Erro ao carregar transações')
+      }
       const data = await response.json()
       setTransactions(data)
     } catch (error) {

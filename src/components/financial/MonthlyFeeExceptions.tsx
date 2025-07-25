@@ -73,7 +73,7 @@ export default function MonthlyFeeExceptions({ onUpdate }: MonthlyFeeExceptionsP
       
       // Validar se todos os jogadores foram selecionados
       const validExceptions = exceptions.filter(ex => ex.playerId)
-      if (validExceptions.length === 0) {
+      if (Array.isArray(validExceptions) && validExceptions.length === 0) {
         toast.error('Adicione pelo menos uma exceção')
         return
       }
@@ -137,7 +137,7 @@ export default function MonthlyFeeExceptions({ onUpdate }: MonthlyFeeExceptionsP
               className="flex-1 rounded-md border-gray-300"
             >
               <option value="">Selecione um jogador</option>
-              {players.map(player => (
+              {Array.isArray(players) && players.map(player => (
                 <option key={player.id} value={player.id}>
                   {player.number} - {player.name}
                 </option>

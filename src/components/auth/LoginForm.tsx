@@ -8,12 +8,61 @@ export default function LoginForm() {
   const router = useRouter()
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [checkingStatus, setCheckingStatus] = useState(false)
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search)
       if (params.get('blocked') === '1') {
         setError('Seu acesso está bloqueado por inadimplência ou punição.\nEntre em contato para regularizar:\nE-mail: rsautomacao2000@gmail.com\nWhatsApp: (11) 94832-1756')
+        
+        // Verificar status automaticamente a cada 30 segundos
+        const checkStatus = async () => {
+          setCheckingStatus(true)
+          try {
+            // Tentar buscar o email do localStorage ou sessionStorage
+            const savedEmail = localStorage.getItem('lastLoginEmail') || sessionStorage.getItem('lastLoginEmail')
+            
+            if (savedEmail) {
+              const response = await fetch('/api/auth/check-status', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: savedEmail })
+              })
+              
+              if (response.ok) {
+                const data = await response.json()
+                
+                if (data.canLogin) {
+                  // Usuário foi desbloqueado, limpar erro e permitir login
+                  setError('')
+                  setCheckingStatus(false)
+                  
+                  // Remover parâmetro blocked da URL
+                  const url = new URL(window.location.href)
+                  url.searchParams.delete('blocked')
+                  window.history.replaceState({}, document.title, url.pathname + url.search)
+                  
+                  // Mostrar mensagem de sucesso
+                  alert('Seu acesso foi liberado! Você pode fazer login normalmente.')
+                  return
+                }
+              }
+            }
+          } catch (error) {
+            console.error('Erro ao verificar status:', error)
+          } finally {
+            setCheckingStatus(false)
+          }
+        }
+
+        // Verificar imediatamente
+        checkStatus()
+        
+        // Verificar a cada 30 segundos
+        const interval = setInterval(checkStatus, 30000)
+        
+        return () => clearInterval(interval)
       }
     }
   }, [])
@@ -35,6 +84,12 @@ export default function LoginForm() {
     const formData = new FormData(e.currentTarget)
     const email = formData.get('email') as string
     const password = formData.get('password') as string
+
+    // Salvar email para verificação de status
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('lastLoginEmail', email)
+      sessionStorage.setItem('lastLoginEmail', email)
+    }
 
     try {
       const result = await signIn('credentials', {
@@ -77,6 +132,15 @@ export default function LoginForm() {
                 <button onClick={() => navigator.clipboard.writeText('rsautomacao2000@gmail.com')} className="px-3 py-1 rounded bg-blue-100 text-blue-800 text-xs font-medium hover:bg-blue-200">Copiar e-mail: rsautomacao2000@gmail.com</button>
                 <a href="https://wa.me/5511948321756" target="_blank" rel="noopener noreferrer" className="px-3 py-1 rounded bg-green-100 text-green-800 text-xs font-medium hover:bg-green-200">Abrir WhatsApp: (11) 94832-1756</a>
               </div>
+              {checkingStatus && (
+                <div className="mt-3 flex items-center text-xs text-blue-600">
+                  <svg className="animate-spin -ml-1 mr-2 h-3 w-3 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Verificando status automaticamente...
+                </div>
+              )}
             </div>
           </div>
         </div>

@@ -166,7 +166,34 @@ export default function NotificationBell() {
                         <p className={`text-sm mt-1 ${
                           !notification.isRead ? 'text-gray-700' : 'text-gray-500'
                         }`}>
-                          {notification.message}
+                          {notification.message.split('\n').map((line, index) => {
+                            // Verificar se a linha contém uma URL
+                            const urlRegex = /(https?:\/\/[^\s]+)/g
+                            const parts = line.split(urlRegex)
+                            
+                            return (
+                              <span key={index}>
+                                {parts.map((part, partIndex) => {
+                                  if (urlRegex.test(part)) {
+                                    return (
+                                      <a
+                                        key={partIndex}
+                                        href={part}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-blue-600 hover:text-blue-800 underline break-all"
+                                        onClick={(e) => e.stopPropagation()}
+                                      >
+                                        {part}
+                                      </a>
+                                    )
+                                  }
+                                  return part
+                                })}
+                                {index < notification.message.split('\n').length - 1 && <br />}
+                              </span>
+                            )
+                          })}
                         </p>
                         {!notification.isRead && (
                           <div className="mt-2">

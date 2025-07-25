@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { ArrowRightOnRectangleIcon, TrashIcon, ShieldCheckIcon, UsersIcon, UserIcon, CurrencyDollarIcon } from '@heroicons/react/24/outline'
 import AdminSendMessageModal from '@/components/admin/AdminSendMessageModal'
+import { Menu } from '@headlessui/react'
+import { Cog6ToothIcon } from '@heroicons/react/24/outline'
 
 interface Team {
   id: string
@@ -47,13 +49,13 @@ export default function AdminDashboard() {
     }
 
     fetchTeams()
-  }, [router, showDeleted])
+  }, [router])
 
   const fetchTeams = async () => {
     try {
       setLoading(true)
       
-      const response = await fetch(`/api/admin/teams${showDeleted ? '?showDeleted=true' : ''}`)
+      const response = await fetch(`/api/admin/teams`)
       if (!response.ok) {
         throw new Error('Erro ao buscar times')
       }
@@ -256,6 +258,52 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleTogglePayment = async (teamId: string, currentStatus: string) => {
+    try {
+      const newStatus = currentStatus === 'PAID' ? 'ACTIVE' : 'PAID'
+      
+      const response = await fetch(`/api/admin/teams/${teamId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          action: 'toggle-payment',
+          status: newStatus
+        })
+      })
+
+      if (response.ok) {
+        // Atualizar lista local
+        setTeams(prev => prev.map(team => 
+          team.id === teamId 
+            ? { ...team, status: newStatus }
+            : team
+        ))
+        console.log(`✅ Status de pagamento alterado para ${teamId}`)
+      } else {
+        console.error('❌ Erro ao alterar status de pagamento')
+      }
+    } catch (error) {
+      console.error('Erro ao alterar status de pagamento:', error)
+    }
+  }
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'ACTIVE':
+        return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Ativo</span>
+      case 'OVERDUE':
+        return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">Atraso</span>
+      case 'BLOCKED':
+        return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">Bloqueado</span>
+      case 'PAID':
+        return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">Pago</span>
+      default:
+        return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">{status}</span>
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
@@ -281,13 +329,13 @@ export default function AdminDashboard() {
                 <p className="text-sm text-gray-600">Gerencie todos os times do sistema</p>
               </div>
             </div>
-            <button
-              onClick={handleLogout}
-              className="flex items-center space-x-2 px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm"
-            >
-              <ArrowRightOnRectangleIcon className="h-4 w-4" />
-              <span>Sair</span>
-            </button>
+              <button
+                onClick={handleLogout}
+                className="flex items-center space-x-2 px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm"
+              >
+                <ArrowRightOnRectangleIcon className="h-4 w-4" />
+                <span>Sair</span>
+              </button>
           </div>
         </div>
       </div>
@@ -346,17 +394,9 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* Filtro de times excluídos */}
+        {/* Filtros de status dos times (em breve) */}
         <div className="flex items-center gap-4 mb-2">
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={showDeleted}
-              onChange={e => setShowDeleted(e.target.checked)}
-              className="form-checkbox h-4 w-4 text-indigo-600"
-            />
-            Mostrar times excluídos
-          </label>
+          {/* Aqui vão os filtros de status futuramente */}
         </div>
 
         {/* Teams List */}
@@ -367,6 +407,33 @@ export default function AdminDashboard() {
                 <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Times Cadastrados</h2>
                 <p className="text-gray-600 text-xs sm:text-sm">Gerencie todos os times do sistema</p>
               </div>
+              <div className="flex space-x-2">
+                <button
+                  onClick={async () => {
+                    if (confirm('Executar fluxo automático de pagamentos (cobrança, atraso e bloqueio)?')) {
+                      try {
+                        const response = await fetch('/api/admin/automated-flow', {
+                          method: 'POST'
+                        })
+                        if (response.ok) {
+                          alert('Fluxo automático executado com sucesso!')
+                          fetchTeams() // Recarregar lista
+                        } else {
+                          alert('Erro ao executar fluxo automático')
+                        }
+                      } catch (error) {
+                        console.error('Erro:', error)
+                        alert('Erro ao executar fluxo automático')
+                      }
+                    }
+                  }}
+                  className="flex items-center space-x-2 px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
+                >
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                  <span>Fluxo Automático</span>
+                </button>
               <button
                 onClick={async () => {
                   if (confirm('Verificar status de pagamento de todos os times e bloquear automaticamente os em atraso?')) {
@@ -383,6 +450,7 @@ export default function AdminDashboard() {
                 </svg>
                 <span>Verificar Pagamentos</span>
               </button>
+              </div>
             </div>
           </div>
 
@@ -403,9 +471,7 @@ export default function AdminDashboard() {
                       <div className="flex items-center space-x-4 text-sm text-gray-500">
                         <span>📞 {team.whatsapp || 'Não informado'}</span>
                         <span>📅 {formatDate(team.createdAt)}</span>
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(team.status)}`}>
-                          {getStatusText(team.status, team.deletedAt)}
-                        </span>
+                        {getStatusBadge(team.status)}
                       </div>
                     </div>
                   </div>
@@ -457,6 +523,20 @@ export default function AdminDashboard() {
                       >
                         <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        </svg>
+                      </button>
+                      <button 
+                        onClick={() => handleTogglePayment(team.id, team.status)}
+                        className={`p-2 rounded-lg transition-colors ${
+                          team.status === 'PAID' 
+                            ? 'text-blue-600 hover:bg-blue-50' 
+                            : 'text-gray-600 hover:bg-gray-50'
+                        }`}
+                        title={team.status === 'PAID' ? 'Marcar como não pago' : 'Marcar como pago'}
+                        disabled={team.status === 'EXCLUIDO'}
+                      >
+                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                       </button>
                       <button 

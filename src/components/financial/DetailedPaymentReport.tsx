@@ -69,25 +69,24 @@ export default function DetailedPaymentReport() {
   const fetchPaymentHistory = async () => {
     try {
       setLoading(true)
-      const params = new URLSearchParams({
-        monthsBack: monthsBack.toString(),
-        status: statusFilter
-      })
+      // Verificar se estamos em um relatório compartilhado
+      const isSharedReport = window.location.pathname.includes('/shared-reports/')
+      const token = window.location.pathname.split('/shared-reports/')[1]?.split('/')[0]
       
-      if (selectedPlayer) {
-        params.append('playerId', selectedPlayer)
+      let url = `/api/dashboard/financial/payment-history?monthsBack=${monthsBack}&status=${statusFilter}`
+      if (isSharedReport && token) {
+        url = `/api/shared-reports/${token}/financial/payment-history?monthsBack=${monthsBack}&status=${statusFilter}`
       }
-
-      const response = await fetch(`/api/dashboard/financial/payment-history?${params}`)
+      
+      const response = await fetch(url)
       if (!response.ok) {
         throw new Error('Falha ao buscar dados')
       }
-      
-      const result = await response.json()
-      setData(result)
+      const data = await response.json()
+      setData(data)
     } catch (error) {
       console.error('Erro ao carregar histórico:', error)
-      toast.error('Erro ao carregar dados')
+      toast.error('Erro ao carregar histórico')
     } finally {
       setLoading(false)
     }
@@ -343,12 +342,12 @@ export default function DetailedPaymentReport() {
 
       {/* Lista de Jogadores */}
       <div className="space-y-4">
-        {data.players.length === 0 ? (
+        {Array.isArray(data.players) && data.players.length === 0 ? (
           <div className="text-center py-8 text-gray-500">
             Nenhum jogador encontrado para os filtros selecionados.
           </div>
         ) : (
-          data.players.map(player => (
+          Array.isArray(data.players) && data.players.map(player => (
             <div key={player.id} className="border rounded-lg overflow-hidden">
               {/* Cabeçalho do jogador */}
               <div 
@@ -400,11 +399,13 @@ export default function DetailedPaymentReport() {
               {expandedPlayers.has(player.id) && (
                 <div className="px-4 py-3 bg-white">
                   <div className="space-y-2">
-                    {player.payments.length === 0 ? (
-                      <p className="text-gray-500 text-sm">Nenhum pagamento encontrado.</p>
+                    {Array.isArray(player.payments) && player.payments.length === 0 ? (
+                      <div className="text-center py-4 text-gray-500">
+                        Nenhum pagamento registrado
+                      </div>
                     ) : (
-                      player.payments.map(payment => (
-                        <div key={payment.id} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
+                      Array.isArray(player.payments) && player.payments.map(payment => (
+                        <div key={payment.id} className="flex justify-between items-center py-2 border-b border-gray-100 last:border-b-0">
                           <div>
                             <p className="font-medium text-gray-900">
                               {formatMonthYear(payment.month, payment.year)}

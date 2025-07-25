@@ -8,7 +8,7 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    const { action, newPassword } = await request.json()
+    const { action, newPassword, status } = await request.json()
     const teamId = params.id
 
     const team = await prisma.team.findUnique({ where: { id: teamId } })
@@ -17,6 +17,17 @@ export async function PUT(
     }
 
     switch (action) {
+      case 'toggle-payment':
+        // Alternar status de pagamento
+        await prisma.team.update({
+          where: { id: teamId },
+          data: { 
+            status: status,
+            updatedAt: new Date()
+          }
+        })
+        break
+
       case 'block':
         // Bloquear time (marcar como bloqueado)
         await prisma.team.update({

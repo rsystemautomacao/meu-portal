@@ -163,7 +163,7 @@ export default function AdminUsersPage() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {filteredUsers.map((user) => (
+                {Array.isArray(filteredUsers) && filteredUsers.map((user) => (
                   <tr key={user.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
@@ -177,9 +177,9 @@ export default function AdminUsersPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">
-                        {user.ownedTeams.length > 0 ? (
+                        {Array.isArray(user.ownedTeams) && user.ownedTeams.length > 0 ? (
                           <div className="flex flex-wrap gap-1">
-                            {user.ownedTeams.map(team => (
+                            {Array.isArray(user.ownedTeams) && user.ownedTeams.map(team => (
                               <span
                                 key={team.id}
                                 className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
@@ -228,7 +228,7 @@ export default function AdminUsersPage() {
           </div>
         </div>
 
-        {filteredUsers.length === 0 && (
+        {Array.isArray(filteredUsers) && filteredUsers.length === 0 && (
           <div className="text-center py-12">
             <p className="text-gray-500">Nenhum usuário encontrado</p>
           </div>

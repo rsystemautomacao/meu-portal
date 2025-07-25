@@ -37,7 +37,7 @@ export default function HistoricalDebts({ onDebtsChange }: HistoricalDebtsProps)
   const [historicalDebts, setHistoricalDebts] = useState<HistoricalDebt[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['add-debt']))
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set())
   
   // Form state
   const [selectedPlayer, setSelectedPlayer] = useState('')
