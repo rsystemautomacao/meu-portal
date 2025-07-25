@@ -33,7 +33,7 @@ const REPORT_COMPONENTS = {
 
 export default function SharedReportsPage() {
   const params = useParams()
-  const token = params.token as string
+  const token = params?.token as string
   const [reportData, setReportData] = useState<SharedReportData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
