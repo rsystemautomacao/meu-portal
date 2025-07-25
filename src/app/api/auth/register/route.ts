@@ -101,7 +101,7 @@ export async function POST(req: Request) {
           const messageData = {
             teamId: result.team.id,
             teamName: result.team.name,
-            whatsapp: result.team.whatsapp,
+            whatsapp: result.team.whatsapp || undefined,
             subject: 'Bem-vindo ao Meu Portal! 🎉',
             message: welcomeMessage,
             messageType: 'welcome',
