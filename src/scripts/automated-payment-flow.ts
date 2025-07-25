@@ -44,7 +44,7 @@ async function automatedPaymentFlow() {
         const messageData = {
           teamId: team.id,
           teamName: team.name,
-          whatsapp: team.whatsapp,
+          whatsapp: team.whatsapp || undefined,
           subject: 'Mensalidade Pendente - Meu Portal',
           message: paymentMessage,
           messageType: 'payment_reminder',
@@ -82,7 +82,7 @@ async function automatedPaymentFlow() {
         const messageData = {
           teamId: team.id,
           teamName: team.name,
-          whatsapp: team.whatsapp,
+          whatsapp: team.whatsapp || undefined,
           subject: 'Aviso de Bloqueio - Meu Portal',
           message: blockMessage,
           messageType: 'payment_overdue',
@@ -119,7 +119,7 @@ async function automatedPaymentFlow() {
         const messageData = {
           teamId: team.id,
           teamName: team.name,
-          whatsapp: team.whatsapp,
+          whatsapp: team.whatsapp || undefined,
           subject: 'Acesso Bloqueado - Meu Portal',
           message: blockMessage,
           messageType: 'access_blocked',

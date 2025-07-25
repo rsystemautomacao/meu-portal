@@ -139,7 +139,7 @@ Equipe Meu Portal`
     const messageData = {
       teamId: teamData.id,
       teamName: teamData.name,
-      whatsapp: (teamData as any).whatsapp,
+      whatsapp: (teamData as any).whatsapp || undefined,
       subject,
       message,
       messageType,
