@@ -71,19 +71,35 @@ export async function POST(
             subject = 'Mensalidade Pendente - Meu Portal'
             // Buscar mensagem de cobrança do SystemConfig
             const systemConfig = await prisma.systemConfig.findFirst()
-            let paymentMessage = systemConfig?.paymentMessage || ''
             
             // Calcular data de vencimento (7 dias após a criação do time)
             const teamCreatedAt = new Date(teamData.createdAt)
             const vencimentoDate = new Date(teamCreatedAt.getTime() + (7 * 24 * 60 * 60 * 1000))
             const vencimento = `${String(vencimentoDate.getDate()).padStart(2, '0')}/${String(vencimentoDate.getMonth() + 1).padStart(2, '0')}/${vencimentoDate.getFullYear()}`
             
-            // Substituir variáveis na mensagem, se existirem
+            // Valores padrão
+            const valor = systemConfig?.monthlyValue ? `R$ ${systemConfig.monthlyValue.toFixed(2)}/mês` : 'R$ 29,90/mês'
+            const link = systemConfig?.paymentLink || 'https://mpago.li/2YzHBRt'
+            
+            // Mensagem padrão se não houver configuração personalizada
+            let paymentMessage = systemConfig?.paymentMessage || `Olá! Tudo bem? 👋
+Estamos passando para avisar que sua assinatura do Meu Portal está prestes a vencer.
+
+Para continuar aproveitando todos os recursos da plataforma, você precisará renovar manualmente sua assinatura até {vencimento}.
+O valor da renovação é de {valor}, e o pagamento pode ser feito por Pix ou cartão através do link abaixo:
+
+🔗 {link}
+
+Se tiver qualquer dúvida ou precisar de ajuda com o pagamento, é só chamar a gente no WhatsApp: (11) 94395-0503.
+
+Obrigado por fazer parte do Meu Portal! 💙`
+            
+            // Substituir variáveis na mensagem
             paymentMessage = paymentMessage
               .replace(/{team}/g, teamData.name)
               .replace(/{vencimento}/g, vencimento)
-              .replace(/{valor}/g, systemConfig?.monthlyValue ? `R$ ${systemConfig.monthlyValue.toFixed(2)}/mês` : 'R$ 29,90/mês')
-              .replace(/{link}/g, systemConfig?.paymentLink || '')
+              .replace(/{valor}/g, valor)
+              .replace(/{link}/g, link)
             
             // Preservar formatação (quebras de linha)
             message = paymentMessage

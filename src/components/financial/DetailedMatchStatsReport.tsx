@@ -3,6 +3,7 @@ import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { ChartBarIcon, ClipboardIcon, CheckCircleIcon, ChevronDownIcon, ChevronUpIcon, FunnelIcon } from '@heroicons/react/24/outline'
 import { toast } from 'react-hot-toast'
+import { usePathname } from 'next/navigation'
 
 const PERIODS = [
   { label: 'Mês atual', value: 'month' },
@@ -14,6 +15,7 @@ const PERIODS = [
 ]
 
 export default function DetailedMatchStatsReport() {
+  const pathname = usePathname()
   const [matches, setMatches] = useState<any[]>([])
   const [players, setPlayers] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -45,8 +47,8 @@ export default function DetailedMatchStatsReport() {
     try {
       setLoading(true)
       // Verificar se estamos em um relatório compartilhado
-      const isSharedReport = window.location.pathname.includes('/shared-reports/')
-      const token = window.location.pathname.split('/shared-reports/')[1]?.split('/')[0]
+      const isSharedReport = pathname?.includes('/shared-reports/') || false
+      const token = pathname?.split('/shared-reports/')[1]?.split('/')[0]
       
       let url = '/api/matches'
       if (isSharedReport && token) {
@@ -58,7 +60,13 @@ export default function DetailedMatchStatsReport() {
         throw new Error('Falha ao buscar partidas')
       }
       const data = await response.json()
-      setMatches(data)
+      // Se estamos em um relatório compartilhado, a API retorna { matches, statistics }
+      // Se não, retorna apenas o array de partidas
+      if (isSharedReport && data.matches) {
+        setMatches(data.matches)
+      } else {
+        setMatches(data)
+      }
     } catch (error) {
       console.error('Erro ao carregar partidas:', error)
       toast.error('Erro ao carregar partidas')
@@ -71,8 +79,8 @@ export default function DetailedMatchStatsReport() {
     try {
       setLoading(true)
       // Verificar se estamos em um relatório compartilhado
-      const isSharedReport = window.location.pathname.includes('/shared-reports/')
-      const token = window.location.pathname.split('/shared-reports/')[1]?.split('/')[0]
+      const isSharedReport = pathname?.includes('/shared-reports/') || false
+      const token = pathname?.split('/shared-reports/')[1]?.split('/')[0]
       
       let url = '/api/players'
       if (isSharedReport && token) {
@@ -94,7 +102,7 @@ export default function DetailedMatchStatsReport() {
   }
 
   // Lista de nomes dos jogadores do time
-  const playerNames = players.map((p: any) => p.name)
+  const playerNames = Array.isArray(players) ? players.map((p: any) => p.name) : []
 
   // Filtro de período
   const now = new Date()
@@ -117,6 +125,17 @@ export default function DetailedMatchStatsReport() {
   } else {
     start = customStart ? new Date(customStart) : new Date(2000,0,1)
     end = customEnd ? new Date(customEnd) : now
+  }
+
+  // Verificar se matches é um array antes de usar filter
+  if (!Array.isArray(matches)) {
+    console.error('matches não é um array:', matches)
+    return (
+      <div className="bg-white shadow rounded-lg p-6 text-center">
+        <h3 className="text-lg font-medium text-gray-900 mb-4">Estatísticas das Partidas</h3>
+        <p className="text-gray-500">Erro ao carregar dados das partidas.</p>
+      </div>
+    )
   }
 
   const filteredMatches = matches.filter(m => {

@@ -10,7 +10,8 @@
     "export": "next build && next export",
     "deploy": "npm run build && touch out/.nojekyll",
     "postinstall": "prisma generate",
-    "backup": "node backup.js"
+    "backup": "node backup.js",
+    "seed:config": "npx tsx prisma/seed-system-config.ts"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.0",

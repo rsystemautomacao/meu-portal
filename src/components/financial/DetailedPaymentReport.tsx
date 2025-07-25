@@ -83,6 +83,7 @@ export default function DetailedPaymentReport() {
         throw new Error('Falha ao buscar dados')
       }
       const data = await response.json()
+
       setData(data)
     } catch (error) {
       console.error('Erro ao carregar histórico:', error)

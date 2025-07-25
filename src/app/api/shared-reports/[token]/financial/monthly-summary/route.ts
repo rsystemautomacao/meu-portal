@@ -87,15 +87,60 @@ export async function GET(
       .filter(p => p.status === 'pending')
       .reduce((sum, p) => sum + p.amount, 0)
 
-    return NextResponse.json({
+    // Agrupar transações por tipo
+    const incomeByType: { [key: string]: number } = {}
+    const expenseByType: { [key: string]: number } = {}
+    
+    transactions.forEach(transaction => {
+      // Usar a descrição como categoria ou criar uma categoria baseada no tipo
+      let category = 'OTHER'
+      
+      // Tentar extrair categoria da descrição
+      const description = transaction.description.toLowerCase()
+      if (description.includes('mensalidade') || description.includes('mensal')) {
+        category = 'MONTHLY_FEE'
+      } else if (description.includes('festival') || description.includes('evento')) {
+        category = 'FESTIVAL'
+      } else if (description.includes('doação') || description.includes('donation')) {
+        category = 'DONATION'
+      } else if (description.includes('rifa') || description.includes('raffle')) {
+        category = 'RAFFLE'
+      } else if (description.includes('campeonato') || description.includes('championship')) {
+        category = 'CHAMPIONSHIP'
+      } else if (description.includes('limpeza') || description.includes('cleaning')) {
+        category = 'CLEANING'
+      } else if (description.includes('material') || description.includes('equipamento')) {
+        category = 'GAME_MATERIALS'
+      } else if (description.includes('liga') || description.includes('league')) {
+        category = 'LEAGUE_MONTHLY'
+      } else if (description.includes('quadra') || description.includes('court')) {
+        category = 'COURT_MONTHLY'
+      } else if (description.includes('uniforme') || description.includes('uniform')) {
+        category = 'UNIFORMS'
+      }
+      
+      if (transaction.type === 'INCOME') {
+        incomeByType[category] = (incomeByType[category] || 0) + transaction.amount
+      } else if (transaction.type === 'EXPENSE') {
+        expenseByType[category] = (expenseByType[category] || 0) + transaction.amount
+      }
+    })
+
+    const response = {
       month: month,
-      income,
-      expenses,
+      totalIncome: income,
+      totalExpense: expenses,
       balance,
+      incomeByType,
+      expenseByType,
       totalPayments,
       pendingPayments,
       transactions: transactions.length
-    })
+    }
+    
+
+    
+    return NextResponse.json(response)
   } catch (error) {
     console.error("Erro ao buscar resumo mensal para relatório compartilhado:", error)
     return NextResponse.json({ error: 'Erro interno do servidor' }, { status: 500 })

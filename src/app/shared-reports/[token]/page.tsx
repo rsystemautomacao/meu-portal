@@ -16,6 +16,8 @@ import PlayerPaymentStatus from '@/components/financial/PlayerPaymentStatus'
 import TransactionList from '@/components/financial/TransactionList'
 import DetailedMatchStatsReport from '@/components/financial/DetailedMatchStatsReport'
 import DetailedPaymentReport from '@/components/financial/DetailedPaymentReport'
+import SharedMatchesReport from '@/components/matches/SharedMatchesReport'
+import SharedMatchStatsReport from '@/components/matches/SharedMatchStatsReport'
 
 interface SharedReportData {
   teamName: string
@@ -26,9 +28,11 @@ interface SharedReportData {
 const REPORT_COMPONENTS = {
   monthly_summary: { component: MonthlyReport, name: 'Resumo Mensal', icon: ChartBarIcon },
   player_payments: { component: PlayerPaymentStatus, name: 'Pagamentos dos Jogadores', icon: UserGroupIcon },
-  transactions: { component: TransactionList, name: 'Transações', icon: CurrencyDollarIcon },
+  transactions: { component: () => <TransactionList showActions={false} />, name: 'Transações', icon: CurrencyDollarIcon },
   match_stats: { component: DetailedMatchStatsReport, name: 'Estatísticas das Partidas', icon: CalendarIcon },
-  payment_details: { component: DetailedPaymentReport, name: 'Relatório Detalhado de Pagamentos', icon: DocumentTextIcon }
+  payment_details: { component: DetailedPaymentReport, name: 'Relatório Detalhado de Pagamentos', icon: DocumentTextIcon },
+  matches: { component: SharedMatchesReport, name: 'Histórico de Partidas', icon: CalendarIcon },
+  match_statistics: { component: SharedMatchStatsReport, name: 'Estatísticas Detalhadas das Partidas', icon: ChartBarIcon }
 }
 
 export default function SharedReportsPage() {
@@ -121,10 +125,10 @@ export default function SharedReportsPage() {
           <div className="flex justify-between items-center">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">
-                Relatórios Financeiros - {reportData.teamName}
+                Relatórios - {reportData.teamName}
               </h1>
               <p className="text-gray-600 mt-1">
-                Visualização compartilhada dos relatórios financeiros
+                Visualização compartilhada dos relatórios financeiros e de partidas
               </p>
             </div>
             <div className="flex items-center space-x-2 text-sm text-gray-500">

@@ -52,6 +52,7 @@ export default function MonthlyReport() {
         throw new Error('Erro ao carregar dados')
       }
       const data = await response.json()
+
       setSummary(data)
     } catch (error) {
       console.error('Erro ao carregar dados:', error)

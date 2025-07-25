@@ -15,9 +15,10 @@ interface Transaction {
 interface TransactionListProps {
   onTransactionDeleted?: () => void
   refresh?: number
+  showActions?: boolean
 }
 
-export default function TransactionList({ onTransactionDeleted, refresh }: TransactionListProps) {
+export default function TransactionList({ onTransactionDeleted, refresh, showActions = true }: TransactionListProps) {
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -111,9 +112,11 @@ export default function TransactionList({ onTransactionDeleted, refresh }: Trans
               <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Tipo
               </th>
-              <th scope="col" className="relative px-6 py-3">
-                <span className="sr-only">Ações</span>
-              </th>
+              {showActions && (
+                <th scope="col" className="relative px-6 py-3">
+                  <span className="sr-only">Ações</span>
+                </th>
+              )}
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
@@ -139,14 +142,16 @@ export default function TransactionList({ onTransactionDeleted, refresh }: Trans
                     {transaction.type === 'INCOME' ? 'Entrada' : 'Saída'}
                   </span>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                  <button
-                    onClick={() => handleDelete(transaction.id)}
-                    className="text-red-600 hover:text-red-900"
-                  >
-                    Excluir
-                  </button>
-                </td>
+                {showActions && (
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <button
+                      onClick={() => handleDelete(transaction.id)}
+                      className="text-red-600 hover:text-red-900"
+                    >
+                      Excluir
+                    </button>
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>

@@ -29,20 +29,19 @@ export async function GET(
     // Buscar jogadores do time
     const players = await prisma.player.findMany({
       where: { teamId: sharedReport.team.id },
-      include: {
-        monthlyFeeExceptions: true,
-        payments: true
+      select: {
+        id: true,
+        name: true,
+        position: true,
+        isExempt: true,
+        monthlyFee: true
       },
-      orderBy: { name: 'asc' }
+      orderBy: {
+        name: 'asc'
+      }
     })
 
-    // Adicionar isExempt ao retorno
-    const playersWithIsExempt = players.map(player => ({
-      ...player,
-      isExempt: !!player.isExempt
-    }))
-
-    return NextResponse.json(playersWithIsExempt)
+    return NextResponse.json(players)
   } catch (error) {
     console.error("Erro ao buscar jogadores para relatório compartilhado:", error)
     return NextResponse.json({ error: 'Erro interno do servidor' }, { status: 500 })

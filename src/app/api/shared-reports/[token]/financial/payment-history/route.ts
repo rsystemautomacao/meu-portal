@@ -34,13 +34,18 @@ export async function GET(
     const startDate = new Date()
     startDate.setMonth(startDate.getMonth() - monthsBack)
 
-    // Buscar jogadores do time
-    const teamPlayers = await prisma.player.findMany({
+    // Buscar todos os jogadores do time
+    const allPlayers = await prisma.player.findMany({
       where: { teamId: sharedReport.team.id },
-      select: { id: true }
+      select: {
+        id: true,
+        name: true,
+        isExempt: true,
+        monthlyFee: true
+      }
     })
     
-    const playerIds = teamPlayers.map((p: { id: string }) => p.id)
+    const playerIds = allPlayers.map(p => p.id)
     
     // Buscar pagamentos do período
     const payments = await prisma.payment.findMany({
@@ -64,33 +69,53 @@ export async function GET(
       orderBy: { dueDate: 'desc' }
     })
 
-    // Agrupar por jogador
+    // Inicializar mapa com todos os jogadores
     const playersMap = new Map()
     
+    allPlayers.forEach(player => {
+      playersMap.set(player.id, {
+        id: player.id,
+        name: player.name,
+        monthlyFee: player.monthlyFee || 0,
+        isExempt: player.isExempt,
+        payments: [],
+        totalOutstanding: 0,
+        monthsOutstanding: 0,
+        hasOutstandingPayments: false
+      })
+    })
+    
+    // Adicionar pagamentos aos jogadores
     payments.forEach(payment => {
-      const playerId = payment.playerId
-      if (!playersMap.has(playerId)) {
-        playersMap.set(playerId, {
-          id: playerId,
-          name: payment.player.name,
-          isExempt: payment.player.isExempt,
-          payments: [],
-          totalOutstanding: 0,
-          monthsOutstanding: 0,
-          hasOutstandingPayments: false
-        })
-      }
-      
-      const player = playersMap.get(playerId)
-      player.payments.push(payment)
-      
-      if (payment.status === 'pending' || payment.status === 'late') {
-        player.totalOutstanding += payment.amount
-        player.hasOutstandingPayments = true
+      const player = playersMap.get(payment.playerId)
+      if (player) {
+        // Processar pagamento para exibição
+        const dueDate = new Date(payment.dueDate)
+        const today = new Date()
+        const isLate = dueDate < today && payment.status !== 'paid'
+        
+        const processedPayment = {
+          id: payment.id,
+          month: dueDate.getMonth() + 1,
+          year: dueDate.getFullYear(),
+          amount: payment.amount,
+          status: payment.status.toUpperCase(),
+          dueDate: payment.dueDate,
+          paymentDate: payment.paymentDate,
+          isLate,
+          daysLate: isLate ? Math.floor((today.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24)) : 0
+        }
+        
+        player.payments.push(processedPayment)
+        
+        if (payment.status === 'pending' || payment.status === 'late') {
+          player.totalOutstanding += payment.amount
+          player.hasOutstandingPayments = true
+        }
       }
     })
 
-        // Calcular meses em aberto
+    // Calcular meses em aberto
     const players = Array.from(playersMap.values()).map(player => {
       const outstandingPayments = player.payments.filter((p: any) =>
         p.status === 'pending' || p.status === 'late'
@@ -99,14 +124,18 @@ export async function GET(
       return player
     })
 
-    return NextResponse.json({
+    const response = {
       players,
       summary: {
         totalPlayers: players.length,
-        playersWithOutstanding: players.filter(p => p.hasOutstandingPayments).length,
+        playersWithDebt: players.filter(p => p.hasOutstandingPayments).length,
         totalOutstanding: players.reduce((sum, p) => sum + p.totalOutstanding, 0)
       }
-    })
+    }
+    
+
+    
+    return NextResponse.json(response)
   } catch (error) {
     console.error("Erro ao buscar histórico de pagamentos para relatório compartilhado:", error)
     return NextResponse.json({ error: 'Erro interno do servidor' }, { status: 500 })
