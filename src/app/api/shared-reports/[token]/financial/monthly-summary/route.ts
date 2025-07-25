@@ -49,9 +49,6 @@ export async function GET(
           gte: startDate,
           lte: endDate
         }
-      },
-      include: {
-        players: true
       }
     })
 
@@ -66,10 +63,17 @@ export async function GET(
 
     const balance = income - expenses
 
-    // Buscar pagamentos do mês
+    // Buscar pagamentos do mês através dos jogadores do time
+    const players = await prisma.player.findMany({
+      where: { teamId: sharedReport.team.id },
+      select: { id: true }
+    })
+    
+    const playerIds = players.map(p => p.id)
+    
     const payments = await prisma.payment.findMany({
       where: {
-        teamId: sharedReport.team.id,
+        playerId: { in: playerIds },
         year: year,
         month: monthNum
       }
