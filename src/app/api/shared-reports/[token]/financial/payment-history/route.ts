@@ -34,10 +34,18 @@ export async function GET(
     const startDate = new Date()
     startDate.setMonth(startDate.getMonth() - monthsBack)
 
+    // Buscar jogadores do time
+    const teamPlayers = await prisma.player.findMany({
+      where: { teamId: sharedReport.team.id },
+      select: { id: true }
+    })
+    
+    const playerIds = teamPlayers.map((p: { id: string }) => p.id)
+    
     // Buscar pagamentos do período
     const payments = await prisma.payment.findMany({
       where: {
-        teamId: sharedReport.team.id,
+        playerId: { in: playerIds },
         dueDate: {
           gte: startDate,
           lte: endDate

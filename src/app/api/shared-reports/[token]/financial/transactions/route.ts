@@ -29,10 +29,7 @@ export async function GET(
     // Buscar transações do time
     const transactions = await prisma.transaction.findMany({
       where: { teamId: sharedReport.team.id },
-      orderBy: { createdAt: 'desc' },
-      include: {
-        players: true
-      }
+      orderBy: { createdAt: 'desc' }
     })
 
     return NextResponse.json(transactions)
