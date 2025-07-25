@@ -30,6 +30,8 @@ export async function POST(request: Request, { params }: { params: { id: string 
     // Verificar se já existe
     const exists = await prisma.teamSystemPayment.findFirst({ where: { teamId, month: currentMonth, year: currentYear } });
     if (!exists) {
+      // Calcular a data de vencimento (último dia do mês)
+      const dueDate = new Date(currentYear, currentMonth, 0); // Último dia do mês
       await prisma.teamSystemPayment.create({
         data: {
           teamId,
@@ -37,6 +39,7 @@ export async function POST(request: Request, { params }: { params: { id: string 
           year: currentYear,
           amount,
           status: 'pending',
+          dueDate,
         }
       });
       return NextResponse.json({ message: 'Mensalidade do sistema gerada', month: currentMonth, year: currentYear });

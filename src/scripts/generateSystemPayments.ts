@@ -22,6 +22,8 @@ async function main() {
       where: { teamId: team.id, month, year }
     });
     if (!exists) {
+      // Calcular a data de vencimento (último dia do mês)
+      const dueDate = new Date(year, month, 0); // Último dia do mês
       await prisma.teamSystemPayment.create({
         data: {
           teamId: team.id,
@@ -29,6 +31,7 @@ async function main() {
           year,
           amount: config.monthlyValue,
           status: 'pending',
+          dueDate,
         }
       });
       count++;
