@@ -19,7 +19,7 @@ export default function AdminConfiguracoes() {
       });
   }, []);
 
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setConfig({ ...config, [e.target.name]: e.target.value });
   };
 
