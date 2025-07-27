@@ -15,7 +15,8 @@ import {
   CalendarIcon,
   UserGroupIcon,
   CheckCircleIcon,
-  XCircleIcon
+  XCircleIcon,
+  BanknotesIcon
 } from '@heroicons/react/24/outline'
 import PlayerPaymentStatus from '@/components/financial/PlayerPaymentStatus'
 import TransactionForm from '@/components/financial/TransactionForm'
@@ -39,6 +40,13 @@ export default function FinancialPage() {
   const [notifications, setNotifications] = useState<{ id: string; message: string }[]>([])
   const [transactionsRefresh, setTransactionsRefresh] = useState(0)
   const router = useRouter()
+
+  const tabs = [
+    { id: 'overview', name: 'Visão Geral' },
+    { id: 'players', name: 'Jogadores' },
+    { id: 'transactions', name: 'Transações' },
+    { id: 'reports', name: 'Relatórios' },
+  ]
 
   // Função para verificar pagamentos em atraso
   const checkLatePayments = async () => {
@@ -79,65 +87,42 @@ export default function FinancialPage() {
   }, [session, status, router])
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Cabeçalho */}
-      <div className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-bold text-gray-900">Financeiro</h1>
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-blue-50">
+      <div className="w-full p-2 sm:p-4 lg:p-6">
+        {/* Header */}
+        <div className="mb-4 sm:mb-6">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2 flex items-center">
+            <BanknotesIcon className="h-6 w-6 sm:h-8 sm:w-8 mr-2 sm:mr-3 text-green-600" />
+            Financeiro
+          </h1>
+          <p className="text-base sm:text-lg text-gray-600">
+            Gerencie as finanças do seu time
+          </p>
+        </div>
+
+        {/* Tabs */}
+        <div className="mb-4 sm:mb-6">
+          <div className="border-b border-gray-200">
+            <nav className="-mb-px flex space-x-4 sm:space-x-8 overflow-x-auto">
+              {tabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`whitespace-nowrap py-2 px-1 sm:px-3 border-b-2 font-medium text-sm ${
+                    activeTab === tab.id
+                      ? 'border-blue-500 text-blue-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  {tab.name}
+                </button>
+              ))}
+            </nav>
           </div>
         </div>
-      </div>
 
-      {/* Navegação por abas */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="border-b border-gray-200 bg-white rounded-t-xl shadow-sm">
-          <nav className="flex space-x-2 sm:space-x-4 lg:space-x-8 overflow-x-auto px-2 py-2">
-            <button
-              onClick={() => setActiveTab('overview')}
-              className={`${
-                activeTab === 'overview'
-                  ? 'border-b-4 border-blue-600 text-blue-700 font-bold bg-blue-50 shadow'
-                  : 'border-b-4 border-transparent text-gray-500 hover:text-blue-600 hover:bg-blue-50'
-              } whitespace-nowrap py-3 px-4 rounded-t-lg transition-all duration-150`}
-            >
-              Visão Geral
-            </button>
-            <button
-              onClick={() => setActiveTab('players')}
-              className={`${
-                activeTab === 'players'
-                  ? 'border-b-4 border-blue-600 text-blue-700 font-bold bg-blue-50 shadow'
-                  : 'border-b-4 border-transparent text-gray-500 hover:text-blue-600 hover:bg-blue-50'
-              } whitespace-nowrap py-3 px-4 rounded-t-lg transition-all duration-150`}
-            >
-              Jogadores
-            </button>
-            <button
-              onClick={() => setActiveTab('transactions')}
-              className={`${
-                activeTab === 'transactions'
-                  ? 'border-b-4 border-blue-600 text-blue-700 font-bold bg-blue-50 shadow'
-                  : 'border-b-4 border-transparent text-gray-500 hover:text-blue-600 hover:bg-blue-50'
-              } whitespace-nowrap py-3 px-4 rounded-t-lg transition-all duration-150`}
-            >
-              Transações
-            </button>
-            <button
-              onClick={() => setActiveTab('reports')}
-              className={`${
-                activeTab === 'reports'
-                  ? 'border-b-4 border-blue-600 text-blue-700 font-bold bg-blue-50 shadow'
-                  : 'border-b-4 border-transparent text-gray-500 hover:text-blue-600 hover:bg-blue-50'
-              } whitespace-nowrap py-3 px-4 rounded-t-lg transition-all duration-150`}
-            >
-              Relatórios
-            </button>
-          </nav>
-        </div>
-
-        {/* Conteúdo das abas */}
-        <div className="mt-6">
+        {/* Content */}
+        <div className="mt-4 sm:mt-6">
           {activeTab === 'overview' && (
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
               <MonthlyReport />

@@ -277,25 +277,25 @@ export default function PlayersPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+      <div className="w-full p-2 sm:p-4 lg:p-6">
         {/* Header */}
-        <div className="mb-8">
+        <div className="mb-4 sm:mb-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2 flex items-center">
-                <UserIcon className="h-8 w-8 mr-3 text-blue-600" />
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2 flex items-center">
+                <UserIcon className="h-6 w-6 sm:h-8 sm:w-8 mr-2 sm:mr-3 text-blue-600" />
                 Jogadores
               </h1>
-              <p className="text-lg text-gray-600">
+              <p className="text-base sm:text-lg text-gray-600">
                 Gerencie o elenco do seu time
               </p>
             </div>
-            <div className="mt-4 sm:mt-0">
+            <div className="mt-3 sm:mt-0">
               <button
                 onClick={() => setShowModal(true)}
-                className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-xl shadow-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 transform hover:scale-105"
+                className="inline-flex items-center px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-xl shadow-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 transform hover:scale-105 w-full sm:w-auto"
               >
-                <UserPlusIcon className="h-5 w-5 mr-2" />
+                <UserPlusIcon className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
                 Adicionar Jogador
               </button>
             </div>
@@ -303,7 +303,7 @@ export default function PlayersPage() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-6 sm:mb-8">
           <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-6 border border-green-200 shadow-sm">
             <div className="flex items-center">
               <div className="bg-green-100 rounded-lg p-3 mr-4">

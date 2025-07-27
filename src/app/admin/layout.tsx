@@ -68,7 +68,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         </div>
       </div>
       )}
-      <main className={isLoginPage ? "" : "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8"}>
+      <main className={isLoginPage ? "" : "w-full p-2 sm:p-4 lg:p-6"}>
         {children}
       </main>
     </div>

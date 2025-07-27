@@ -211,7 +211,7 @@ export default function MatchesPage() {
   if (error) return <div className="p-4 text-red-500">{error}</div>
 
   return (
-    <div className="p-4">
+    <div className="p-2 sm:p-4">
       <div className="sm:flex sm:items-center">
         <div className="sm:flex-auto">
           <h1 className="text-xl font-semibold text-gray-900">Partidas</h1>
@@ -223,14 +223,14 @@ export default function MatchesPage() {
           <button
             type="button"
             onClick={handleAddMatch}
-            className="inline-flex items-center justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-opacity-90"
+            className="inline-flex items-center justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-opacity-90 w-full sm:w-auto"
           >
             Adicionar Partida
           </button>
         </div>
       </div>
 
-      <div className="mt-8 flex flex-col">
+      <div className="mt-6 sm:mt-8 flex flex-col">
         <div className="-my-2 -mx-4 overflow-x-auto sm:-mx-6 lg:-mx-8 w-full">
           <div className="inline-block min-w-full py-2 align-middle md:px-6 lg:px-8">
             <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">

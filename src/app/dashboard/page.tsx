@@ -281,10 +281,10 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="w-full">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-2xl font-semibold text-gray-900">
+      <div className="mb-4 sm:mb-6">
+        <h1 className="text-xl sm:text-2xl font-semibold text-gray-900">
           Bem-vindo, {session.user?.name}!
         </h1>
         <p className="mt-1 text-sm text-gray-600">
@@ -294,13 +294,13 @@ export default function DashboardPage() {
 
       {/* Banner de aviso para PAUSED */}
       {paused && (
-        <div className="w-full bg-yellow-100 border-b border-yellow-300 text-yellow-900 text-center py-2 font-semibold">
+        <div className="w-full bg-yellow-100 border-b border-yellow-300 text-yellow-900 text-center py-2 font-semibold mb-4">
           Seu time está <span className="font-bold">pausado</span>. Não serão geradas novas mensalidades até reativação.
         </div>
       )}
 
       {/* Cards de resumo */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-8">
+      <div className="grid grid-cols-1 gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-6 sm:mb-8">
         <div className="bg-white overflow-hidden shadow rounded-lg">
           <div className="p-5">
             <div className="flex items-center">
@@ -400,9 +400,9 @@ export default function DashboardPage() {
       </div>
 
       {/* Seção de últimas partidas */}
-      <div className="mt-8 overflow-x-auto w-full">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-medium text-gray-900">Últimas Partidas</h2>
+      <div className="mt-6 sm:mt-8 overflow-x-auto w-full">
+        <div className="flex items-center justify-between mb-3 sm:mb-4">
+          <h2 className="text-base sm:text-lg font-medium text-gray-900">Últimas Partidas</h2>
           <button 
             onClick={() => router.push('/dashboard/matches')}
             className="text-sm text-blue-600 hover:text-blue-800 font-medium"
@@ -456,9 +456,9 @@ export default function DashboardPage() {
       </div>
 
       {/* Seção de estatísticas */}
-      <div className="mt-8">
-        <h2 className="text-lg font-medium text-gray-900 mb-4">Estatísticas</h2>
-        <div className="bg-white shadow overflow-hidden sm:rounded-md p-4">
+      <div className="mt-6 sm:mt-8">
+        <h2 className="text-base sm:text-lg font-medium text-gray-900 mb-3 sm:mb-4">Estatísticas</h2>
+        <div className="bg-white shadow overflow-hidden sm:rounded-md p-3 sm:p-4">
           {dashboardData?.recentMatches && Array.isArray(dashboardData.recentMatches) && dashboardData.recentMatches.length > 0 ? (() => {
             const { stats, allPlayers, golsPro, golsContra } = getPlayerStats(dashboardData.recentMatches);
             return (

@@ -328,10 +328,10 @@ export default function SettingsPage() {
 
   return (
     <>
-      <div className="max-w-4xl mx-auto p-4 sm:p-6 lg:p-8">
-        <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 flex items-center">
-                <Cog6ToothIcon className="h-8 w-8 mr-3 text-indigo-600"/>
+      <div className="w-full p-2 sm:p-4 lg:p-6">
+        <div className="mb-4 sm:mb-6">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 flex items-center">
+                <Cog6ToothIcon className="h-6 w-6 sm:h-8 sm:w-8 mr-2 sm:mr-3 text-indigo-600"/>
                 Configurações do Time
             </h1>
             <p className="mt-2 text-sm text-gray-500">
@@ -341,7 +341,7 @@ export default function SettingsPage() {
 
         {/* Banner de aviso para PAUSED */}
         {paused && (
-          <div className="w-full bg-yellow-100 border-b border-yellow-300 text-yellow-900 text-center py-2 font-semibold">
+          <div className="w-full bg-yellow-100 border-b border-yellow-300 text-yellow-900 text-center py-2 font-semibold mb-4">
             Seu time está <span className="font-bold">pausado</span>. Não serão geradas novas mensalidades até reativação.
           </div>
         )}
@@ -352,7 +352,7 @@ export default function SettingsPage() {
         {/* Relatórios Compartilháveis */}
         <SharedReportsConfig />
 
-          {/* Informações Gerais */}
+        {/* Informações Gerais */}
         <div className="mt-8 bg-gradient-to-br from-white to-gray-50 p-8 rounded-xl shadow-lg border border-gray-200">
           <div className="border-b border-gray-200 pb-6 mb-6">
             <h2 className="text-2xl font-bold text-gray-900 flex items-center mb-2">

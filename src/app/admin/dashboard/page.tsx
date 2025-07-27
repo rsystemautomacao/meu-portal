@@ -349,17 +349,17 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
+      <div className="w-full p-2 sm:p-4 lg:p-6">
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
           <div className="bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl p-4 sm:p-6 text-white shadow-lg">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-purple-100 text-xs sm:text-sm font-medium">Total de Times</p>
-                <p className="text-2xl sm:text-3xl font-bold">{stats.totalTeams}</p>
+                <p className="text-xl sm:text-2xl lg:text-3xl font-bold">{stats.totalTeams}</p>
               </div>
               <div className="bg-white bg-opacity-20 rounded-full p-2 sm:p-3">
-                <UsersIcon className="h-6 w-6 sm:h-8 sm:w-8" />
+                <UsersIcon className="h-5 w-5 sm:h-6 sm:w-6 lg:h-8 lg:w-8" />
               </div>
             </div>
           </div>
@@ -368,10 +368,10 @@ export default function AdminDashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-blue-100 text-xs sm:text-sm font-medium">Total de Usuários</p>
-                <p className="text-2xl sm:text-3xl font-bold">{stats.totalUsers}</p>
+                <p className="text-xl sm:text-2xl lg:text-3xl font-bold">{stats.totalUsers}</p>
               </div>
               <div className="bg-white bg-opacity-20 rounded-full p-2 sm:p-3">
-                <UserIcon className="h-6 w-6 sm:h-8 sm:w-8" />
+                <UserIcon className="h-5 w-5 sm:h-6 sm:w-6 lg:h-8 lg:w-8" />
               </div>
             </div>
           </div>

@@ -102,7 +102,7 @@ export default function DashboardLayout({
       {/* Main content */}
       <div className="flex-1 overflow-auto">
         {/* Header com notificações */}
-        <header className="bg-white shadow-sm border-b border-gray-200 px-4 py-3">
+        <header className="bg-white shadow-sm border-b border-gray-200 px-2 sm:px-4 py-3">
           <div className="flex justify-between items-center">
             <div>
               <h1 className="text-lg font-semibold text-gray-900">Meu Portal</h1>
@@ -113,7 +113,7 @@ export default function DashboardLayout({
           </div>
         </header>
         
-        <main className="py-4 px-2 sm:px-6 lg:px-8">
+        <main className="py-2 px-2 sm:py-4 sm:px-4">
           {children}
         </main>
       </div>
