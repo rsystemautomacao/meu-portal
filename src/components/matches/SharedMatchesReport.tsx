@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import { CalendarIcon, TrophyIcon, ChartBarIcon } from '@heroicons/react/24/outline'
+import { CalendarIcon, ChartBarIcon, XMarkIcon, UserIcon } from '@heroicons/react/24/outline'
 import { toast } from 'react-hot-toast'
 import { usePathname } from 'next/navigation'
+import { Dialog, Transition } from '@headlessui/react'
+import { Fragment } from 'react'
+import { CheckCircleIcon } from '@heroicons/react/24/solid'
 
 interface Match {
   id: string
@@ -27,7 +30,6 @@ interface MatchEvent {
   team: string
   quadro: number
   assist?: string
-  goleiro?: string
 }
 
 interface MatchStatistics {
@@ -47,11 +49,183 @@ interface MatchData {
   statistics: MatchStatistics
 }
 
+interface StatsModalProps {
+  isOpen: boolean
+  onClose: () => void
+  events: MatchEvent[]
+}
+
+function StatsModal({ isOpen, onClose, events }: StatsModalProps) {
+  const [copied, setCopied] = useState(false)
+
+  const getLabel = (type: string) => {
+    switch (type) {
+      case 'goal': return 'Gol';
+      case 'assist': return 'Assistência';
+      case 'yellow_card': return 'Amarelo';
+      case 'red_card': return 'Vermelho';
+      default: return type;
+    }
+  };
+
+  const getColor = (type: string) => {
+    switch (type) {
+      case 'goal': return 'text-green-700';
+      case 'assist': return 'text-blue-700';
+      case 'yellow_card': return 'text-yellow-600';
+      case 'red_card': return 'text-red-600';
+      default: return 'text-gray-700';
+    }
+  };
+
+  const ICONS: Record<string, React.ReactNode> = {
+    goal: <span className="inline-block text-green-600 mr-1">⚽</span>,
+    assist: <span className="inline-block text-blue-600 mr-1">🅰️</span>,
+    yellow_card: <span className="inline-block text-yellow-500 mr-1">🟨</span>,
+    red_card: <span className="inline-block text-red-600 mr-1">🟥</span>,
+  }
+
+  const quadros = [1, 2];
+  const grouped = quadros.map(q => ({
+    quadro: q,
+    events: events.filter(ev => ev.quadro === q)
+  }))
+
+  // Função para copiar estatísticas formatadas
+  function handleCopyStats() {
+    let text = '📊 *Estatísticas da Partida*\n\n'
+    for (const quadro of [1, 2]) {
+      text += `*${quadro}º Quadro*\n`
+      const evs = events.filter(ev => ev.quadro === quadro)
+      if (evs.length === 0) {
+        text += '_Nenhum evento registrado._\n'
+      } else {
+        for (const ev of evs) {
+          let line = ''
+          switch (ev.type) {
+            case 'goal':
+              line += '⚽ *Gol* ' + ev.player
+              if (ev.assist) line += ` (🅰️ ${ev.assist})`
+              break
+            case 'assist':
+              line += '🅰️ *Assistência* ' + ev.player
+              break
+            case 'yellow_card':
+              line += '🟨 *Amarelo* ' + ev.player
+              break
+            case 'red_card':
+              line += '🟥 *Vermelho* ' + ev.player
+              break
+            default:
+              line += ev.type + ' ' + ev.player
+          }
+          if (ev.minute) line += ` ${ev.minute}'`
+          if (ev.team === 'home') line += ' (🏠)'
+          if (ev.team === 'away') line += ' (⚔️)'
+          text += line + '\n'
+        }
+      }
+      text += '\n'
+    }
+    navigator.clipboard.writeText(text)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  return (
+    <Transition.Root show={isOpen} as={Fragment}>
+      <Dialog as="div" className="relative z-10" onClose={onClose}>
+        <Transition.Child
+          as={Fragment}
+          enter="ease-out duration-300"
+          enterFrom="opacity-0"
+          enterTo="opacity-100"
+          leave="ease-in duration-200"
+          leaveFrom="opacity-100"
+          leaveTo="opacity-0"
+        >
+          <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
+        </Transition.Child>
+        <div className="fixed inset-0 z-10 overflow-y-auto">
+          <div className="flex min-h-full items-end justify-center p-2 text-center sm:items-center sm:p-0 w-full">
+            <Transition.Child
+              as={Fragment}
+              enter="ease-out duration-300"
+              enterFrom="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+              enterTo="opacity-100 translate-y-0 sm:scale-100"
+              leave="ease-in duration-200"
+              leaveFrom="opacity-100 translate-y-0 sm:scale-100"
+              leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+            >
+              <Dialog.Panel className="relative transform overflow-hidden rounded-lg bg-white px-2 pb-4 pt-5 text-left shadow-xl transition-all w-full max-w-full sm:my-8 sm:w-full sm:max-w-lg sm:p-6 mx-2">
+                <div className="absolute right-0 top-0 hidden pr-4 pt-4 sm:block">
+                  <button
+                    type="button"
+                    className="rounded-md bg-white text-gray-400 hover:text-gray-500"
+                    onClick={onClose}
+                  >
+                    <span className="sr-only">Fechar</span>
+                    <XMarkIcon className="h-6 w-6" />
+                  </button>
+                </div>
+                <div className="flex justify-end mb-2">
+                  <button
+                    onClick={handleCopyStats}
+                    className={`inline-flex items-center gap-2 px-3 py-1 rounded font-semibold text-sm shadow transition-colors duration-200 ${copied ? 'bg-green-600 text-white' : 'bg-blue-600 text-white hover:bg-blue-700'}`}
+                    title="Copiar estatísticas"
+                  >
+                    {copied ? <CheckCircleIcon className="h-5 w-5" /> : <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16h8M8 12h8m-8-4h8m-2-4v16m-4-16v16" /></svg>}
+                    {copied ? 'Copiado!' : 'Copiar' }
+                  </button>
+                </div>
+                <Dialog.Title as="h3" className="text-lg font-semibold leading-6 text-gray-900 mb-4">
+                  Estatísticas da Partida
+                </Dialog.Title>
+                {grouped.map(({ quadro, events }) => (
+                  <div key={quadro} className="mb-6">
+                    <div className="font-bold mb-2 text-base">{quadro}º Quadro</div>
+                    {events.length === 0 && <div className="text-gray-400 text-sm mb-2">Nenhum evento registrado.</div>}
+                    <ul className="space-y-1">
+                      {events.map(ev => (
+                        <li key={ev.id} className="flex items-center gap-1 text-sm">
+                          {ICONS[ev.type as keyof typeof ICONS] || <UserIcon className="h-3 w-3 text-gray-400" />}
+                          <span className={`font-semibold ${getColor(ev.type)} text-xs`}>{getLabel(ev.type)}</span>
+                          <span className="font-medium text-gray-800 text-xs">{ev.player}</span>
+                          {ev.type === 'goal' && ev.assist && (
+                            <span className="text-xs text-blue-600">🅰️{ev.assist}</span>
+                          )}
+                          <span className="text-xs text-gray-500">{ev.minute}'</span>
+                          <span className="text-xs text-gray-400">({ev.team === 'home' ? '🏠' : '⚔️'})</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+                <div className="mt-4 text-right">
+                  <button
+                    type="button"
+                    className="inline-flex justify-center rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-opacity-90"
+                    onClick={onClose}
+                  >
+                    Fechar
+                  </button>
+                </div>
+              </Dialog.Panel>
+            </Transition.Child>
+          </div>
+        </div>
+      </Dialog>
+    </Transition.Root>
+  );
+}
+
 export default function SharedMatchesReport() {
   const pathname = usePathname()
   const [data, setData] = useState<MatchData | null>(null)
   const [loading, setLoading] = useState(true)
   const [selectedMonth, setSelectedMonth] = useState(new Date())
+  const [selectedMatch, setSelectedMatch] = useState<Match | null>(null)
+  const [isStatsModalOpen, setIsStatsModalOpen] = useState(false)
 
   useEffect(() => {
     fetchMatches()
@@ -93,24 +267,9 @@ export default function SharedMatchesReport() {
     return 'bg-blue-100 text-blue-800'
   }
 
-  const getEventTypeLabel = (type: string) => {
-    const labels: { [key: string]: string } = {
-      goal: 'Gol',
-      assist: 'Assistência',
-      yellow_card: 'Cartão Amarelo',
-      red_card: 'Cartão Vermelho',
-    }
-    return labels[type] || type
-  }
-
-  const getEventTypeColor = (type: string) => {
-    const colors: { [key: string]: string } = {
-      goal: 'bg-green-100 text-green-800',
-      assist: 'bg-blue-100 text-blue-800',
-      yellow_card: 'bg-yellow-100 text-yellow-800',
-      red_card: 'bg-red-100 text-red-800',
-    }
-    return colors[type] || 'bg-gray-100 text-gray-800'
+  const handleViewStats = (match: Match) => {
+    setSelectedMatch(match)
+    setIsStatsModalOpen(true)
   }
 
   if (loading) {
@@ -146,7 +305,7 @@ export default function SharedMatchesReport() {
           </span>
           <div>
             <h3 className="text-2xl font-bold text-gray-900">Histórico de Partidas</h3>
-            <p className="text-gray-600 text-sm">Lista completa de partidas com eventos</p>
+            <p className="text-gray-600 text-sm">Lista completa de partidas</p>
           </div>
         </div>
         <div className="flex items-center space-x-3">
@@ -162,147 +321,92 @@ export default function SharedMatchesReport() {
         </div>
       </div>
 
-      {/* Estatísticas */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-blue-50 p-4 rounded-lg">
-          <div className="flex items-center">
-            <TrophyIcon className="h-5 w-5 text-blue-600" />
-            <div className="ml-3">
-              <p className="text-sm font-medium text-blue-600">Total de Partidas</p>
-              <p className="text-lg font-semibold text-blue-900">
-                {data.statistics.totalMatches}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-green-50 p-4 rounded-lg">
-          <div className="flex items-center">
-            <TrophyIcon className="h-5 w-5 text-green-600" />
-            <div className="ml-3">
-              <p className="text-sm font-medium text-green-600">Vitórias</p>
-              <p className="text-lg font-semibold text-green-900">
-                {data.statistics.wins}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-red-50 p-4 rounded-lg">
-          <div className="flex items-center">
-            <TrophyIcon className="h-5 w-5 text-red-600" />
-            <div className="ml-3">
-              <p className="text-sm font-medium text-red-600">Derrotas</p>
-              <p className="text-lg font-semibold text-red-900">
-                {data.statistics.losses}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-yellow-50 p-4 rounded-lg">
-          <div className="flex items-center">
-            <TrophyIcon className="h-5 w-5 text-yellow-600" />
-            <div className="ml-3">
-              <p className="text-sm font-medium text-yellow-600">Empates</p>
-              <p className="text-lg font-semibold text-yellow-900">
-                {data.statistics.draws}
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Estatísticas de Gols */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-        <div className="bg-gray-50 p-4 rounded-lg">
-          <h4 className="text-sm font-medium text-gray-700 mb-2">Gols Marcados</h4>
-          <div className="flex items-center justify-between">
-            <span className="text-2xl font-bold text-gray-900">
-              {data.statistics.totalGoalsScored}
-            </span>
-            <span className="text-sm text-gray-500">
-              Média: {data.statistics.averageGoalsScored}/jogo
-            </span>
-          </div>
-        </div>
-
-        <div className="bg-gray-50 p-4 rounded-lg">
-          <h4 className="text-sm font-medium text-gray-700 mb-2">Gols Sofridos</h4>
-          <div className="flex items-center justify-between">
-            <span className="text-2xl font-bold text-gray-900">
-              {data.statistics.totalGoalsConceded}
-            </span>
-            <span className="text-sm text-gray-500">
-              Média: {data.statistics.averageGoalsConceded}/jogo
-            </span>
-          </div>
-        </div>
-      </div>
-
       {/* Lista de Partidas */}
-      <div className="space-y-4">
+      <div className="mt-6">
         {data.matches.length === 0 ? (
           <div className="text-center py-8 text-gray-500">
             Nenhuma partida encontrada para o período selecionado.
           </div>
         ) : (
-          data.matches.map((match) => (
-            <div key={match.id} className="border rounded-lg overflow-hidden">
-              <div className="bg-gray-50 px-4 py-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4">
-                    <div>
-                      <h4 className="font-medium text-gray-900">
-                        {format(new Date(match.date), 'dd/MM/yyyy', { locale: ptBR })}
-                      </h4>
-                      <p className="text-sm text-gray-500">vs {match.opponent}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-4">
-                    <div className="text-right">
-                      <div className="flex items-center space-x-2">
-                        <span className="text-sm text-gray-500">1°</span>
-                        <span className={`px-2 py-1 rounded text-xs font-medium ${getScoreColor(match.ourScore1, match.opponentScore1)}`}>
-                          {match.ourScore1}x{match.opponentScore1}
-                        </span>
-                        <span className="text-sm text-gray-500">2°</span>
-                        <span className={`px-2 py-1 rounded text-xs font-medium ${getScoreColor(match.ourScore2, match.opponentScore2)}`}>
-                          {match.ourScore2}x{match.opponentScore2}
-                        </span>
-                      </div>
-                      <p className="text-sm text-gray-500">Total: {match.ourScore}x{match.opponentScore}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Eventos da Partida */}
-              {match.events.length > 0 && (
-                <div className="px-4 py-3 bg-white">
-                  <h5 className="text-sm font-medium text-gray-700 mb-2">Eventos da Partida</h5>
-                  <div className="space-y-1">
-                    {match.events.map((event) => (
-                      <div key={event.id} className="flex items-center justify-between text-sm">
-                        <div className="flex items-center space-x-2">
-                          <span className={`px-2 py-1 rounded text-xs font-medium ${getEventTypeColor(event.type)}`}>
-                            {getEventTypeLabel(event.type)}
-                          </span>
-                          <span className="text-gray-600">{event.player}</span>
-                          {event.assist && (
-                            <span className="text-gray-500">(assist: {event.assist})</span>
-                          )}
-                        </div>
-                        <span className="text-gray-500">{event.minute}'</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          ))
+          <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
+            <table className="min-w-full divide-y divide-gray-300 text-xs sm:text-sm">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    Data
+                  </th>
+                  <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    Adversário
+                  </th>
+                  <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    1º Quadro
+                  </th>
+                  <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    2º Quadro
+                  </th>
+                  <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    Total
+                  </th>
+                  <th scope="col" className="relative py-3.5 pl-3 pr-4 sm:pr-6">
+                    <span className="sr-only">Ações</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200 bg-white">
+                {data.matches.map((match) => (
+                  <tr key={match.id} className="hover:bg-gray-50">
+                    <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                      {format(new Date(match.date), "d 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                    </td>
+                    <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                      {match.opponent}
+                    </td>
+                    <td className="whitespace-nowrap px-3 py-4 text-center">
+                      <span className={`inline-block text-base font-bold rounded px-3 py-1 ${getScoreColor(match.ourScore1, match.opponentScore1)}`}>
+                        {match.ourScore1} × {match.opponentScore1}
+                      </span>
+                    </td>
+                    <td className="whitespace-nowrap px-3 py-4 text-center">
+                      <span className={`inline-block text-base font-bold rounded px-3 py-1 ${getScoreColor(match.ourScore2, match.opponentScore2)}`}>
+                        {match.ourScore2} × {match.opponentScore2}
+                      </span>
+                    </td>
+                    <td className="whitespace-nowrap px-3 py-4 text-center">
+                      <span className={`inline-block text-base font-bold rounded px-3 py-1 ${getScoreColor(match.ourScore, match.opponentScore)}`}>
+                        {match.ourScore} × {match.opponentScore}
+                      </span>
+                    </td>
+                    <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                      {match.events && match.events.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => handleViewStats(match)}
+                          className="inline-flex items-center text-blue-600 hover:text-blue-800"
+                        >
+                          <ChartBarIcon className="h-5 w-5 mr-1" />
+                          Ver Estatísticas
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
+
+      {/* Modal de Estatísticas */}
+      {selectedMatch && (
+        <StatsModal
+          isOpen={isStatsModalOpen}
+          onClose={() => {
+            setIsStatsModalOpen(false)
+            setSelectedMatch(null)
+          }}
+          events={selectedMatch.events}
+        />
+      )}
     </div>
   )
 } 
