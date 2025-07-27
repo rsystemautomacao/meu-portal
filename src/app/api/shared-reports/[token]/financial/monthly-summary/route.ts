@@ -11,6 +11,9 @@ export async function GET(
     const { searchParams } = new URL(request.url)
     const month = searchParams.get('month')
 
+    console.log('🔍 API shared-reports monthly-summary chamada')
+    console.log('📋 Parâmetros:', { token, month })
+
     if (!month) {
       return NextResponse.json({ error: 'Mês é obrigatório' }, { status: 400 })
     }
@@ -28,6 +31,13 @@ export async function GET(
       }
     })
 
+    console.log('📊 SharedReport encontrado:', sharedReport ? 'Sim' : 'Não')
+    if (sharedReport) {
+      console.log('   - Team ID:', sharedReport.team.id)
+      console.log('   - Team Name:', sharedReport.team.name)
+      console.log('   - Is Active:', sharedReport.isActive)
+    }
+
     if (!sharedReport || !sharedReport.isActive) {
       return NextResponse.json({ error: 'Relatório não encontrado ou inativo' }, { status: 404 })
     }
@@ -38,108 +48,65 @@ export async function GET(
       return NextResponse.json({ error: 'Formato de mês inválido' }, { status: 400 })
     }
 
-    // Buscar transações do mês
-    const startDate = new Date(year, monthNum - 1, 1)
-    const endDate = new Date(year, monthNum, 0, 23, 59, 59)
+    // Usar a mesma lógica do dashboard
+    const targetMonth = new Date(year, monthNum - 1, 1)
+    const nextMonth = new Date(year, monthNum, 1)
+
+    console.log('📅 Período de busca:', { targetMonth, nextMonth })
 
     const transactions = await prisma.transaction.findMany({
       where: {
         teamId: sharedReport.team.id,
-        createdAt: {
-          gte: startDate,
-          lte: endDate
+        date: {
+          gte: targetMonth,
+          lt: nextMonth
         }
       }
     })
 
-    // Calcular totais
-    const income = transactions
-      .filter(t => t.type === 'INCOME')
-      .reduce((sum, t) => sum + t.amount, 0)
-
-    const expenses = transactions
-      .filter(t => t.type === 'EXPENSE')
-      .reduce((sum, t) => sum + t.amount, 0)
-
-    const balance = income - expenses
-
-    // Buscar pagamentos do mês através dos jogadores do time
-    const players = await prisma.player.findMany({
-      where: { teamId: sharedReport.team.id },
-      select: { id: true }
-    })
-    
-    const playerIds = players.map(p => p.id)
-    
-    const payments = await prisma.payment.findMany({
-      where: {
-        playerId: { in: playerIds },
-        year: year,
-        month: monthNum
-      }
+    console.log(`📊 Transações encontradas: ${transactions.length}`)
+    transactions.forEach((t, index) => {
+      console.log(`   ${index + 1}. ${t.description} - ${t.type} - R$ ${t.amount}`)
     })
 
-    const totalPayments = payments
-      .filter(p => p.status === 'paid')
-      .reduce((sum, p) => sum + p.amount, 0)
+    // Calcular totais usando a mesma lógica do dashboard
+    const totalIncome = transactions
+      .filter(t => t.type === 'income')
+      .reduce((sum, t) => sum + t.amount, 0)
 
-    const pendingPayments = payments
-      .filter(p => p.status === 'pending')
-      .reduce((sum, p) => sum + p.amount, 0)
+    const totalExpense = transactions
+      .filter(t => t.type === 'expense')
+      .reduce((sum, t) => sum + t.amount, 0)
 
-    // Agrupar transações por tipo
+    const balance = totalIncome - totalExpense
+
+    console.log('💰 Totais calculados:', { totalIncome, totalExpense, balance })
+
+    // Agrupar por tipo usando a mesma lógica do dashboard
     const incomeByType: { [key: string]: number } = {}
     const expenseByType: { [key: string]: number } = {}
-    
+
     transactions.forEach(transaction => {
-      // Usar a descrição como categoria ou criar uma categoria baseada no tipo
-      let category = 'OTHER'
-      
-      // Tentar extrair categoria da descrição
-      const description = transaction.description.toLowerCase()
-      if (description.includes('mensalidade') || description.includes('mensal')) {
-        category = 'MONTHLY_FEE'
-      } else if (description.includes('festival') || description.includes('evento')) {
-        category = 'FESTIVAL'
-      } else if (description.includes('doação') || description.includes('donation')) {
-        category = 'DONATION'
-      } else if (description.includes('rifa') || description.includes('raffle')) {
-        category = 'RAFFLE'
-      } else if (description.includes('campeonato') || description.includes('championship')) {
-        category = 'CHAMPIONSHIP'
-      } else if (description.includes('limpeza') || description.includes('cleaning')) {
-        category = 'CLEANING'
-      } else if (description.includes('material') || description.includes('equipamento')) {
-        category = 'GAME_MATERIALS'
-      } else if (description.includes('liga') || description.includes('league')) {
-        category = 'LEAGUE_MONTHLY'
-      } else if (description.includes('quadra') || description.includes('court')) {
-        category = 'COURT_MONTHLY'
-      } else if (description.includes('uniforme') || description.includes('uniform')) {
-        category = 'UNIFORMS'
-      }
-      
-      if (transaction.type === 'INCOME') {
-        incomeByType[category] = (incomeByType[category] || 0) + transaction.amount
-      } else if (transaction.type === 'EXPENSE') {
-        expenseByType[category] = (expenseByType[category] || 0) + transaction.amount
+      if (transaction.type === 'income') {
+        const type = transaction.description.split(' ')[0] || 'OTHER'
+        incomeByType[type] = (incomeByType[type] || 0) + transaction.amount
+      } else {
+        const type = transaction.description.split(' ')[0] || 'OTHER'
+        expenseByType[type] = (expenseByType[type] || 0) + transaction.amount
       }
     })
 
     const response = {
-      month: month,
-      totalIncome: income,
-      totalExpense: expenses,
+      totalIncome,
+      totalExpense,
       balance,
       incomeByType,
       expenseByType,
-      totalPayments,
-      pendingPayments,
-      transactions: transactions.length
+      month: monthNum,
+      year: year
     }
     
-
-    
+    console.log('✅ Resposta da API:', response)
     return NextResponse.json(response)
   } catch (error) {
     console.error("Erro ao buscar resumo mensal para relatório compartilhado:", error)

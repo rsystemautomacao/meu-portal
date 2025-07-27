@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
+import { usePathname } from 'next/navigation'
 import {
   ChartBarIcon,
   ArrowUpIcon,
@@ -27,17 +28,18 @@ export default function MonthlyReport() {
   const [summary, setSummary] = useState<MonthlySummary | null>(null)
   const [loading, setLoading] = useState(true)
   const [selectedMonth, setSelectedMonth] = useState(new Date())
+  const pathname = usePathname()
 
   useEffect(() => {
     fetchMonthlySummary()
-  }, [selectedMonth])
+  }, [selectedMonth, pathname])
 
   const fetchMonthlySummary = async () => {
     try {
       setLoading(true)
       // Verificar se estamos em um relatório compartilhado
-      const isSharedReport = window.location.pathname.includes('/shared-reports/')
-      const token = window.location.pathname.split('/shared-reports/')[1]?.split('/')[0]
+      const isSharedReport = pathname?.includes('/shared-reports/')
+      const token = pathname?.split('/shared-reports/')[1]?.split('/')[0]
       
       // Formatar a data corretamente como YYYY-MM
       const monthParam = format(selectedMonth, 'yyyy-MM')
@@ -47,15 +49,20 @@ export default function MonthlyReport() {
         url = `/api/shared-reports/${token}/financial/monthly-summary?month=${monthParam}`
       }
       
+      console.log('🔍 MonthlyReport - URL:', url)
+      console.log('🔍 MonthlyReport - isSharedReport:', isSharedReport)
+      console.log('🔍 MonthlyReport - token:', token)
+      
       const response = await fetch(url)
       if (!response.ok) {
         throw new Error('Erro ao carregar dados')
       }
       const data = await response.json()
 
+      console.log('📦 MonthlyReport - Dados recebidos:', data)
       setSummary(data)
     } catch (error) {
-      console.error('Erro ao carregar dados:', error)
+      console.error('❌ Erro ao carregar dados:', error)
       toast.error('Erro ao carregar dados')
     } finally {
       setLoading(false)

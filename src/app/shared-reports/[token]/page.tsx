@@ -31,8 +31,7 @@ const REPORT_COMPONENTS = {
   transactions: { component: () => <TransactionList showActions={false} />, name: 'Transações', icon: CurrencyDollarIcon },
   match_stats: { component: DetailedMatchStatsReport, name: 'Estatísticas das Partidas', icon: CalendarIcon },
   payment_details: { component: DetailedPaymentReport, name: 'Relatório Detalhado de Pagamentos', icon: DocumentTextIcon },
-  matches: { component: SharedMatchesReport, name: 'Histórico de Partidas', icon: CalendarIcon },
-  match_statistics: { component: SharedMatchStatsReport, name: 'Estatísticas Detalhadas das Partidas', icon: ChartBarIcon }
+  matches: { component: SharedMatchesReport, name: 'Histórico de Partidas', icon: CalendarIcon }
 }
 
 export default function SharedReportsPage() {

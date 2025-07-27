@@ -24,8 +24,7 @@ const AVAILABLE_REPORTS = [
   { id: 'transactions', name: 'Transações', description: 'Histórico de receitas e despesas' },
   { id: 'match_stats', name: 'Estatísticas das Partidas', description: 'Performance e resultados dos jogos' },
   { id: 'payment_details', name: 'Relatório Detalhado de Pagamentos', description: 'Análise detalhada dos pagamentos' },
-  { id: 'matches', name: 'Histórico de Partidas', description: 'Lista completa de partidas com eventos' },
-  { id: 'match_statistics', name: 'Estatísticas Detalhadas das Partidas', description: 'Estatísticas de jogadores e goleiros' }
+  { id: 'matches', name: 'Histórico de Partidas', description: 'Lista completa de partidas com eventos' }
 ]
 
 export default function SharedReportsConfig() {

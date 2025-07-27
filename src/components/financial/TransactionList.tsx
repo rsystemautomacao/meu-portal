@@ -113,9 +113,9 @@ export default function TransactionList({ onTransactionDeleted, refresh, showAct
                 Tipo
               </th>
               {showActions && (
-                <th scope="col" className="relative px-6 py-3">
-                  <span className="sr-only">Ações</span>
-                </th>
+              <th scope="col" className="relative px-6 py-3">
+                <span className="sr-only">Ações</span>
+              </th>
               )}
             </tr>
           </thead>
@@ -143,14 +143,14 @@ export default function TransactionList({ onTransactionDeleted, refresh, showAct
                   </span>
                 </td>
                 {showActions && (
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <button
-                      onClick={() => handleDelete(transaction.id)}
-                      className="text-red-600 hover:text-red-900"
-                    >
-                      Excluir
-                    </button>
-                  </td>
+                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                  <button
+                    onClick={() => handleDelete(transaction.id)}
+                    className="text-red-600 hover:text-red-900"
+                  >
+                    Excluir
+                  </button>
+                </td>
                 )}
               </tr>
             ))}

@@ -78,11 +78,11 @@ export async function GET(
         name: player.name,
         monthlyFee: player.monthlyFee || 0,
         isExempt: player.isExempt,
-        payments: [],
-        totalOutstanding: 0,
-        monthsOutstanding: 0,
-        hasOutstandingPayments: false
-      })
+          payments: [],
+          totalOutstanding: 0,
+          monthsOutstanding: 0,
+          hasOutstandingPayments: false
+        })
     })
     
     // Adicionar pagamentos aos jogadores
@@ -107,10 +107,10 @@ export async function GET(
         }
         
         player.payments.push(processedPayment)
-        
-        if (payment.status === 'pending' || payment.status === 'late') {
-          player.totalOutstanding += payment.amount
-          player.hasOutstandingPayments = true
+      
+      if (payment.status === 'pending' || payment.status === 'late') {
+        player.totalOutstanding += payment.amount
+        player.hasOutstandingPayments = true
         }
       }
     })

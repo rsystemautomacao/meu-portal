@@ -65,7 +65,7 @@ export default function DetailedMatchStatsReport() {
       if (isSharedReport && data.matches) {
         setMatches(data.matches)
       } else {
-        setMatches(data)
+      setMatches(data)
       }
     } catch (error) {
       console.error('Erro ao carregar partidas:', error)
