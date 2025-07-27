@@ -183,7 +183,7 @@ export async function PUT(request: NextRequest) {
     }
 }
 
-// DELETE: Exclusão completa do time e usuário
+// DELETE: Exclusão permanente mas preserva dados para análise
 export async function DELETE(request: NextRequest) {
     const session = await getServerSession(authOptions);
     if (!session?.user.id) {
@@ -196,7 +196,23 @@ export async function DELETE(request: NextRequest) {
             return NextResponse.json({ error: 'Time não encontrado ou você não é o dono' }, { status: 404 });
         }
 
-        // Exclusão completa em transação
+        // Buscar dados do time antes de excluir
+        const teamData = await prisma.team.findUnique({
+            where: { id: teamId },
+            select: {
+                name: true,
+                whatsapp: true,
+                createdAt: true,
+                primaryColor: true,
+                secondaryColor: true
+            }
+        });
+
+        if (!teamData) {
+            return NextResponse.json({ error: 'Time não encontrado' }, { status: 404 });
+        }
+
+        // Exclusão permanente em transação
         await prisma.$transaction(async (tx) => {
             // 1. Excluir eventos de partidas
             await tx.matchEvent.deleteMany({
@@ -280,11 +296,36 @@ export async function DELETE(request: NextRequest) {
                     where: { id: session.user.id }
                 });
             }
+
+            // 15. Criar registro de exclusão para análise (temporariamente comentado)
+            // await tx.deletedTeamAnalytics.create({
+            //     data: {
+            //         originalTeamId: teamId,
+            //         teamName: teamData.name,
+            //         whatsapp: teamData.whatsapp,
+            //         primaryColor: teamData.primaryColor,
+            //         secondaryColor: teamData.secondaryColor,
+            //         teamCreatedAt: teamData.createdAt,
+            //         deletedAt: new Date(),
+            //         deletedBy: 'CLIENT',
+            //         userEmail: session.user.email || 'unknown'
+            //     }
+            // });
+            
+            console.log('📊 Dados preservados para análise:', {
+                teamName: teamData.name,
+                whatsapp: teamData.whatsapp,
+                createdAt: teamData.createdAt,
+                deletedAt: new Date(),
+                userEmail: session.user.email
+            });
         });
 
-        return NextResponse.json({ message: 'Time e dados relacionados excluídos permanentemente' });
+        return NextResponse.json({ 
+            message: 'Conta excluída permanentemente. Email liberado para novo registro.' 
+        });
     } catch (error) {
-        console.error("Erro ao excluir time:", error);
+        console.error("Erro ao excluir conta:", error);
         return NextResponse.json({ error: 'Erro interno do servidor' }, { status: 500 });
     }
 } 

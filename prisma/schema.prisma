@@ -272,4 +272,22 @@ model TeamSystemPayment {
   @@index([teamId])
   @@index([status])
   @@index([month, year])
+}
+
+model DeletedTeamAnalytics {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  originalTeamId  String   // ID original do time (para referência)
+  teamName        String   // Nome do time
+  whatsapp        String?  // WhatsApp do time
+  primaryColor    String   // Cor primária
+  secondaryColor  String   // Cor secundária
+  teamCreatedAt   DateTime // Data de criação original do time
+  deletedAt       DateTime @default(now()) // Data de exclusão
+  deletedBy       String   // 'CLIENT' ou 'ADMIN'
+  userEmail       String   // Email do usuário que excluiu
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([deletedAt])
+  @@index([deletedBy])
 } 
