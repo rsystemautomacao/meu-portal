@@ -11,9 +11,8 @@ export async function GET(request: Request) {
     
     console.log('📋 Parâmetros:', { showDeleted })
     
-    // Buscar times com filtro opcional
-    const teams = await prisma.team.findMany({
-      where: showDeleted ? {} : { deletedAt: null }, // Se showDeleted=true, mostra todos. Senão, só não deletados
+    // Buscar todos os times primeiro, depois filtrar
+    const allTeams = await prisma.team.findMany({
       include: {
         users: {
           include: {
@@ -32,7 +31,12 @@ export async function GET(request: Request) {
       }
     })
 
-    console.log(`📊 Times encontrados no banco: ${teams.length}`)
+    console.log(`📊 Todos os times encontrados: ${allTeams.length}`)
+    
+    // Filtrar baseado no parâmetro showDeleted
+    const teams = showDeleted ? allTeams : allTeams.filter(team => !team.deletedAt)
+    
+    console.log(`📊 Times após filtro: ${teams.length}`)
     teams.forEach((team, index) => {
       console.log(`   ${index + 1}. ${team.name} (${team.id}) - Status: ${team.status} - Deletado: ${!!team.deletedAt}`)
     })
