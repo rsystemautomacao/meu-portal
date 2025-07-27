@@ -4,8 +4,16 @@ import { prisma } from '@/lib/prisma'
 // GET - Buscar todos os times com estatísticas
 export async function GET(request: Request) {
   try {
-    // Buscar todos os times, sem filtro de exclusão
+    console.log('🔍 API /api/admin/teams chamada')
+    
+    const { searchParams } = new URL(request.url)
+    const showDeleted = searchParams.get('showDeleted') === 'true'
+    
+    console.log('📋 Parâmetros:', { showDeleted })
+    
+    // Buscar times com filtro opcional
     const teams = await prisma.team.findMany({
+      where: showDeleted ? {} : { deletedAt: null }, // Se showDeleted=true, mostra todos. Senão, só não deletados
       include: {
         users: {
           include: {
@@ -22,6 +30,11 @@ export async function GET(request: Request) {
       orderBy: {
         createdAt: 'desc'
       }
+    })
+
+    console.log(`📊 Times encontrados no banco: ${teams.length}`)
+    teams.forEach((team, index) => {
+      console.log(`   ${index + 1}. ${team.name} (${team.id}) - Status: ${team.status} - Deletado: ${!!team.deletedAt}`)
     })
 
     // Processar dados dos times
@@ -46,12 +59,14 @@ export async function GET(request: Request) {
       }
     })
 
+    console.log(`✅ Retornando ${teamsWithStats.length} times processados`)
+
     return NextResponse.json({
       teams: teamsWithStats,
       total: teamsWithStats.length
     })
   } catch (error) {
-    console.error('Erro ao buscar times:', error)
+    console.error('❌ Erro ao buscar times:', error)
     return NextResponse.json(
       { error: 'Erro ao buscar times' },
       { status: 500 }

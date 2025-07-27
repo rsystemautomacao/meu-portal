@@ -183,7 +183,7 @@ export async function PUT(request: NextRequest) {
     }
 }
 
-// DELETE: Soft delete do time
+// DELETE: Exclusão completa do time e usuário
 export async function DELETE(request: NextRequest) {
     const session = await getServerSession(authOptions);
     if (!session?.user.id) {
@@ -196,15 +196,95 @@ export async function DELETE(request: NextRequest) {
             return NextResponse.json({ error: 'Time não encontrado ou você não é o dono' }, { status: 404 });
         }
 
-        // Soft delete: marcar deletedAt
-        await (prisma.team as any).update({
-            where: { id: teamId },
-            data: { deletedAt: new Date() },
+        // Exclusão completa em transação
+        await prisma.$transaction(async (tx) => {
+            // 1. Excluir eventos de partidas
+            await tx.matchEvent.deleteMany({
+                where: { match: { teamId } }
+            });
+
+            // 2. Excluir partidas
+            await tx.match.deleteMany({
+                where: { teamId }
+            });
+
+            // 3. Excluir pagamentos dos jogadores
+            const players = await tx.player.findMany({
+                where: { teamId },
+                select: { id: true }
+            });
+            
+            for (const player of players) {
+                await tx.payment.deleteMany({
+                    where: { playerId: player.id }
+                });
+            }
+
+            // 4. Excluir jogadores
+            await tx.player.deleteMany({
+                where: { teamId }
+            });
+
+            // 5. Excluir transações
+            await tx.transaction.deleteMany({
+                where: { teamId }
+            });
+
+            // 6. Excluir configurações de mensalidade
+            await tx.monthlyFeeConfig.deleteMany({
+                where: { teamId }
+            });
+
+            // 7. Excluir exceções de mensalidade
+            await tx.monthlyFeeException.deleteMany({
+                where: { teamId }
+            });
+
+            // 8. Excluir débitos históricos
+            await tx.historicalDebt.deleteMany({
+                where: { teamId }
+            });
+
+            // 9. Excluir notificações
+            await tx.notification.deleteMany({
+                where: { teamId }
+            });
+
+            // 10. Excluir relatórios compartilhados
+            await tx.sharedReport.deleteMany({
+                where: { teamId }
+            });
+
+            // 11. Excluir pagamentos do sistema
+            await tx.teamSystemPayment.deleteMany({
+                where: { teamId }
+            });
+
+            // 12. Excluir relações usuário-time
+            await tx.teamUser.deleteMany({
+                where: { teamId }
+            });
+
+            // 13. Excluir o time
+            await tx.team.delete({
+                where: { id: teamId }
+            });
+
+            // 14. Excluir o usuário (se não estiver em outros times)
+            const otherTeams = await tx.teamUser.findMany({
+                where: { userId: session.user.id }
+            });
+
+            if (otherTeams.length === 0) {
+                await tx.user.delete({
+                    where: { id: session.user.id }
+                });
+            }
         });
 
-        return NextResponse.json({ message: 'Time marcado como excluído (soft delete)' });
+        return NextResponse.json({ message: 'Time e dados relacionados excluídos permanentemente' });
     } catch (error) {
-        console.error("Erro ao marcar time como excluído:", error);
+        console.error("Erro ao excluir time:", error);
         return NextResponse.json({ error: 'Erro interno do servidor' }, { status: 500 });
     }
 } 

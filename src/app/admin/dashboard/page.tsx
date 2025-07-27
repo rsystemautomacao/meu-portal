@@ -49,18 +49,25 @@ export default function AdminDashboard() {
     }
 
     fetchTeams()
-  }, [router])
+  }, [router, showDeleted])
 
   const fetchTeams = async () => {
     try {
       setLoading(true)
+      console.log('🔄 Iniciando busca de times...')
       
-      const response = await fetch(`/api/admin/teams`)
+      const url = showDeleted ? '/api/admin/teams?showDeleted=true' : '/api/admin/teams'
+      const response = await fetch(url)
+      console.log('📡 Response status:', response.status)
+      
       if (!response.ok) {
         throw new Error('Erro ao buscar times')
       }
       
       const data = await response.json()
+      console.log('📦 Dados recebidos:', data)
+      console.log(`📊 Times recebidos: ${data.teams?.length || 0}`)
+      
       setTeams(data.teams)
       
       // Calcular estatísticas
@@ -74,8 +81,10 @@ export default function AdminDashboard() {
         totalPlayers,
         totalRevenue
       })
+      
+      console.log('✅ Times carregados com sucesso')
     } catch (error) {
-      console.error('Erro ao carregar times:', error)
+      console.error('❌ Erro ao carregar times:', error)
     } finally {
       setLoading(false)
     }
@@ -394,9 +403,26 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* Filtros de status dos times (em breve) */}
-        <div className="flex items-center gap-4 mb-2">
-          {/* Aqui vão os filtros de status futuramente */}
+        {/* Filtros de status dos times */}
+        <div className="flex items-center gap-4 mb-4">
+          <button
+            onClick={() => setShowDeleted(!showDeleted)}
+            className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors text-sm font-medium ${
+              showDeleted 
+                ? 'bg-red-100 text-red-700 border border-red-300' 
+                : 'bg-gray-100 text-gray-700 border border-gray-300'
+            }`}
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+            <span>{showDeleted ? 'Ocultar Excluídos' : 'Mostrar Excluídos'}</span>
+          </button>
+          {showDeleted && (
+            <span className="text-sm text-gray-500">
+              Mostrando {teams.filter(t => t.status === 'EXCLUIDO').length} times excluídos
+            </span>
+          )}
         </div>
 
         {/* Teams List */}
