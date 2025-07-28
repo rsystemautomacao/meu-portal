@@ -17,23 +17,32 @@ export class MessagingService {
         para: data.whatsapp,
         time: data.teamName,
         tipo: data.messageType,
-        assunto: data.subject
+        assunto: data.subject,
+        mensagem: data.message.substring(0, 100) + '...'
       })
 
       // Aqui você implementaria a integração real com WhatsApp Business API
-      // Por enquanto, vamos simular o envio
+      // Por enquanto, vamos simular o envio com mais realismo
       
       // Simular delay de envio
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      await new Promise(resolve => setTimeout(resolve, 2000))
       
-      // Simular sucesso (90% de chance)
-      const success = Math.random() > 0.1
+      // Simular sucesso baseado no tipo de mensagem
+      let success = true
+      
+      if (data.messageType === 'payment_reminder') {
+        success = Math.random() > 0.1 // 90% sucesso
+      } else if (data.messageType === 'access_blocked') {
+        success = Math.random() > 0.05 // 95% sucesso
+      } else {
+        success = Math.random() > 0.15 // 85% sucesso
+      }
       
       if (success) {
-        console.log('✅ Mensagem enviada com sucesso via WhatsApp')
+        console.log('✅ Mensagem WhatsApp enviada com sucesso para', data.teamName)
         return true
       } else {
-        console.log('❌ Falha no envio da mensagem WhatsApp')
+        console.log('❌ Falha no envio da mensagem WhatsApp para', data.teamName)
         return false
       }
     } catch (error) {
@@ -48,20 +57,29 @@ export class MessagingService {
       console.log('📧 Enviando email:', {
         para: data.teamName,
         assunto: data.subject,
-        tipo: data.messageType
+        tipo: data.messageType,
+        mensagem: data.message.substring(0, 100) + '...'
       })
 
       // Simular delay de envio
-      await new Promise(resolve => setTimeout(resolve, 500))
+      await new Promise(resolve => setTimeout(resolve, 1500))
       
-      // Simular sucesso (95% de chance)
-      const success = Math.random() > 0.05
+      // Simular sucesso baseado no tipo de mensagem
+      let success = true
+      
+      if (data.messageType === 'welcome') {
+        success = Math.random() > 0.05 // 95% sucesso
+      } else if (data.messageType === 'payment_reminder') {
+        success = Math.random() > 0.1 // 90% sucesso
+      } else {
+        success = Math.random() > 0.15 // 85% sucesso
+      }
       
       if (success) {
-        console.log('✅ Email enviado com sucesso')
+        console.log('✅ Email enviado com sucesso para', data.teamName)
         return true
       } else {
-        console.log('❌ Falha no envio do email')
+        console.log('❌ Falha no envio do email para', data.teamName)
         return false
       }
     } catch (error) {
@@ -75,31 +93,51 @@ export class MessagingService {
     whatsapp: boolean
     email: boolean
     success: boolean
+    details: string
   }> {
     const results = {
       whatsapp: false,
       email: false,
-      success: false
+      success: false,
+      details: ''
     }
+
+    console.log(`🚀 Iniciando envio de mensagem para ${data.teamName}`)
+    console.log(`📋 Tipo: ${data.messageType}`)
+    console.log(`📱 WhatsApp: ${data.whatsapp ? 'Sim' : 'Não'}`)
 
     // Tentar enviar via WhatsApp se tiver número
     if (data.whatsapp) {
+      console.log('📱 Tentando enviar via WhatsApp...')
       results.whatsapp = await this.sendWhatsAppMessage(data)
     }
 
     // Tentar enviar via email
+    console.log('📧 Tentando enviar via email...')
     results.email = await this.sendEmail(data)
 
     // Considerar sucesso se pelo menos um canal funcionou
     results.success = results.whatsapp || results.email
+
+    // Gerar detalhes do resultado
+    if (results.success) {
+      const channels = []
+      if (results.whatsapp) channels.push('WhatsApp')
+      if (results.email) channels.push('Email')
+      results.details = `Mensagem enviada com sucesso via ${channels.join(' e ')}`
+    } else {
+      results.details = 'Falha no envio por todos os canais disponíveis'
+    }
+
+    console.log(`📊 Resultado final: ${results.success ? '✅ Sucesso' : '❌ Falha'}`)
+    console.log(`📝 Detalhes: ${results.details}`)
 
     return results
   }
 
   // Gerar link de pagamento (simulação)
   static generatePaymentLink(teamId: string, amount: number = 29.90): string {
-    // Aqui você implementaria a integração com gateway de pagamento
-    return `https://pay.mercadopago.com.br/checkout/v1/redirect?pref_id=PAYMENT_PREF_ID_${teamId}`
+    return `https://pay.mercadopago.com.br/${teamId}?amount=${amount}`
   }
 
   // Verificar status de pagamento (simulação)
@@ -109,15 +147,27 @@ export class MessagingService {
     dueDate: string
     daysOverdue: number
   }> {
-    // Simular verificação de pagamento
-    const paid = Math.random() > 0.3 // 70% de chance de estar pago
-    const daysOverdue = paid ? 0 : Math.floor(Math.random() * 30) + 1
-    
-    return {
-      paid,
-      amount: 29.90,
-      dueDate: new Date().toISOString().split('T')[0],
-      daysOverdue
+    try {
+      // Simular verificação de pagamento
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      
+      // Simular resultado (70% de chance de estar pago)
+      const isPaid = Math.random() > 0.3
+      
+      return {
+        paid: isPaid,
+        amount: 29.90,
+        dueDate: new Date().toLocaleDateString('pt-BR'),
+        daysOverdue: isPaid ? 0 : Math.floor(Math.random() * 10) + 1
+      }
+    } catch (error) {
+      console.error('❌ Erro ao verificar status de pagamento:', error)
+      return {
+        paid: false,
+        amount: 29.90,
+        dueDate: new Date().toLocaleDateString('pt-BR'),
+        daysOverdue: 0
+      }
     }
   }
 } 

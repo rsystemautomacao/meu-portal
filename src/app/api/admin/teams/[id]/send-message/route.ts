@@ -50,11 +50,11 @@ export async function POST(
         messageDetails = 'Lembrete de pagamento enviado'
         break
       case 'access_blocked':
-        messageContent = customMessage || systemConfig.welcomeMessage
+        messageContent = customMessage || 'Seu acesso foi bloqueado por falta de pagamento. Entre em contato para regularizar sua situação.'
         messageDetails = 'Mensagem de bloqueio de acesso enviada'
         break
       case 'payment_overdue':
-        messageContent = customMessage || systemConfig.paymentMessage
+        messageContent = customMessage || 'Atenção: seu acesso será bloqueado em até 48 horas por falta de pagamento. Regularize para evitar o bloqueio.'
         messageDetails = 'Mensagem de pagamento em atraso enviada'
         break
       case 'custom':
