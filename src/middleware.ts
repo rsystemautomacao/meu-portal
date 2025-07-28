@@ -31,12 +31,13 @@ export async function middleware(request: NextRequest) {
   
   // Se o usuário está autenticado e não está acessando páginas de admin
   if (token && !request.nextUrl.pathname.startsWith('/admin')) {
-    // Atualizar último acesso do time (apenas para rotas do dashboard)
-    if (request.nextUrl.pathname.startsWith('/dashboard') || 
-        request.nextUrl.pathname.startsWith('/financial') ||
-        request.nextUrl.pathname.startsWith('/matches') ||
-        request.nextUrl.pathname.startsWith('/players') ||
-        request.nextUrl.pathname.startsWith('/settings')) {
+    // Atualizar último acesso do time (apenas para rotas do dashboard e apenas se NÃO for admin universal)
+    if ((request.nextUrl.pathname.startsWith('/dashboard') || 
+         request.nextUrl.pathname.startsWith('/financial') ||
+         request.nextUrl.pathname.startsWith('/matches') ||
+         request.nextUrl.pathname.startsWith('/players') ||
+         request.nextUrl.pathname.startsWith('/settings')) && 
+        !token.isUniversalAdmin) {
       
       try {
         // Buscar o time do usuário e atualizar lastAccess
