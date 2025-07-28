@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server'
-import bcrypt from 'bcrypt'
 import { prisma } from '@/lib/prisma'
-import { Prisma } from '@prisma/client'
+import bcrypt from 'bcryptjs'
 import { MessagingService } from '@/lib/messaging'
+import { logWelcomeMessage } from '@/lib/userLogs'
 
 interface TeamData {
   name: string
@@ -20,32 +20,34 @@ interface RegisterData {
 
 export async function POST(req: Request) {
   try {
-    const { email, password, team } = (await req.json()) as RegisterData
-    
-    console.log('Tentando registrar usuário:', { email, team: team.name })
+    const { email, password, team }: RegisterData = await req.json()
 
-    try {
-      // Verificar se o email já existe
-      const existingUser = await prisma.user.findUnique({
-        where: { email },
-      })
+    // Verificar se o email já existe
+    const existingUser = await prisma.user.findUnique({
+      where: { email }
+    })
 
-      console.log('Resultado da busca de usuário:', existingUser)
+    if (existingUser) {
+      return NextResponse.json(
+        { message: 'Email já cadastrado' },
+        { status: 400 }
+      )
+    }
 
-      if (existingUser) {
-        console.log('Email já está em uso:', email)
-        return NextResponse.json(
-          { message: 'Este email já está em uso' },
-          { status: 400 }
-        )
-      }
-    } catch (dbError) {
-      console.error('Erro ao verificar email:', dbError)
-      // Continua mesmo com erro na verificação
+    // Verificar se o nome do time já existe
+    const existingTeam = await prisma.team.findFirst({
+      where: { name: team.name }
+    })
+
+    if (existingTeam) {
+      return NextResponse.json(
+        { message: 'Nome do time já cadastrado' },
+        { status: 400 }
+      )
     }
 
     // Hash da senha
-    const hashedPassword = await bcrypt.hash(password, 10)
+    const hashedPassword = await bcrypt.hash(password, 12)
 
     console.log('Iniciando transação para criar usuário e time')
 
@@ -120,6 +122,9 @@ export async function POST(req: Request) {
               isRead: false
             }
           })
+
+          // Registrar log de mensagem de boas-vindas
+          await logWelcomeMessage(result.user.id, `Mensagem de boas-vindas enviada para ${team.name}`)
 
           console.log('✅ Mensagem de boas-vindas enviada com sucesso')
         }
