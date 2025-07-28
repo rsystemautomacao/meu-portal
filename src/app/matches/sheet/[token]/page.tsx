@@ -11,6 +11,7 @@ const EVENT_TYPES = [
   { type: 'yellow_card', label: 'Amarelo', color: 'bg-yellow-400', icon: '🟨' },
   { type: 'red_card', label: 'Vermelho', color: 'bg-red-500', icon: '🟥' },
   { type: 'assist', label: 'Assistência', color: 'bg-blue-400', icon: '🅰️' },
+  { type: 'fault', label: 'Falta', color: 'bg-orange-500', icon: '⚠️' },
 ]
 
 export default function MatchSheetPage() {
@@ -33,6 +34,7 @@ export default function MatchSheetPage() {
   const [saving, setSaving] = useState(false)
   const [finalizado, setFinalizado] = useState(false)
   const [quadroSelecionado, setQuadroSelecionado] = useState<number|null>(null)
+  const [tempoAtual, setTempoAtual] = useState<1|2>(1) // 1º ou 2º tempo do quadro atual
   const [presentes, setPresentes] = useState<any[]>([])
   const [selecionandoPresentes, setSelecionandoPresentes] = useState(false)
   const [jogadores, setJogadores] = useState<any[]>([])
@@ -43,11 +45,25 @@ export default function MatchSheetPage() {
   const [quadrosPreenchidos, setQuadrosPreenchidos] = useState<{1: boolean, 2: boolean}>({1: false, 2: false})
   const [showTimerEndModal, setShowTimerEndModal] = useState(false)
   const [restaurado, setRestaurado] = useState(false)
+  
+  // Estados para controlar os tempos de cada quadro
+  const [temposQuadro1, setTemposQuadro1] = useState<{1: boolean, 2: boolean}>({1: false, 2: false})
+  const [temposQuadro2, setTemposQuadro2] = useState<{1: boolean, 2: boolean}>({1: false, 2: false})
+
+  // Estados para controle de faltas
+  const [faultsHome, setFaultsHome] = useState<Record<1|2, number>>({ 1: 0, 2: 0 })
+  const [faultsAway, setFaultsAway] = useState<Record<1|2, number>>({ 1: 0, 2: 0 })
+  const [showFaultAlert, setShowFaultAlert] = useState(false)
+  const [faultAlertTeam, setFaultAlertTeam] = useState<'home' | 'away' | null>(null)
+  const [faultAlertQuadro, setFaultAlertQuadro] = useState<1|2|null>(null)
 
   // Estados para o novo layout
   const [selectedEventType, setSelectedEventType] = useState<string>('')
   const [homeForm, setHomeForm] = useState({ player: '', assist: '' })
   const [awayForm, setAwayForm] = useState({ player: '', goleiro: '' })
+
+  // Filtrar eventos do quadro atual
+  const eventosQuadroAtual = events.filter(ev => ev.quadro === quadroSelecionado)
 
   const STORAGE_KEY = token ? `sumula-online-${token}` : 'sumula-online-temp'
 
@@ -90,27 +106,28 @@ export default function MatchSheetPage() {
   // Modal customizado de confirmação de reload
   {/* Modal de confirmação de reload/refresh */}
   {showReloadModal && (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center border-2 border-red-300">
-        <div className="text-3xl mb-4">⚠️</div>
+        <div className="text-4xl mb-4">⚠️</div>
         <div className="font-bold text-xl text-red-700 mb-2">Atenção!</div>
-        <div className="text-gray-700 mb-6">Se você atualizar ou sair da página agora, poderá perder todos os dados não salvos da súmula em andamento.</div>
+        <div className="text-gray-700 mb-6">Você tem dados não salvos. Tem certeza que deseja recarregar a página?</div>
         <div className="flex gap-4 justify-center">
           <button
-            className="bg-gradient-to-r from-red-600 to-pink-600 text-white rounded-xl px-6 py-3 font-bold text-lg shadow-lg hover:from-red-700 hover:to-pink-700 transition-all duration-200"
+            className="bg-red-600 text-white rounded-xl px-6 py-3 font-bold text-lg shadow-lg hover:bg-red-700 transition-all duration-200"
             onClick={() => {
               setShowReloadModal(false)
-              if (reloadCallback.current) reloadCallback.current()
-              else window.removeEventListener('beforeunload', () => {})
+              if (reloadCallback.current) {
+                reloadCallback.current()
+              }
             }}
           >
-            Atualizar mesmo assim
+            Sim, recarregar
           </button>
           <button
-            className="bg-gradient-to-r from-gray-300 to-gray-400 text-gray-800 rounded-xl px-6 py-3 font-bold text-lg shadow-lg hover:from-gray-400 hover:to-gray-500 transition-all duration-200"
+            className="bg-gray-600 text-white rounded-xl px-6 py-3 font-bold text-lg shadow-lg hover:bg-gray-700 transition-all duration-200"
             onClick={() => setShowReloadModal(false)}
           >
-            Cancelar atualização
+            Cancelar
           </button>
         </div>
       </div>
@@ -287,14 +304,40 @@ export default function MatchSheetPage() {
     return { nosso, adv }
   }
 
+  // Função para calcular faltas por tempo dentro do quadro atual
+  const calcularFaltasTempo = (quadro: 1 | 2, tempo: 1 | 2) => {
+    const faltasHome = events.filter(ev => ev.type === 'fault' && ev.team === 'home' && ev.quadro === quadro && ev.tempo === tempo).length
+    const faltasAway = events.filter(ev => ev.type === 'fault' && ev.team === 'away' && ev.quadro === quadro && ev.tempo === tempo).length
+    return { home: faltasHome, away: faltasAway }
+  }
+
+  // Função para verificar e mostrar alerta de 5 faltas
+  const verificarFaltas = (quadro: 1 | 2, tempo: 1 | 2, team: 'home' | 'away') => {
+    const faltas = calcularFaltasTempo(quadro, tempo)
+    const faltasTime = team === 'home' ? faltas.home : faltas.away
+    
+    if (faltasTime === 4) {
+      setFaultAlertTeam(team)
+      setFaultAlertQuadro(quadro)
+      setShowFaultAlert(true)
+      
+      // Auto-hide após 5 segundos
+      setTimeout(() => {
+        setShowFaultAlert(false)
+        setFaultAlertTeam(null)
+        setFaultAlertQuadro(null)
+      }, 5000)
+    }
+  }
+
   // Função para adicionar evento do meu time
   const handleAddHomeEvent = () => {
-    if (!homeForm.player) {
-      alert('Selecione o jogador!')
-      return
-    }
     if (!selectedEventType) {
       alert('Selecione o tipo de evento!')
+      return
+    }
+    if (!homeForm.player) {
+      alert('Selecione o jogador!')
       return
     }
     
@@ -306,6 +349,7 @@ export default function MatchSheetPage() {
       player: homeForm.player,
       minute: minuteValue,
       quadro: quadroSelecionado,
+      tempo: tempoAtual,
       team: 'home'
     }
     
@@ -316,17 +360,31 @@ export default function MatchSheetPage() {
     setEvents([...events, evento])
     setHomeForm({ player: '', assist: '' })
     setSelectedEventType('')
+    
+    // Verificar faltas se for uma falta (após adicionar o evento)
+    if (selectedEventType === 'fault') {
+      setTimeout(() => {
+        verificarFaltas(quadroSelecionado as 1|2, tempoAtual, 'home')
+      }, 100)
+    }
   }
 
   // Função para adicionar evento do adversário
   const handleAddAwayEvent = () => {
-    if (!awayForm.player) {
-      alert('Preencha o nome do jogador!')
-      return
-    }
     if (!selectedEventType) {
       alert('Selecione o tipo de evento!')
       return
+    }
+    if (selectedEventType === 'goal') {
+      if (!awayForm.goleiro) {
+        alert('Selecione o goleiro!')
+        return
+      }
+    } else {
+      if (!awayForm.player) {
+        alert('Preencha o nome do jogador!')
+        return
+      }
     }
     
     let minuteValue = Math.ceil(timer[quadroSelecionado as 1|2]/60)
@@ -334,9 +392,10 @@ export default function MatchSheetPage() {
     
     let evento: any = { 
       type: selectedEventType,
-      player: awayForm.player,
+      player: selectedEventType === 'goal' ? 'Jogador Adversário' : awayForm.player,
       minute: minuteValue,
       quadro: quadroSelecionado,
+      tempo: tempoAtual,
       team: 'away'
     }
     
@@ -347,6 +406,13 @@ export default function MatchSheetPage() {
     setEvents([...events, evento])
     setAwayForm({ player: '', goleiro: '' })
     setSelectedEventType('')
+    
+    // Verificar faltas se for uma falta (após adicionar o evento)
+    if (selectedEventType === 'fault') {
+      setTimeout(() => {
+        verificarFaltas(quadroSelecionado as 1|2, tempoAtual, 'away')
+      }, 100)
+    }
   }
 
   const handleFinalizarQuadro = async () => {
@@ -385,10 +451,38 @@ export default function MatchSheetPage() {
     }
   }
 
-  const sumulaCompleta = quadrosPreenchidos[1] && quadrosPreenchidos[2]
+  const handleFinalizarTempo = async () => {
+    if (saving) return
+    setSaving(true)
+    
+    try {
+      // Marcar o tempo atual como finalizado
+      if (quadroSelecionado === 1) {
+        setTemposQuadro1(prev => ({ ...prev, [tempoAtual]: true }))
+      } else if (quadroSelecionado === 2) {
+        setTemposQuadro2(prev => ({ ...prev, [tempoAtual]: true }))
+      }
+      
+      // Se ainda não finalizou o segundo tempo, ir para o próximo tempo
+      if (tempoAtual === 1) {
+        alert(`✅ ${tempoAtual}º Tempo finalizado com sucesso!`)
+        setTempoAtual(2)
+        setSaving(false)
+        return
+      }
+      
+      // Se finalizou o segundo tempo, finalizar o quadro
+      alert(`✅ ${quadroSelecionado}º Quadro finalizado com sucesso!`)
+      await handleFinalizarQuadro()
+    } catch (error) {
+      console.error('Erro ao finalizar tempo:', error)
+      alert('Erro ao salvar. Tente novamente.')
+    } finally {
+      setSaving(false)
+    }
+  }
 
-  // Filtrar eventos do quadro atual
-  const eventosQuadroAtual = events.filter(ev => ev.quadro === quadroSelecionado)
+  const sumulaCompleta = quadrosPreenchidos[1] && quadrosPreenchidos[2]
 
   const [isLandscape, setIsLandscape] = useState(true)
   const [showOrientationBanner, setShowOrientationBanner] = useState(false)
@@ -489,12 +583,36 @@ export default function MatchSheetPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex flex-col items-center px-4 py-6">
-      {showBanner && (
-        <div className="fixed top-0 left-0 w-full z-50 bg-red-100 border-b-2 border-red-300 text-red-900 text-center py-2 font-bold flex flex-col items-center shadow-lg animate-pulse">
-          <span className="text-base">⚠️ Não recarregue ou feche esta página durante o preenchimento da súmula. Você pode perder dados não salvos.</span>
-          {(isSafari || isIOS) && (
-            <span className="text-xs text-red-700 mt-1">No Safari/iPhone, não é possível exibir alerta de confirmação ao recarregar. Salve a súmula antes de sair!</span>
-          )}
+      {/* Modal de confirmação de reload/refresh */}
+      {showReloadModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center border-2 border-red-300">
+            <div className="text-4xl mb-4">⚠️</div>
+            <div className="font-bold text-xl text-red-700 mb-2">Atenção!</div>
+            <div className="text-gray-700 mb-6">Você tem dados não salvos. Tem certeza que deseja recarregar a página?</div>
+            <div className="flex gap-4 justify-center">
+              <button
+                className="bg-red-600 text-white rounded-xl px-6 py-3 font-bold text-lg shadow-lg hover:bg-red-700 transition-all duration-200"
+                onClick={() => {
+                  setShowReloadModal(false)
+                  if (reloadCallback.current) {
+                    reloadCallback.current()
+                  }
+                }}
+              >
+                Sim, recarregar
+              </button>
+              <button
+                className="bg-gray-600 text-white rounded-xl px-6 py-3 font-bold text-lg shadow-lg hover:bg-gray-700 transition-all duration-200"
+                onClick={() => {
+                  setShowReloadModal(false)
+                  reloadCallback.current = null
+                }}
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
         </div>
       )}
       {/* Banner de orientação */}
@@ -521,7 +639,12 @@ export default function MatchSheetPage() {
             <div className="flex gap-4 justify-center">
               <button
                 className={`bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl px-8 py-4 font-bold text-lg shadow-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 ${quadrosPreenchidos[1] ? 'opacity-50 cursor-not-allowed' : 'transform hover:scale-105'}`}
-                onClick={() => !quadrosPreenchidos[1] && setQuadroSelecionado(1)}
+                onClick={() => {
+                  if (!quadrosPreenchidos[1]) {
+                    setQuadroSelecionado(1)
+                    setTempoAtual(1)
+                  }
+                }}
                 disabled={quadrosPreenchidos[1]}
               >
                 <div className="text-sm mb-1">1º</div>
@@ -529,7 +652,12 @@ export default function MatchSheetPage() {
               </button>
               <button
                 className={`bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl px-8 py-4 font-bold text-lg shadow-lg hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 ${quadrosPreenchidos[2] ? 'opacity-50 cursor-not-allowed' : 'transform hover:scale-105'}`}
-                onClick={() => !quadrosPreenchidos[2] && setQuadroSelecionado(2)}
+                onClick={() => {
+                  if (!quadrosPreenchidos[2]) {
+                    setQuadroSelecionado(2)
+                    setTempoAtual(1)
+                  }
+                }}
                 disabled={quadrosPreenchidos[2]}
               >
                 <div className="text-sm mb-1">2º</div>
@@ -575,6 +703,28 @@ export default function MatchSheetPage() {
         </div>
       )}
 
+      {/* Modal de alerta de 5 faltas */}
+      {showFaultAlert && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center border-2 border-orange-300">
+            <div className="text-4xl mb-4">⚠️</div>
+            <div className="font-bold text-2xl text-orange-700 mb-2">ATENÇÃO!</div>
+            <div className="text-lg text-gray-700 mb-4">
+              5ª falta para o time <strong>{faultAlertTeam === 'home' ? '🏠 Meu time' : '⚔️ Adversário'}</strong>
+            </div>
+            <div className="text-sm text-gray-600 mb-6">
+              {faultAlertQuadro}º Quadro - {faultAlertTeam === 'home' ? '1º' : '2º'} Tempo
+            </div>
+            <button
+              className="bg-gradient-to-r from-orange-600 to-red-600 text-white rounded-xl px-6 py-3 font-bold text-lg shadow-lg hover:from-orange-700 hover:to-red-700 transition-all duration-200"
+              onClick={() => setShowFaultAlert(false)}
+            >
+              Entendi
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Cabeçalho da súmula */}
       <div className="w-full max-w-6xl bg-gradient-to-r from-white to-blue-50 rounded-2xl shadow-xl p-6 mb-6 border border-blue-200">
         <div className="text-center mb-4">
@@ -587,22 +737,80 @@ export default function MatchSheetPage() {
         <div className="flex justify-between items-center">
           <div className="text-center">
             <div className="text-lg font-bold text-blue-900 mb-2">
-              QUADRO ATUAL: {quadroSelecionado}º QUADRO
+              {quadroSelecionado}º QUADRO - {tempoAtual}º TEMPO
             </div>
             <div className="text-sm text-gray-600">Local: {match.location || 'Casa'}</div>
+            
+            {/* Exibição de faltas */}
+            <div className="mt-2 p-2 bg-orange-50 rounded-lg border border-orange-200">
+              <div className="text-orange-600 font-semibold text-center">Faltas do {tempoAtual}º Tempo:</div>
+              <div className="flex justify-between gap-4 mt-1">
+                <span className="text-green-700 font-semibold">🏠 {calcularFaltasTempo(quadroSelecionado as 1|2, tempoAtual).home}</span>
+                <span className="text-red-700 font-semibold">⚔️ {calcularFaltasTempo(quadroSelecionado as 1|2, tempoAtual).away}</span>
+              </div>
+            </div>
+            
+            {/* Controles de tempo */}
+            <div className="flex justify-center mt-2">
+              <div className="flex gap-2">
+                <button
+                  className={`px-3 py-1 rounded text-sm font-semibold ${
+                    tempoAtual === 1 
+                      ? 'bg-blue-600 text-white' 
+                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  }`}
+                  onClick={() => setTempoAtual(1)}
+                >
+                  1º Tempo
+                </button>
+                <button
+                  className={`px-3 py-1 rounded text-sm font-semibold ${
+                    tempoAtual === 2 
+                      ? 'bg-blue-600 text-white' 
+                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  } ${!temposQuadro1[1] && quadroSelecionado === 1 || !temposQuadro2[1] && quadroSelecionado === 2 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  onClick={() => {
+                    const temposQuadro = quadroSelecionado === 1 ? temposQuadro1 : temposQuadro2
+                    if (temposQuadro[1]) {
+                      setTempoAtual(2)
+                    }
+                  }}
+                  disabled={!temposQuadro1[1] && quadroSelecionado === 1 || !temposQuadro2[1] && quadroSelecionado === 2}
+                >
+                  2º Tempo
+                </button>
+              </div>
+            </div>
           </div>
           
           <div className="flex gap-4">
             <div className="text-center bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-4">
-              <div className="text-sm text-green-700 font-semibold mb-1">1º Quadro</div>
+              <div className="text-sm text-green-700 font-semibold mb-1">1º Tempo</div>
               <div className="text-2xl font-bold text-green-900">
                 {placarQuadro(1).nosso} <span className="text-gray-400">×</span> {placarQuadro(1).adv}
               </div>
+              {/* Faltas do 1º tempo */}
+              <div className="mt-2 text-xs">
+                <div className="text-orange-600 font-semibold">Faltas:</div>
+                <div className="flex justify-between gap-2">
+                  <span className="text-green-700">🏠 {calcularFaltasTempo(1, 1).home}</span>
+                  <span className="text-red-700">⚔️ {calcularFaltasTempo(1, 1).away}</span>
+                </div>
+              </div>
             </div>
-            <div className="text-center bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-4">
-              <div className="text-sm text-blue-700 font-semibold mb-1">2º Quadro</div>
-              <div className="text-2xl font-bold text-blue-900">
+            
+            <div className="text-center bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl p-4">
+              <div className="text-sm text-indigo-700 font-semibold mb-1">2º Tempo</div>
+              <div className="text-2xl font-bold text-indigo-900">
                 {placarQuadro(2).nosso} <span className="text-gray-400">×</span> {placarQuadro(2).adv}
+              </div>
+              {/* Faltas do 2º tempo */}
+              <div className="mt-2 text-xs">
+                <div className="text-orange-600 font-semibold">Faltas:</div>
+                <div className="flex justify-between gap-2">
+                  <span className="text-green-700">🏠 {calcularFaltasTempo(2, 1).home}</span>
+                  <span className="text-red-700">⚔️ {calcularFaltasTempo(2, 1).away}</span>
+                </div>
               </div>
             </div>
           </div>
@@ -725,7 +933,6 @@ export default function MatchSheetPage() {
               <button
                 className="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl py-4 font-bold text-lg shadow-lg hover:from-green-700 hover:to-emerald-700 transition-all duration-200 transform hover:scale-105"
                 onClick={handleAddHomeEvent}
-                disabled={!selectedEventType || !homeForm.player}
               >
                 ➕ ADICIONAR MEU TIME
               </button>
@@ -761,12 +968,16 @@ export default function MatchSheetPage() {
 
             {/* Campos específicos para adversário */}
             <div className="space-y-3">
-              <input
-                className="w-full rounded-xl border-gray-300 p-3 text-lg bg-white shadow-sm focus:border-red-500 focus:ring-red-500"
-                placeholder="👤 Nome do jogador"
-                value={awayForm.player}
-                onChange={e => setAwayForm(f => ({ ...f, player: e.target.value }))}
-              />
+              {selectedEventType !== 'goal' && (
+                <input
+                  className="w-full rounded-xl border-gray-300 p-3 text-lg bg-white shadow-sm focus:border-red-500 focus:ring-red-500"
+                  placeholder="👤 Nome do jogador"
+                  value={awayForm.player}
+                  onChange={e => setAwayForm(f => ({ ...f, player: e.target.value }))}
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                />
+              )}
 
               {selectedEventType === 'goal' && (
                 <select
@@ -784,7 +995,6 @@ export default function MatchSheetPage() {
               <button
                 className="w-full bg-gradient-to-r from-red-600 to-pink-600 text-white rounded-xl py-4 font-bold text-lg shadow-lg hover:from-red-700 hover:to-pink-700 transition-all duration-200 transform hover:scale-105"
                 onClick={handleAddAwayEvent}
-                disabled={!selectedEventType || !awayForm.player}
               >
                 ➕ ADICIONAR ADVERSÁRIO
               </button>
@@ -797,9 +1007,9 @@ export default function MatchSheetPage() {
       <div className="w-full max-w-6xl bg-gradient-to-r from-white to-gray-50 rounded-2xl shadow-xl p-6 mb-6 border border-gray-200">
         <div className="mb-4 font-bold text-center text-xl text-gray-900 flex items-center justify-center">
           <span className="mr-2">📋</span>
-          EVENTOS DO {quadroSelecionado}º QUADRO
+          TODOS OS EVENTOS
         </div>
-        {eventosQuadroAtual.length === 0 && (
+        {events.length === 0 && (
           <div className="text-center text-gray-500 py-8">
             <div className="text-4xl mb-2">📝</div>
             <div className="font-semibold">Nenhum evento registrado ainda.</div>
@@ -807,7 +1017,7 @@ export default function MatchSheetPage() {
           </div>
         )}
         <ul className="space-y-3">
-          {eventosQuadroAtual.map((ev, i) => (
+          {events.map((ev, i) => (
             <li key={i} className="flex items-center justify-between py-4 px-6 bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
               <div className="flex items-center gap-3">
                 <span className={`px-3 py-2 rounded-lg text-white font-semibold text-sm ${EVENT_TYPES.find(t => t.type === ev.type)?.color || 'bg-gray-500'}`}>
@@ -820,6 +1030,7 @@ export default function MatchSheetPage() {
               </div>
               <div className="flex items-center gap-3">
                 <span className="text-lg font-bold text-gray-700">{ev.minute}'</span>
+                <span className="px-2 py-1 bg-orange-100 text-orange-800 rounded-lg text-sm font-semibold">{ev.tempo}ºT</span>
                 <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-lg text-sm font-semibold">{ev.quadro}ºQ</span>
                 {ev.type === 'goal' && ev.team === 'home' && ev.assist && (
                   <span className="px-2 py-1 bg-blue-50 text-blue-700 rounded-lg text-xs">🅰️ {ev.assist}</span>
@@ -833,16 +1044,29 @@ export default function MatchSheetPage() {
         </ul>
       </div>
 
-      {/* Botão de finalizar quadro */}
-      {quadroSelecionado !== null && !finalizado && (
-        <button
-          className="w-full max-w-6xl bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-2xl py-6 font-bold text-xl shadow-xl mb-6 hover:from-green-700 hover:to-emerald-700 transition-all duration-200 transform hover:scale-105"
-          onClick={handleFinalizarQuadro}
-          disabled={saving}
-        >
-          {saving ? '💾 Salvando...' : `✅ Finalizar e Salvar ${quadroSelecionado}º Quadro`}
-        </button>
-      )}
+      {/* Botão de finalizar tempo/quadro */}
+      {quadroSelecionado !== null && !finalizado && (() => {
+        const temposQuadro = quadroSelecionado === 1 ? temposQuadro1 : temposQuadro2
+        const tempoAtualFinalizado = temposQuadro[tempoAtual]
+        
+        if (tempoAtualFinalizado) {
+          return (
+            <div className="w-full max-w-6xl bg-gradient-to-r from-green-100 to-emerald-100 text-green-800 rounded-2xl py-6 font-bold text-xl shadow-xl mb-6 border-2 border-green-300">
+              ✅ {tempoAtual}º Tempo Finalizado
+            </div>
+          )
+        }
+        
+        return (
+          <button
+            className="w-full max-w-6xl bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-2xl py-6 font-bold text-xl shadow-xl mb-6 hover:from-green-700 hover:to-emerald-700 transition-all duration-200 transform hover:scale-105"
+            onClick={handleFinalizarTempo}
+            disabled={saving}
+          >
+            {saving ? '💾 Salvando...' : tempoAtual === 1 ? `✅ Finalizar ${tempoAtual}º Tempo` : `✅ Finalizar ${quadroSelecionado}º Quadro`}
+          </button>
+        )
+      })()}
 
       {finalizado && (
         <button
@@ -878,4 +1102,4 @@ export default function MatchSheetPage() {
       )}
     </div>
   )
-} 
+}

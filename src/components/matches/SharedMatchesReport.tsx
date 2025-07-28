@@ -64,6 +64,7 @@ function StatsModal({ isOpen, onClose, events }: StatsModalProps) {
       case 'assist': return 'Assistência';
       case 'yellow_card': return 'Amarelo';
       case 'red_card': return 'Vermelho';
+      case 'fault': return 'Falta';
       default: return type;
     }
   };
@@ -74,6 +75,7 @@ function StatsModal({ isOpen, onClose, events }: StatsModalProps) {
       case 'assist': return 'text-blue-700';
       case 'yellow_card': return 'text-yellow-600';
       case 'red_card': return 'text-red-600';
+      case 'fault': return 'text-orange-600';
       default: return 'text-gray-700';
     }
   };
@@ -83,6 +85,7 @@ function StatsModal({ isOpen, onClose, events }: StatsModalProps) {
     assist: <span className="inline-block text-blue-600 mr-1">🅰️</span>,
     yellow_card: <span className="inline-block text-yellow-500 mr-1">🟨</span>,
     red_card: <span className="inline-block text-red-600 mr-1">🟥</span>,
+    fault: <span className="inline-block text-orange-500 mr-1">⚠️</span>,
   }
 
   const quadros = [1, 2];
@@ -115,6 +118,9 @@ function StatsModal({ isOpen, onClose, events }: StatsModalProps) {
               break
             case 'red_card':
               line += '🟥 *Vermelho* ' + ev.player
+              break
+            case 'fault':
+              line += '⚠️ *Falta* ' + ev.player
               break
             default:
               line += ev.type + ' ' + ev.player

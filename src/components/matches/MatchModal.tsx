@@ -69,9 +69,9 @@ export default function MatchModal({ isOpen, onClose, onSave, match }: MatchModa
 
   const [players, setPlayers] = useState<any[]>([])
   const [presentes1, setPresentes1] = useState<any[]>([])
-  const [playerStats1, setPlayerStats1] = useState<Record<string, { gols: number, assist: number, amarelo: number, vermelho: number, golsSofridos: number }>>({})
+  const [playerStats1, setPlayerStats1] = useState<Record<string, { gols: number, assist: number, amarelo: number, vermelho: number, faltas: number, golsSofridos: number }>>({})
   const [presentes2, setPresentes2] = useState<any[]>([])
-  const [playerStats2, setPlayerStats2] = useState<Record<string, { gols: number, assist: number, amarelo: number, vermelho: number, golsSofridos: number }>>({})
+  const [playerStats2, setPlayerStats2] = useState<Record<string, { gols: number, assist: number, amarelo: number, vermelho: number, faltas: number, golsSofridos: number }>>({})
   const [isLandscape, setIsLandscape] = useState(true)
   const [showOrientationBanner, setShowOrientationBanner] = useState(false)
   const [fullscreenError, setFullscreenError] = useState('')
@@ -164,7 +164,7 @@ export default function MatchModal({ isOpen, onClose, onSave, match }: MatchModa
     setPlayerStats1(prev => {
       const novo: Record<string, any> = { ...prev }
       presentes1.forEach(j => {
-        if (!novo[j.id]) novo[j.id] = { gols: 0, assist: 0, amarelo: 0, vermelho: 0, golsSofridos: 0 }
+        if (!novo[j.id]) novo[j.id] = { gols: 0, assist: 0, amarelo: 0, vermelho: 0, faltas: 0, golsSofridos: 0 }
       })
       Object.keys(novo).forEach(id => {
         if (!presentes1.find(j => j.id === id)) delete novo[id]
@@ -176,7 +176,7 @@ export default function MatchModal({ isOpen, onClose, onSave, match }: MatchModa
     setPlayerStats2(prev => {
       const novo: Record<string, any> = { ...prev }
       presentes2.forEach(j => {
-        if (!novo[j.id]) novo[j.id] = { gols: 0, assist: 0, amarelo: 0, vermelho: 0, golsSofridos: 0 }
+        if (!novo[j.id]) novo[j.id] = { gols: 0, assist: 0, amarelo: 0, vermelho: 0, faltas: 0, golsSofridos: 0 }
       })
       Object.keys(novo).forEach(id => {
         if (!presentes2.find(j => j.id === id)) delete novo[id]
@@ -223,6 +223,9 @@ export default function MatchModal({ isOpen, onClose, onSave, match }: MatchModa
       for (let i = 0; i < (stats.vermelho || 0); i++) {
         events.push({ type: 'red_card', player: j.name, minute: 0, team: 'home', quadro: 1 })
       }
+      for (let i = 0; i < (stats.faltas || 0); i++) {
+        events.push({ type: 'fault', player: j.name, minute: 0, team: 'home', quadro: 1 })
+      }
       // Gols sofridos pelo goleiro
       for (let i = 0; i < (stats.golsSofridos || 0); i++) {
         events.push({ type: 'goal', player: 'Adversário', minute: 0, team: 'away', quadro: 1, goleiro: j.name })
@@ -249,6 +252,9 @@ export default function MatchModal({ isOpen, onClose, onSave, match }: MatchModa
       }
       for (let i = 0; i < (stats.vermelho || 0); i++) {
         events.push({ type: 'red_card', player: j.name, minute: 0, team: 'home', quadro: 2 })
+      }
+      for (let i = 0; i < (stats.faltas || 0); i++) {
+        events.push({ type: 'fault', player: j.name, minute: 0, team: 'home', quadro: 2 })
       }
       // Gols sofridos pelo goleiro
       for (let i = 0; i < (stats.golsSofridos || 0); i++) {
@@ -552,6 +558,25 @@ export default function MatchModal({ isOpen, onClose, onSave, match }: MatchModa
                                           }} 
                                           placeholder="0"
                                         />
+                                        <span title="Faltas" className="text-gray-700 text-base sm:text-lg">⚠️</span>
+                                        <input 
+                                          type="text" 
+                                          inputMode="numeric"
+                                          pattern="[0-9]*"
+                                          className="w-8 sm:w-12 rounded border-gray-300 text-center text-sm" 
+                                          value={playerStats1[j.id]?.faltas === 0 ? '' : playerStats1[j.id]?.faltas || ''} 
+                                          onChange={e => {
+                                            const value = e.target.value;
+                                            setPlayerStats1(s => ({ 
+                                              ...s, 
+                                              [j.id]: { 
+                                                ...s[j.id], 
+                                                faltas: value === '' ? 0 : Number(value) || 0
+                                              } 
+                                            }))
+                                          }} 
+                                          placeholder="0"
+                                        />
                                         <span title="Gols sofridos (goleiro)" className="text-gray-700 text-base sm:text-lg">🥅</span>
                                         <input 
                                           type="text" 
@@ -684,6 +709,25 @@ export default function MatchModal({ isOpen, onClose, onSave, match }: MatchModa
                                               [j.id]: { 
                                                 ...s[j.id], 
                                                 vermelho: value === '' ? 0 : Number(value) || 0
+                                              } 
+                                            }))
+                                          }} 
+                                          placeholder="0"
+                                        />
+                                        <span title="Faltas" className="text-gray-700 text-base sm:text-lg">⚠️</span>
+                                        <input 
+                                          type="text" 
+                                          inputMode="numeric"
+                                          pattern="[0-9]*"
+                                          className="w-8 sm:w-12 rounded border-gray-300 text-center text-sm" 
+                                          value={playerStats2[j.id]?.faltas === 0 ? '' : playerStats2[j.id]?.faltas || ''} 
+                                          onChange={e => {
+                                            const value = e.target.value;
+                                            setPlayerStats2(s => ({ 
+                                              ...s, 
+                                              [j.id]: { 
+                                                ...s[j.id], 
+                                                faltas: value === '' ? 0 : Number(value) || 0
                                               } 
                                             }))
                                           }} 

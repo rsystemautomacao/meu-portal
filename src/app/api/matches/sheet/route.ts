@@ -137,6 +137,7 @@ export async function PUT(request: NextRequest) {
             minute: event.minute,
             team: event.team,
             quadro: event.quadro,
+            tempo: event.tempo,
             assist: event.assist,
             ...(event.goleiro ? { goleiro: event.goleiro } : {})
           }

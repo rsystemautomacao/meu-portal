@@ -83,6 +83,7 @@ export async function POST(request: NextRequest) {
           minute: event.minute,
           team: event.team,
           quadro: event.quadro,
+          tempo: event.tempo,
           assist: event.assist,
           ...(typeof event.goleiro === 'string' ? { goleiro: event.goleiro } : {})
         }))

@@ -13,8 +13,9 @@ interface PaymentAlert {
 
 export default function PaymentAlerts() {
   const [alerts, setAlerts] = useState<PaymentAlert[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false); // Mudado para false
   const [error, setError] = useState<string | null>(null);
+  const [initialLoad, setInitialLoad] = useState(true); // Novo estado
 
   useEffect(() => {
     const fetchAlerts = async () => {
@@ -32,6 +33,7 @@ export default function PaymentAlerts() {
         setAlerts([]);
       } finally {
         setLoading(false);
+        setInitialLoad(false); // Marcar carregamento inicial como concluído
       }
     };
 
@@ -41,9 +43,15 @@ export default function PaymentAlerts() {
     return () => clearInterval(interval);
   }, []);
 
+  // Se ainda está no carregamento inicial, não mostrar nada
+  if (initialLoad) {
+    return null;
+  }
+
+  // Mostrar loading apenas se não for carregamento inicial
   if (loading) {
     return (
-      <div className="bg-white shadow rounded-lg p-4">
+      <div className="bg-white shadow rounded-lg p-4 mb-4">
         <div className="animate-pulse flex space-x-4">
           <div className="flex-1 space-y-4 py-1">
             <div className="h-4 bg-gray-200 rounded w-3/4"></div>
@@ -59,7 +67,7 @@ export default function PaymentAlerts() {
 
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+      <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
         <p className="text-red-600">{error}</p>
       </div>
     );

@@ -52,9 +52,16 @@ export async function GET(req: Request) {
     const latePayments = []
 
     for (const player of players) {
-      // Verificar se o jogador está isento
-      const isExempt = player.monthlyFeeExceptions.some(ex => ex.isExempt)
-      if (isExempt) continue
+      // Verificar se o jogador está isento globalmente (campo isExempt)
+      if (player.isExempt) {
+        continue
+      }
+
+      // Verificar se o jogador está isento para este mês específico
+      const isExemptForMonth = player.monthlyFeeExceptions.some(ex => ex.isExempt)
+      if (isExemptForMonth) {
+        continue
+      }
 
       // Verificar se já pagou
       const hasPaid = player.payments.some(p => p.status === 'paid')

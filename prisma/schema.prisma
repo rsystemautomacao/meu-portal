@@ -102,11 +102,12 @@ model MatchEvent {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   match     Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
   matchId   String   @db.ObjectId
-  type      String   // "goal", "assist", "yellow_card", "red_card"
+  type      String   // "goal", "assist", "yellow_card", "red_card", "fault"
   player    String   // Player name or ID
   minute    Int
   team      String   // "home" ou "away"
-  quadro    Int      // 1 ou 2
+  quadro    Int      // 1 ou 2 (mantido para compatibilidade)
+  tempo     Int?     // 1 ou 2 (novo campo para tempos de jogo)
   assist    String?  // Nome do jogador da assistência (opcional)
   goleiro   String?  // Nome do goleiro (opcional, para gols sofridos)
   createdAt DateTime @default(now())

@@ -55,8 +55,19 @@ export async function POST(req: Request) {
 
     // Filtrar jogadores que não estão isentos
     const eligiblePlayers = players.filter(player => {
-      const isExempt = player.monthlyFeeExceptions.some(ex => ex.isExempt)
-      return !isExempt && player.monthlyFee > 0
+      // Verificar se o jogador está isento globalmente (campo isExempt)
+      if (player.isExempt) {
+        return false
+      }
+
+      // Verificar se o jogador está isento para este mês específico
+      const isExemptForMonth = player.monthlyFeeExceptions.some(ex => ex.isExempt)
+      if (isExemptForMonth) {
+        return false
+      }
+
+      // Verificar se tem mensalidade definida e maior que zero
+      return player.monthlyFee > 0
     })
 
     if (eligiblePlayers.length === 0) {

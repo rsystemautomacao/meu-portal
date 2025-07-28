@@ -66,7 +66,7 @@ export default function DashboardPage() {
   const [paused, setPaused] = useState(false)
 
   // Estado para ordenação
-  const [sortField, setSortField] = useState<'presencas' | 'gols' | 'assist' | 'amarelo' | 'vermelho' | 'golsSofridos' | null>('gols');
+  const [sortField, setSortField] = useState<'presencas' | 'gols' | 'assist' | 'amarelo' | 'vermelho' | 'faltas' | 'golsSofridos' | null>('gols');
   const [sortOrder, setSortOrder] = useState<'desc' | 'asc' | null>('desc');
   const [copied, setCopied] = useState(false);
 
@@ -195,7 +195,7 @@ export default function DashboardPage() {
         // Gols sofridos por goleiro: contabilizar SEMPRE que houver campo goleiro
         if (ev.goleiro && typeof ev.goleiro === 'string' && ev.type === 'goal' && ev.team === 'away' && ev.goleiro !== 'Adversário' && ev.goleiro.trim() !== '') {
           allPlayers.add(ev.goleiro);
-          if (!stats[ev.goleiro]) stats[ev.goleiro] = { presencas: 0, gols: 0, assist: 0, amarelo: 0, vermelho: 0, golsSofridos: 0 };
+          if (!stats[ev.goleiro]) stats[ev.goleiro] = { presencas: 0, gols: 0, assist: 0, amarelo: 0, vermelho: 0, faltas: 0, golsSofridos: 0 };
           stats[ev.goleiro].golsSofridos++;
         }
         
@@ -213,7 +213,7 @@ export default function DashboardPage() {
         if (!playerName || playerName === 'Adversário' || playerName.trim() === '') return;
         
         allPlayers.add(playerName);
-        if (!stats[playerName]) stats[playerName] = { presencas: 0, gols: 0, assist: 0, amarelo: 0, vermelho: 0, golsSofridos: 0 };
+        if (!stats[playerName]) stats[playerName] = { presencas: 0, gols: 0, assist: 0, amarelo: 0, vermelho: 0, faltas: 0, golsSofridos: 0 };
         
         if (ev.type === 'goal') {
           if (ev.team === 'home') {
@@ -224,12 +224,13 @@ export default function DashboardPage() {
         if (ev.type === 'assist') stats[playerName].assist++;
         if (ev.type === 'yellow_card') stats[playerName].amarelo++;
         if (ev.type === 'red_card') stats[playerName].vermelho++;
+        if (ev.type === 'fault') stats[playerName].faltas = (stats[playerName].faltas || 0) + 1
       });
     });
     
     // Preencher presenças no stats
     Object.keys(presencas).forEach(player => {
-      if (!stats[player]) stats[player] = { presencas: 0, gols: 0, assist: 0, amarelo: 0, vermelho: 0, golsSofridos: 0 };
+      if (!stats[player]) stats[player] = { presencas: 0, gols: 0, assist: 0, amarelo: 0, vermelho: 0, faltas: 0, golsSofridos: 0 };
       stats[player].presencas = presencas[player];
     });
     
@@ -237,7 +238,7 @@ export default function DashboardPage() {
   }
 
   // Função para lidar com clique no ícone
-  function handleSort(field: 'presencas' | 'gols' | 'assist' | 'amarelo' | 'vermelho' | 'golsSofridos') {
+  function handleSort(field: 'presencas' | 'gols' | 'assist' | 'amarelo' | 'vermelho' | 'faltas' | 'golsSofridos') {
     if (sortField !== field) {
       setSortField(field);
       setSortOrder('desc');
@@ -461,6 +462,35 @@ export default function DashboardPage() {
         <div className="bg-white shadow overflow-hidden sm:rounded-md p-3 sm:p-4">
           {dashboardData?.recentMatches && Array.isArray(dashboardData.recentMatches) && dashboardData.recentMatches.length > 0 ? (() => {
             const { stats, allPlayers, golsPro, golsContra } = getPlayerStats(dashboardData.recentMatches);
+            const totalGoals = Object.values(stats).reduce((sum, s) => sum + s.gols, 0)
+            const totalAssists = Object.values(stats).reduce((sum, s) => sum + s.assist, 0)
+            const totalYellow = Object.values(stats).reduce((sum, s) => sum + s.amarelo, 0)
+            const totalRed = Object.values(stats).reduce((sum, s) => sum + s.vermelho, 0)
+            const totalFaults = Object.values(stats).reduce((sum, s) => sum + (s.faltas || 0), 0)
+            const totalGoalsConceded = Object.values(stats).reduce((sum, s) => sum + s.golsSofridos, 0)
+            
+            const avgGoals = totalGoals / dashboardData.recentMatches.length
+            const avgAssists = totalAssists / dashboardData.recentMatches.length
+            const avgYellow = totalYellow / dashboardData.recentMatches.length
+            const avgRed = totalRed / dashboardData.recentMatches.length
+            const avgFaults = totalFaults / dashboardData.recentMatches.length
+            const avgGoalsConceded = totalGoalsConceded / dashboardData.recentMatches.length
+            
+            let text = `📊 *Estatísticas dos Últimos ${dashboardData.recentMatches.length} Jogos*\n\n`
+            text += `*Gols marcados:* ${golsPro}\n`
+            text += `*Gols sofridos:* ${golsContra}\n`
+            text += `*Saldo:* ${golsPro - golsContra}\n\n`
+            text += `*Total de:*\n`
+            text += `*Gols:* ${totalGoals} (média ${avgGoals.toFixed(2)})\n`
+            text += `*Assistências:* ${totalAssists} (média ${avgAssists.toFixed(2)})\n`
+            text += `*Cartões amarelos:* ${totalYellow} (média ${avgYellow.toFixed(2)})\n`
+            text += `*Cartões vermelhos:* ${totalRed} (média ${avgRed.toFixed(2)})\n`
+            text += `*Faltas:* ${totalFaults} (média ${avgFaults.toFixed(2)})\n`
+            text += `*Gols sofridos (goleiros):* ${totalGoalsConceded} (média ${avgGoalsConceded.toFixed(2)})\n\n`
+            text += `*Por Jogador:*\n`
+            Object.entries(stats).sort(([,a], [,b]) => b.gols - a.gols).forEach(([name, stats]) => {
+              text += `• ${name}: ${stats.gols} gols, ${stats.assist} ass, ${stats.amarelo} amarelos, ${stats.vermelho} vermelhos, ${stats.faltas || 0} faltas, ${stats.presencas} jogos\n`
+            })
             return (
               <>
                 <div className="flex justify-between items-center mb-2">
@@ -489,6 +519,7 @@ export default function DashboardPage() {
                       <th className="px-2 py-1 text-center text-xs font-semibold text-gray-700 cursor-pointer select-none" title="Assistências" onClick={() => handleSort('assist')}>🅰️{sortField === 'assist' && (sortOrder === 'desc' ? <ChevronDownIcon className="inline h-3 w-3" /> : <ChevronUpIcon className="inline h-3 w-3" />)}</th>
                       <th className="px-2 py-1 text-center text-xs font-semibold text-gray-700 cursor-pointer select-none" title="Amarelo" onClick={() => handleSort('amarelo')}>🟨{sortField === 'amarelo' && (sortOrder === 'desc' ? <ChevronDownIcon className="inline h-3 w-3" /> : <ChevronUpIcon className="inline h-3 w-3" />)}</th>
                       <th className="px-2 py-1 text-center text-xs font-semibold text-gray-700 cursor-pointer select-none" title="Vermelho" onClick={() => handleSort('vermelho')}>🟥{sortField === 'vermelho' && (sortOrder === 'desc' ? <ChevronDownIcon className="inline h-3 w-3" /> : <ChevronUpIcon className="inline h-3 w-3" />)}</th>
+                                             <th className="px-2 py-1 text-center text-xs font-semibold text-gray-700 cursor-pointer select-none" title="Faltas" onClick={() => handleSort('faltas')}>⚠️{sortField === 'faltas' && (sortOrder === 'desc' ? <ChevronDownIcon className="inline h-3 w-3" /> : <ChevronUpIcon className="inline h-3 w-3" />)}</th>
                       <th className="px-2 py-1 text-center text-xs font-semibold text-gray-700 cursor-pointer select-none" title="Gols Sofridos (Goleiro)" onClick={() => handleSort('golsSofridos')}>🥅{sortField === 'golsSofridos' && (sortOrder === 'desc' ? <ChevronDownIcon className="inline h-3 w-3" /> : <ChevronUpIcon className="inline h-3 w-3" />)}</th>
                     </tr>
                   </thead>
@@ -506,6 +537,7 @@ export default function DashboardPage() {
                         <td className="px-2 py-1 text-center">{stats[player].assist}</td>
                         <td className="px-2 py-1 text-center">{stats[player].amarelo}</td>
                         <td className="px-2 py-1 text-center">{stats[player].vermelho}</td>
+                        <td className="px-2 py-1 text-center">{stats[player].faltas}</td>
                         <td className="px-2 py-1 text-center">{stats[player].golsSofridos}</td>
                       </tr>
                     ))}

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 
 interface BeforeInstallPromptEvent extends Event {
   readonly platforms: string[]
@@ -17,18 +17,27 @@ export function usePWA() {
   const [isStandalone, setIsStandalone] = useState(false)
   const [isOnline, setIsOnline] = useState(true)
 
+  // Memoizar verificações para evitar recálculos
+  const checkStandalone = useCallback(() => {
+    return window.matchMedia('(display-mode: standalone)').matches || 
+           (window.navigator as any).standalone === true
+  }, [])
+
+  const checkOnline = useCallback(() => {
+    return navigator.onLine
+  }, [])
+
   useEffect(() => {
     // Verificar se está em modo standalone (instalado)
-    const checkStandalone = () => {
-      const standalone = window.matchMedia('(display-mode: standalone)').matches || 
-                        (window.navigator as any).standalone === true
+    const updateStandalone = () => {
+      const standalone = checkStandalone()
       setIsStandalone(standalone)
       setIsInstalled(standalone)
     }
 
     // Verificar conectividade
-    const checkOnline = () => {
-      setIsOnline(navigator.onLine)
+    const updateOnline = () => {
+      setIsOnline(checkOnline())
     }
 
     // Capturar evento beforeinstallprompt
@@ -46,22 +55,22 @@ export function usePWA() {
     // Event listeners
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
     window.addEventListener('appinstalled', handleAppInstalled)
-    window.addEventListener('online', checkOnline)
-    window.addEventListener('offline', checkOnline)
+    window.addEventListener('online', updateOnline)
+    window.addEventListener('offline', updateOnline)
 
     // Verificações iniciais
-    checkStandalone()
-    checkOnline()
+    updateStandalone()
+    updateOnline()
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
       window.removeEventListener('appinstalled', handleAppInstalled)
-      window.removeEventListener('online', checkOnline)
-      window.removeEventListener('offline', checkOnline)
+      window.removeEventListener('online', updateOnline)
+      window.removeEventListener('offline', updateOnline)
     }
-  }, [])
+  }, [checkStandalone, checkOnline])
 
-  const installApp = async () => {
+  const installApp = useCallback(async () => {
     if (!deferredPrompt) return false
 
     try {
@@ -80,9 +89,12 @@ export function usePWA() {
       console.error('Erro ao instalar PWA:', error)
       return false
     }
-  }
+  }, [deferredPrompt])
 
-  const canInstall = !isInstalled && !isStandalone && deferredPrompt !== null
+  // Memoizar canInstall para evitar recálculos
+  const canInstall = useMemo(() => {
+    return !isInstalled && !isStandalone && deferredPrompt !== null
+  }, [isInstalled, isStandalone, deferredPrompt])
 
   return {
     canInstall,

@@ -177,7 +177,7 @@ export default function DetailedMatchStatsReport() {
       // Gols sofridos por goleiro
       if (ev.goleiro && typeof ev.goleiro === 'string' && ev.type === 'goal' && ev.team === 'away' && ev.goleiro !== 'Adversário' && ev.goleiro.trim() !== '') {
         allPlayers.add(ev.goleiro)
-        if (!stats[ev.goleiro]) stats[ev.goleiro] = { presencas: 0, gols: 0, assist: 0, amarelo: 0, vermelho: 0, golsSofridos: 0, goleiro: true }
+        if (!stats[ev.goleiro]) stats[ev.goleiro] = { presencas: 0, gols: 0, assist: 0, amarelo: 0, vermelho: 0, faltas: 0, golsSofridos: 0, goleiro: true }
         stats[ev.goleiro].golsSofridos++
         stats[ev.goleiro].goleiro = true
       }
@@ -190,7 +190,7 @@ export default function DetailedMatchStatsReport() {
       const playerName = typeof ev.player === 'string' ? ev.player : ev.player.name
       if (!playerName || playerName === 'Adversário' || playerName.trim() === '') return
       allPlayers.add(playerName)
-      if (!stats[playerName]) stats[playerName] = { presencas: 0, gols: 0, assist: 0, amarelo: 0, vermelho: 0, golsSofridos: 0 }
+      if (!stats[playerName]) stats[playerName] = { presencas: 0, gols: 0, assist: 0, amarelo: 0, vermelho: 0, faltas: 0, golsSofridos: 0 }
       if (ev.type === 'goal') {
         if (ev.team === 'home') {
           stats[playerName].gols++
@@ -198,13 +198,14 @@ export default function DetailedMatchStatsReport() {
         }
         // Se o gol tem assistente, contar assistência para ele
         if (ev.assist && typeof ev.assist === 'string' && ev.assist !== 'Adversário' && ev.assist.trim() !== '') {
-          if (!stats[ev.assist]) stats[ev.assist] = { presencas: 0, gols: 0, assist: 0, amarelo: 0, vermelho: 0, golsSofridos: 0 }
+          if (!stats[ev.assist]) stats[ev.assist] = { presencas: 0, gols: 0, assist: 0, amarelo: 0, vermelho: 0, faltas: 0, golsSofridos: 0 }
           stats[ev.assist].assist++
         }
       }
       if (ev.type === 'assist') stats[playerName].assist++
       if (ev.type === 'yellow_card') stats[playerName].amarelo++
       if (ev.type === 'red_card') stats[playerName].vermelho++
+      if (ev.type === 'fault') stats[playerName].faltas = (stats[playerName].faltas || 0) + 1
     })
   })
   // Preencher presenças no stats
@@ -220,6 +221,7 @@ export default function DetailedMatchStatsReport() {
   const totalYellow = Object.values(stats).reduce((sum, s) => sum + (s.amarelo || 0), 0)
   const totalRed = Object.values(stats).reduce((sum, s) => sum + (s.vermelho || 0), 0)
   const totalAssists = Object.values(stats).reduce((sum, s) => sum + (s.assist || 0), 0)
+  const totalFaults = Object.values(stats).reduce((sum, s) => sum + (s.faltas || 0), 0)
 
   // Médias
   const avgGoals = totalMatches ? (totalGoals / totalMatches) : 0
@@ -227,6 +229,7 @@ export default function DetailedMatchStatsReport() {
   const avgYellow = totalMatches ? (totalYellow / totalMatches) : 0
   const avgRed = totalMatches ? (totalRed / totalMatches) : 0
   const avgAssists = totalMatches ? (totalAssists / totalMatches) : 0
+  const avgFaults = totalMatches ? (totalFaults / totalMatches) : 0
 
   // Função para calcular porcentagem (evita divisão por zero)
   function percent(part: number, total: number) {
@@ -237,9 +240,9 @@ export default function DetailedMatchStatsReport() {
   // Copiar para WhatsApp
   function handleCopy() {
     let text = `📊 *Estatísticas do Período*\nDe ${format(start, 'dd/MM/yyyy')} até ${format(end, 'dd/MM/yyyy')}\n\n`
-    text += `*Jogos:* ${totalMatches}\n*Gols marcados:* ${totalGoals} (média ${avgGoals.toFixed(2)})\n*Gols sofridos:* ${totalConceded} (média ${avgConceded.toFixed(2)})\n*Assistências:* ${totalAssists}\n*Cartões amarelos:* ${totalYellow} (média ${avgYellow.toFixed(2)})\n*Cartões vermelhos:* ${totalRed} (média ${avgRed.toFixed(2)})\n\n*Por Jogador:*\n`
-    Object.entries(stats).forEach(([name, stats]) => {
-      text += `• ${name}: ${stats.gols} gols, ${stats.assist} ass, ${stats.amarelo} amarelos, ${stats.vermelho} vermelhos, ${stats.presencas} jogos\n`
+    text += `*Jogos:* ${totalMatches}\n*Gols marcados:* ${totalGoals} (média ${avgGoals.toFixed(2)})\n*Gols sofridos:* ${totalConceded} (média ${avgConceded.toFixed(2)})\n*Assistências:* ${totalAssists}\n*Cartões amarelos:* ${totalYellow} (média ${avgYellow.toFixed(2)})\n*Cartões vermelhos:* ${totalRed} (média ${avgRed.toFixed(2)})\n*Faltas:* ${totalFaults} (média ${avgFaults.toFixed(2)})\n\n*Por Jogador:*\n`
+    Object.entries(stats).sort(([,a], [,b]) => b.gols - a.gols).forEach(([name, stats]) => {
+      text += `• ${name}: ${stats.gols} gols, ${stats.assist} ass, ${stats.amarelo} amarelos, ${stats.vermelho} vermelhos, ${stats.faltas || 0} faltas, ${stats.presencas} jogos\n`
       if (stats.goleiro) text += `   (Goleiro: ${stats.golsSofridos} gols sofridos)\n`
     })
     text += '\n*Goleiros:*\n'
@@ -303,9 +306,9 @@ export default function DetailedMatchStatsReport() {
   // Funções de cópia separadas
   function handleCopyPlayers() {
     let text = '📊 *Estatísticas dos Jogadores de Linha*\n\n'
-    text += 'Nome | Jogos | %Pres | Gols | %Gols | Assist | %Ass | Amarelos | %Am | Vermelhos | %Verm\n'
+    text += 'Nome | Jogos | %Pres | Gols | %Gols | Assist | %Ass | Amarelos | %Am | Vermelhos | %Verm | Faltas | %Faltas\n'
     sortedPlayers.forEach(([name, s]) => {
-      text += `${name} | ${s.presencas} | ${percent(s.presencas, totalMatches)} | ${s.gols} | ${percent(s.gols, s.presencas)} | ${s.assist} | ${percent(s.assist, s.presencas)} | ${s.amarelo} | ${percent(s.amarelo, s.presencas)} | ${s.vermelho} | ${percent(s.vermelho, s.presencas)}\n`
+      text += `${name} | ${s.presencas} | ${percent(s.presencas, totalMatches)} | ${s.gols} | ${percent(s.gols, s.presencas)} | ${s.assist} | ${percent(s.assist, s.presencas)} | ${s.amarelo} | ${percent(s.amarelo, s.presencas)} | ${s.vermelho} | ${percent(s.vermelho, s.presencas)} | ${s.faltas || 0} | ${percent(s.faltas || 0, s.presencas)}\n`
     })
     navigator.clipboard.writeText(text)
     setCopiedPlayers(true)
@@ -403,6 +406,11 @@ export default function DetailedMatchStatsReport() {
               <span className="text-xs text-gray-500 mt-1">Assistências</span>
               <span className="text-xs text-blue-700">Média {avgAssists.toFixed(2)}</span>
             </div>
+            <div className="bg-white rounded-xl shadow p-4 flex flex-col items-center border border-blue-100">
+              <span className="text-3xl font-bold text-gray-600">{totalFaults}</span>
+              <span className="text-xs text-gray-500 mt-1">Faltas</span>
+              <span className="text-xs text-gray-700">Média {avgFaults.toFixed(2)}</span>
+            </div>
           </div>
           <div className="mb-8">
             <h3 className="text-lg font-bold text-blue-800 mb-2">Por Jogador</h3>
@@ -421,6 +429,8 @@ export default function DetailedMatchStatsReport() {
                     <th className="px-2 py-1 cursor-pointer" onClick={() => handleSortPlayers('amarelo', true)}>% Am. {sortFieldPlayers === 'amarelo' && sortPercentPlayers && (sortOrderPlayers === 'desc' ? <ChevronDownIcon className="inline h-3 w-3" /> : sortOrderPlayers === 'asc' ? <ChevronUpIcon className="inline h-3 w-3" /> : null)}</th>
                     <th className="px-2 py-1 cursor-pointer" onClick={() => handleSortPlayers('vermelho', false)}>Vermelhos {sortFieldPlayers === 'vermelho' && !sortPercentPlayers && (sortOrderPlayers === 'desc' ? <ChevronDownIcon className="inline h-3 w-3" /> : sortOrderPlayers === 'asc' ? <ChevronUpIcon className="inline h-3 w-3" /> : null)}</th>
                     <th className="px-2 py-1 cursor-pointer" onClick={() => handleSortPlayers('vermelho', true)}>% Verm. {sortFieldPlayers === 'vermelho' && sortPercentPlayers && (sortOrderPlayers === 'desc' ? <ChevronDownIcon className="inline h-3 w-3" /> : sortOrderPlayers === 'asc' ? <ChevronUpIcon className="inline h-3 w-3" /> : null)}</th>
+                    <th className="px-2 py-1 cursor-pointer" onClick={() => handleSortPlayers('faltas', false)}>Faltas {sortFieldPlayers === 'faltas' && !sortPercentPlayers && (sortOrderPlayers === 'desc' ? <ChevronDownIcon className="inline h-3 w-3" /> : sortOrderPlayers === 'asc' ? <ChevronUpIcon className="inline h-3 w-3" /> : null)}</th>
+                    <th className="px-2 py-1 cursor-pointer" onClick={() => handleSortPlayers('faltas', true)}>% Faltas {sortFieldPlayers === 'faltas' && sortPercentPlayers && (sortOrderPlayers === 'desc' ? <ChevronDownIcon className="inline h-3 w-3" /> : sortOrderPlayers === 'asc' ? <ChevronUpIcon className="inline h-3 w-3" /> : null)}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -437,6 +447,8 @@ export default function DetailedMatchStatsReport() {
                       <td className="px-2 py-1 text-center text-yellow-600">{percent(s.amarelo, s.presencas)}</td>
                       <td className="px-2 py-1 text-center text-red-600 font-bold">{s.vermelho}</td>
                       <td className="px-2 py-1 text-center text-red-600">{percent(s.vermelho, s.presencas)}</td>
+                      <td className="px-2 py-1 text-center text-gray-700 font-bold">{s.faltas || 0}</td>
+                      <td className="px-2 py-1 text-center text-gray-700">{percent(s.faltas || 0, s.presencas)}</td>
                     </tr>
                   ))}
                 </tbody>

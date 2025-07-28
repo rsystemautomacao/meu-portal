@@ -7,15 +7,15 @@ import { authOptions } from '@/lib/auth'
 const getPaymentStatus = (player: any, dueDay: number, today: Date) => {
   const { payments, monthlyFeeExceptions, joinDate } = player
 
-  // 1. Verificar isenção
+  // 1. Verificar isenção para este mês específico
   const currentMonth = today.getMonth() + 1
   const currentYear = today.getFullYear()
   
-  const isExempt = monthlyFeeExceptions.some((ex: any) => 
+  const isExemptForMonth = monthlyFeeExceptions.some((ex: any) => 
     ex.month === currentMonth && ex.year === currentYear && ex.isExempt
   )
   
-  if (isExempt) {
+  if (isExemptForMonth) {
     return { status: 'exempt', daysLate: 0 }
   }
 

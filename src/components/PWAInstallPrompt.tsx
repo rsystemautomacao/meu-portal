@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { XMarkIcon } from '@heroicons/react/24/outline'
 
 export default function PWAInstallPrompt() {
@@ -9,10 +9,15 @@ export default function PWAInstallPrompt() {
   const [isInstalled, setIsInstalled] = useState(false)
   const [dismissed, setDismissed] = useState(false)
 
+  // Memoizar a verificação de standalone para evitar recálculos
+  const checkStandalone = useCallback(() => {
+    return window.matchMedia('(display-mode: standalone)').matches || 
+           (window.navigator as any).standalone === true
+  }, [])
+
   useEffect(() => {
     // Verificar se já está instalado
-    if (window.matchMedia('(display-mode: standalone)').matches || 
-        (window.navigator as any).standalone === true) {
+    if (checkStandalone()) {
       setIsInstalled(true)
       return
     }
@@ -53,9 +58,9 @@ export default function PWAInstallPrompt() {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
       window.removeEventListener('appinstalled', handleAppInstalled)
     }
-  }, [isInstalled, dismissed])
+  }, [isInstalled, dismissed, checkStandalone])
 
-  const handleInstallClick = async () => {
+  const handleInstallClick = useCallback(async () => {
     if (!deferredPrompt) return
 
     deferredPrompt.prompt()
@@ -67,16 +72,16 @@ export default function PWAInstallPrompt() {
     }
 
     setDeferredPrompt(null)
-  }
+  }, [deferredPrompt])
 
-  const handleDismiss = () => {
+  const handleDismiss = useCallback(() => {
     setShowInstallPrompt(false)
     setDeferredPrompt(null)
     setDismissed(true)
     localStorage.setItem('pwa-install-dismissed', 'true')
-  }
+  }, [])
 
-  const handleManualInstall = () => {
+  const handleManualInstall = useCallback(() => {
     console.log('Botão "Como Instalar" clicado')
     
     // Verificar se estamos em um dispositivo móvel
@@ -121,11 +126,17 @@ O app será instalado como um programa normal!
     // Marcar como dispensado após mostrar as instruções
     setDismissed(true)
     localStorage.setItem('pwa-install-dismissed', 'true')
-  }
+  }, [])
 
-  console.log('PWAInstallPrompt render:', { isInstalled, showInstallPrompt, dismissed, deferredPrompt: !!deferredPrompt })
+  // Memoizar o estado para evitar renderizações desnecessárias
+  const shouldRender = useMemo(() => {
+    return !isInstalled && showInstallPrompt && !dismissed
+  }, [isInstalled, showInstallPrompt, dismissed])
+
+  // Remover console.log para reduzir overhead
+  // console.log('PWAInstallPrompt render:', { isInstalled, showInstallPrompt, dismissed, deferredPrompt: !!deferredPrompt })
   
-  if (isInstalled || !showInstallPrompt || dismissed) {
+  if (!shouldRender) {
     return null
   }
 
@@ -146,6 +157,7 @@ O app será instalado como um programa normal!
               </p>
             </div>
           </div>
+          
           <div className="flex items-center space-x-2">
             {deferredPrompt ? (
               <button

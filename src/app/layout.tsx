@@ -2,9 +2,23 @@ import '@/styles/globals.css'
 import { Inter } from 'next/font/google'
 import type { Metadata } from 'next'
 import { Providers } from '@/components/providers'
-import PWAInstallPrompt from '@/components/PWAInstallPrompt'
-import { OfflineIndicator } from '@/components/OfflineIndicator'
-import ServiceWorkerRegister from '@/components/ServiceWorkerRegister'
+import dynamic from 'next/dynamic'
+
+// Carregar componentes PWA dinamicamente apenas em produção
+const PWAInstallPrompt = dynamic(() => import('@/components/PWAInstallPrompt'), {
+  ssr: false,
+  loading: () => null,
+})
+
+const OfflineIndicator = dynamic(() => import('@/components/OfflineIndicator').then(mod => ({ default: mod.OfflineIndicator })), {
+  ssr: false,
+  loading: () => null,
+})
+
+const ServiceWorkerRegister = dynamic(() => import('@/components/ServiceWorkerRegister'), {
+  ssr: false,
+  loading: () => null,
+})
 
 const inter = Inter({ 
   subsets: ['latin'],
@@ -101,10 +115,10 @@ export default function RootLayout({
       </head>
       <body className="h-full bg-gray-50 text-gray-900">
         <Providers>
-          <ServiceWorkerRegister />
+          {process.env.NODE_ENV === 'production' && <ServiceWorkerRegister />}
           {children}
-          <PWAInstallPrompt />
-          <OfflineIndicator />
+          {process.env.NODE_ENV === 'production' && <PWAInstallPrompt />}
+          {process.env.NODE_ENV === 'production' && <OfflineIndicator />}
         </Providers>
       </body>
     </html>
