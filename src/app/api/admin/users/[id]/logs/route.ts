@@ -16,9 +16,22 @@ export async function POST(
     const { action, type, details } = await request.json()
     const userId = params.id
 
+    // Buscar o time do usuário
+    const teamUser = await prisma.teamUser.findFirst({
+      where: { 
+        userId,
+        role: 'owner'
+      }
+    })
+
+    if (!teamUser) {
+      return NextResponse.json({ error: 'Usuário não possui time' }, { status: 400 })
+    }
+
     const log = await prisma.userLog.create({
       data: {
         userId,
+        teamId: teamUser.teamId,
         action,
         type,
         details
