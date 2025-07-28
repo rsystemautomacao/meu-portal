@@ -71,68 +71,184 @@ export default function MatchSheetPage() {
   const [showReloadModal, setShowReloadModal] = useState(false)
   const reloadCallback = useRef<(() => void) | null>(null)
 
+  // Estados para controle de orientação e fullscreen
+  const [isLandscape, setIsLandscape] = useState(true)
+  const [showOrientationBanner, setShowOrientationBanner] = useState(false)
+  const [fullscreenError, setFullscreenError] = useState('')
+
+  // Estados para controle de timer quando página perde foco
+  const [pageHidden, setPageHidden] = useState(false)
+  const [timerPausedAt, setTimerPausedAt] = useState<number | null>(null)
+
+  // Detectar se é Safari/iOS
+  const isSafari = typeof window !== 'undefined' &&
+    /Safari/.test(navigator.userAgent) &&
+    !/Chrome/.test(navigator.userAgent)
+  const isIOS = typeof window !== 'undefined' &&
+    (/iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1))
+
+  // Calcular se deve mostrar banner de proteção
+  const showBanner = (events.length > 0 || presentes.length > 0 || timerRunning[1] || timerRunning[2]) && !finalizado
+
+  // Manter tela ligada e prevenir bloqueio automático
+  useEffect(() => {
+    let wakeLock: any = null
+
+    const requestWakeLock = async () => {
+      try {
+        // Tentar usar Wake Lock API (suportada em alguns navegadores)
+        if ('wakeLock' in navigator) {
+          wakeLock = await (navigator as any).wakeLock.request('screen')
+          console.log('Wake Lock ativado - tela permanecerá ligada')
+        }
+      } catch (error) {
+        console.log('Wake Lock não disponível:', error)
+      }
+    }
+
+    const releaseWakeLock = async () => {
+      if (wakeLock) {
+        try {
+          await wakeLock.release()
+          wakeLock = null
+          console.log('Wake Lock liberado')
+        } catch (error) {
+          console.log('Erro ao liberar Wake Lock:', error)
+        }
+      }
+    }
+
+    // Ativar Wake Lock quando página carregar
+    requestWakeLock()
+
+    // Fallback: Simular atividade para manter tela ligada
+    let activityInterval: NodeJS.Timeout | null = null
+    
+    if (timerRunning[1] || timerRunning[2]) {
+      // Se timer está rodando, simular atividade a cada 20 segundos
+      activityInterval = setInterval(() => {
+        // Método 1: Simular movimento do mouse
+        const mouseEvent = new MouseEvent('mousemove', {
+          view: window,
+          bubbles: true,
+          cancelable: true,
+          clientX: Math.random() * window.innerWidth,
+          clientY: Math.random() * window.innerHeight
+        })
+        document.dispatchEvent(mouseEvent)
+        
+        // Método 2: Simular toque (para dispositivos móveis)
+        const touchEvent = new TouchEvent('touchstart', {
+          bubbles: true,
+          cancelable: true,
+          touches: [new Touch({
+            identifier: Date.now(),
+            target: document.body,
+            clientX: 0,
+            clientY: 0,
+            pageX: 0,
+            pageY: 0,
+            radiusX: 0,
+            radiusY: 0,
+            rotationAngle: 0,
+            force: 0
+          })]
+        })
+        document.dispatchEvent(touchEvent)
+        
+        // Método 3: Alternar visibilidade de um elemento
+        const hiddenElement = document.createElement('div')
+        hiddenElement.style.position = 'absolute'
+        hiddenElement.style.top = '-1000px'
+        hiddenElement.style.left = '-1000px'
+        hiddenElement.style.width = '1px'
+        hiddenElement.style.height = '1px'
+        hiddenElement.style.opacity = '0'
+        document.body.appendChild(hiddenElement)
+        
+        // Método 4: Simular scroll
+        window.scrollTo(window.scrollX, window.scrollY)
+        
+        setTimeout(() => {
+          if (document.body.contains(hiddenElement)) {
+            document.body.removeChild(hiddenElement)
+          }
+        }, 100)
+        
+        console.log('Atividade simulada para manter tela ligada')
+      }, 14000) // A cada 14 segundos (antes dos 15s padrão)
+    }
+
+    // Cleanup
+    return () => {
+      releaseWakeLock()
+      if (activityInterval) {
+        clearInterval(activityInterval)
+      }
+    }
+  }, [timerRunning])
+
+  // Listener para detectar quando página perde foco (apenas para logs)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        setPageHidden(true)
+        console.log('Página oculta - Timer continua rodando em background')
+      } else {
+        setPageHidden(false)
+        console.log('Página visível - Timer continua rodando')
+      }
+    }
+
+    const handlePageHide = () => {
+      setPageHidden(true)
+      console.log('Página escondida - Timer continua rodando em background')
+    }
+
+    const handlePageShow = () => {
+      setPageHidden(false)
+      console.log('Página mostrada - Timer continua rodando')
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    window.addEventListener('pagehide', handlePageHide)
+    window.addEventListener('pageshow', handlePageShow)
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      window.removeEventListener('pagehide', handlePageHide)
+      window.removeEventListener('pageshow', handlePageShow)
+    }
+  }, [])
+
   // Proteção contra reload/refresh
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      // Só bloquear se houver dados não salvos (ex: eventos, presentes, timers em andamento)
-      if ((events.length > 0 || presentes.length > 0 || timerRunning[1] || timerRunning[2]) && !showReloadModal) {
+      if (showBanner) {
         e.preventDefault()
         e.returnValue = ''
         setShowReloadModal(true)
+        reloadCallback.current = () => window.location.reload()
         return ''
       }
     }
-    window.addEventListener('beforeunload', handleBeforeUnload)
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload)
-    }
-  }, [events, presentes, timerRunning, showReloadModal])
 
-  // Interceptar F5, Ctrl+R, etc.
-  useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.key === 'F5' || (e.ctrlKey && e.key === 'r')) && (events.length > 0 || presentes.length > 0 || timerRunning[1] || timerRunning[2])) {
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'r' || e.key === 'R')) {
         e.preventDefault()
         setShowReloadModal(true)
         reloadCallback.current = () => window.location.reload()
       }
     }
+
+    window.addEventListener('beforeunload', handleBeforeUnload)
     window.addEventListener('keydown', handleKeyDown)
+
     return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload)
       window.removeEventListener('keydown', handleKeyDown)
     }
-  }, [events, presentes, timerRunning])
-
-  // Modal customizado de confirmação de reload
-  {/* Modal de confirmação de reload/refresh */}
-  {showReloadModal && (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center border-2 border-red-300">
-        <div className="text-4xl mb-4">⚠️</div>
-        <div className="font-bold text-xl text-red-700 mb-2">Atenção!</div>
-        <div className="text-gray-700 mb-6">Você tem dados não salvos. Tem certeza que deseja recarregar a página?</div>
-        <div className="flex gap-4 justify-center">
-          <button
-            className="bg-red-600 text-white rounded-xl px-6 py-3 font-bold text-lg shadow-lg hover:bg-red-700 transition-all duration-200"
-            onClick={() => {
-              setShowReloadModal(false)
-              if (reloadCallback.current) {
-                reloadCallback.current()
-              }
-            }}
-          >
-            Sim, recarregar
-          </button>
-          <button
-            className="bg-gray-600 text-white rounded-xl px-6 py-3 font-bold text-lg shadow-lg hover:bg-gray-700 transition-all duration-200"
-            onClick={() => setShowReloadModal(false)}
-          >
-            Cancelar
-          </button>
-        </div>
-      </div>
-    </div>
-  )}
+  }, [showBanner])
 
   // Forçar orientação landscape em dispositivos móveis
   useEffect(() => {
@@ -275,6 +391,20 @@ export default function MatchSheetPage() {
     const m = Math.floor(s / 60)
     const sec = s % 60
     return `${m.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`
+  }
+
+  // Função para ativar Wake Lock
+  const activateWakeLock = async () => {
+    try {
+      if ('wakeLock' in navigator) {
+        const wakeLock = await (navigator as any).wakeLock.request('screen')
+        console.log('Wake Lock ativado para manter tela ligada')
+        return wakeLock
+      }
+    } catch (error) {
+      console.log('Wake Lock não disponível:', error)
+    }
+    return null
   }
 
   useEffect(() => {
@@ -484,10 +614,6 @@ export default function MatchSheetPage() {
 
   const sumulaCompleta = quadrosPreenchidos[1] && quadrosPreenchidos[2]
 
-  const [isLandscape, setIsLandscape] = useState(true)
-  const [showOrientationBanner, setShowOrientationBanner] = useState(false)
-  const [fullscreenError, setFullscreenError] = useState('')
-
   // Função para checar orientação
   function checkOrientation() {
     const landscape = window.innerWidth > window.innerHeight
@@ -510,15 +636,31 @@ export default function MatchSheetPage() {
   async function handleFullscreenAndLandscape() {
     setFullscreenError('')
     try {
-      if (document.documentElement.requestFullscreen) {
-        await document.documentElement.requestFullscreen()
-      }
-      if ('orientation' in screen && (screen.orientation as any).lock) {
-        await (screen.orientation as any).lock('landscape')
+      // Para iOS/Safari, tentar diferentes abordagens
+      if (isIOS || isSafari) {
+        // iOS não suporta requestFullscreen, então tentar apenas orientação
+        if ('orientation' in screen && (screen.orientation as any).lock) {
+          await (screen.orientation as any).lock('landscape')
+          setFullscreenError('No iPhone, gire o celular manualmente para a posição horizontal.')
+        } else {
+          setFullscreenError('No iPhone, gire o celular manualmente para a posição horizontal.')
+        }
+      } else {
+        // Para outros dispositivos, tentar fullscreen normal
+        if (document.documentElement.requestFullscreen) {
+          await document.documentElement.requestFullscreen()
+        }
+        if ('orientation' in screen && (screen.orientation as any).lock) {
+          await (screen.orientation as any).lock('landscape')
+        }
       }
       setTimeout(checkOrientation, 500)
     } catch (err: any) {
-      setFullscreenError('Não foi possível forçar a orientação. Gire o celular manualmente.')
+      if (isIOS || isSafari) {
+        setFullscreenError('No iPhone, gire o celular manualmente para a posição horizontal.')
+      } else {
+        setFullscreenError('Não foi possível forçar a orientação. Gire o celular manualmente.')
+      }
     }
   }
 
@@ -533,15 +675,6 @@ export default function MatchSheetPage() {
       if (!window.closed) setShowCloseInfo(true)
     }, 300)
   }
-
-  // Detectar se é Safari/iOS
-  const isSafari = typeof window !== 'undefined' &&
-    /Safari/.test(navigator.userAgent) &&
-    !/Chrome/.test(navigator.userAgent)
-  const isIOS = typeof window !== 'undefined' &&
-    (/iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1))
-
-  const showBanner = (events.length > 0 || presentes.length > 0 || timerRunning[1] || timerRunning[2]) && !finalizado
 
   if (!restaurado) return <div className="p-6 text-center">Carregando...</div>
   if (loading) {
@@ -618,12 +751,17 @@ export default function MatchSheetPage() {
       {/* Banner de orientação */}
       {showOrientationBanner && (
         <div className="fixed top-0 left-0 w-full z-50 bg-yellow-100 border-b-2 border-yellow-300 text-yellow-900 text-center py-3 font-bold flex flex-col items-center shadow-lg animate-pulse">
-          <span className="text-lg">Para melhor experiência, use o app na horizontal (paisagem).</span>
+          <span className="text-lg">
+            {isIOS || isSafari 
+              ? 'Para melhor experiência no iPhone, gire o celular para a posição horizontal (deitado).'
+              : 'Para melhor experiência, use o app na horizontal (paisagem).'
+            }
+          </span>
           <button
             className="mt-2 px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold shadow hover:bg-blue-700 transition"
             onClick={handleFullscreenAndLandscape}
           >
-            Ativar Tela Cheia e Horizontal
+            {isIOS || isSafari ? 'Girar para Horizontal' : 'Ativar Tela Cheia e Horizontal'}
           </button>
           {fullscreenError && <span className="text-red-600 text-sm mt-1">{fullscreenError}</span>}
         </div>
@@ -710,7 +848,7 @@ export default function MatchSheetPage() {
             <div className="text-4xl mb-4">⚠️</div>
             <div className="font-bold text-2xl text-orange-700 mb-2">ATENÇÃO!</div>
             <div className="text-lg text-gray-700 mb-4">
-              5ª falta para o time <strong>{faultAlertTeam === 'home' ? '🏠 Meu time' : '⚔️ Adversário'}</strong>
+              5ª falta para o time <strong>{faultAlertTeam === 'home' ? '�� Meu time' : '⚔️ Adversário'}</strong>
             </div>
             <div className="text-sm text-gray-600 mb-6">
               {faultAlertQuadro}º Quadro - {faultAlertTeam === 'home' ? '1º' : '2º'} Tempo
@@ -829,15 +967,22 @@ export default function MatchSheetPage() {
               <span className="text-4xl font-mono bg-white px-6 py-3 rounded-xl shadow-lg border border-yellow-200 text-yellow-900">
                 {formatTimer(timer[quadroSelecionado as 1|2])}
               </span>
+              {timerRunning[quadroSelecionado as 1|2] && (
+                <div className="mt-2 text-sm text-green-600 font-semibold">
+                  🔋 Tela mantida ligada automaticamente
+                </div>
+              )}
             </div>
             <div className="flex justify-center gap-3 mb-4">
               <button
                 className={`px-4 py-2 rounded-lg font-bold shadow-lg transition-all duration-200 ${timerRunning[quadroSelecionado as 1|2] ? 'bg-yellow-500 text-white hover:bg-yellow-600' : 'bg-green-600 text-white hover:bg-green-700'} transform hover:scale-105`}
-                onClick={() => {
+                onClick={async () => {
                   if (!timerRunning[quadroSelecionado as 1|2]) {
                     if (timer[quadroSelecionado as 1|2] === 0) {
                       setTimer(t => ({ ...t, [quadroSelecionado as 1|2]: timerInitial[quadroSelecionado as 1|2] * 60 }))
                     }
+                    // Ativar Wake Lock quando timer é iniciado
+                    await activateWakeLock()
                   }
                   setTimerRunning(t => ({ ...t, [quadroSelecionado as 1|2]: !t[quadroSelecionado as 1|2] }))
                 }}

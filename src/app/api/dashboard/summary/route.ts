@@ -43,14 +43,58 @@ export async function GET() {
     // Pendências financeiras (jogadores com pagamentos pendentes)
     const currentMonth = new Date().getMonth() + 1
     const currentYear = new Date().getFullYear()
-    const pendingPayments = await prisma.payment.count({
-      where: {
-        player: { teamId: teamUser.teamId },
-        month: currentMonth,
-        year: currentYear,
-        status: { not: 'paid' }
+    const today = new Date()
+    
+    // Buscar configuração de mensalidade
+    const config = await prisma.monthlyFeeConfig.findUnique({
+      where: { teamId: teamUser.teamId }
+    })
+    const dueDay = config?.day || 10
+    
+    // Buscar jogadores com pagamentos e exceções
+    const playersWithPayments = await prisma.player.findMany({
+      where: { teamId: teamUser.teamId },
+      include: {
+        payments: {
+          where: {
+            year: currentYear,
+            month: currentMonth
+          }
+        },
+        monthlyFeeExceptions: {
+          where: {
+            year: currentYear,
+            month: currentMonth
+          }
+        }
       }
     })
+    
+    // Calcular pendências financeiras
+    let pendingPayments = 0
+    
+    for (const player of playersWithPayments) {
+      // Verificar se o jogador está isento globalmente
+      if (player.isExempt) {
+        continue
+      }
+      
+      // Verificar se o jogador está isento para este mês específico
+      const isExemptForMonth = player.monthlyFeeExceptions.some(ex => ex.isExempt)
+      if (isExemptForMonth) {
+        continue
+      }
+      
+      // Verificar se já pagou
+      const hasPaid = player.payments.some(p => p.status === 'paid')
+      if (hasPaid) continue
+      
+      // Se não pagou e já passou do vencimento, conta como pendência
+      const dueDate = new Date(currentYear, currentMonth - 1, dueDay)
+      if (today > dueDate) {
+        pendingPayments++
+      }
+    }
 
     // Últimas partidas
     const recentMatches = await prisma.match.findMany({
