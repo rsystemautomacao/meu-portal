@@ -30,6 +30,7 @@ model Team {
   secondaryColor  String      @default("#FFFFFF")
   logo            String?
   status          String      @default("ACTIVE") // ACTIVE, PAUSED, BLOCKED
+  lastAccess      DateTime?   // Último acesso ao sistema
   users           TeamUser[]
   players         Player[]
   matches         Match[]

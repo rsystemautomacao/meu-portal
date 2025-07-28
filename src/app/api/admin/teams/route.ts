@@ -55,6 +55,7 @@ export async function GET(request: Request) {
         secondaryColor: team.secondaryColor,
         logo: team.logo,
         createdAt: team.createdAt.toISOString(),
+        lastAccess: team.lastAccess ? team.lastAccess.toISOString() : null,
         userCount,
         playerCount,
         totalRevenue,

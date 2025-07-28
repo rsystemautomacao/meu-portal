@@ -151,6 +151,28 @@ Equipe Meu Portal`
       }
     }
 
+    // Aplicar substituição de variáveis para todos os tipos de mensagem (exceto custom)
+    if (messageType !== 'custom') {
+      // Buscar configuração do sistema para obter valores padrão
+      const systemConfig = await prisma.systemConfig.findFirst()
+      
+      // Calcular data de vencimento (7 dias após a criação do time)
+      const teamCreatedAt = new Date(teamData.createdAt)
+      const vencimentoDate = new Date(teamCreatedAt.getTime() + (7 * 24 * 60 * 60 * 1000))
+      const vencimento = `${String(vencimentoDate.getDate()).padStart(2, '0')}/${String(vencimentoDate.getMonth() + 1).padStart(2, '0')}/${vencimentoDate.getFullYear()}`
+      
+      // Valores padrão
+      const valor = systemConfig?.monthlyValue ? `R$ ${systemConfig.monthlyValue.toFixed(2)}/mês` : 'R$ 29,90/mês'
+      const link = systemConfig?.paymentLink || 'https://mpago.li/2YzHBRt'
+      
+      // Substituir variáveis na mensagem
+      message = message
+        .replace(/{team}/g, teamData.name)
+        .replace(/{vencimento}/g, vencimento)
+        .replace(/{valor}/g, valor)
+        .replace(/{link}/g, link)
+    }
+
     // Preparar dados para envio
     const messageData = {
       teamId: teamData.id,

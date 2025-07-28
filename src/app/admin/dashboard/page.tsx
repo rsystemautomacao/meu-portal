@@ -2,10 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowRightOnRectangleIcon, TrashIcon, ShieldCheckIcon, UsersIcon, UserIcon, CurrencyDollarIcon } from '@heroicons/react/24/outline'
+import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline'
 import AdminSendMessageModal from '@/components/admin/AdminSendMessageModal'
-import { Menu } from '@headlessui/react'
-import { Cog6ToothIcon } from '@heroicons/react/24/outline'
 
 interface Team {
   id: string
@@ -15,6 +13,7 @@ interface Team {
   secondaryColor: string
   logo?: string
   createdAt: string
+  lastAccess?: string
   userCount: number
   playerCount: number
   totalRevenue?: number
@@ -26,74 +25,31 @@ export default function AdminDashboard() {
   const router = useRouter()
   const [teams, setTeams] = useState<Team[]>([])
   const [loading, setLoading] = useState(true)
-  const [showDeleted, setShowDeleted] = useState(false)
-  const [stats, setStats] = useState({
-    totalTeams: 0,
-    totalUsers: 0,
-    totalPlayers: 0,
-    totalRevenue: 0
-  })
-  const [messageModal, setMessageModal] = useState<{ open: boolean; teamId: string; teamName: string }>({ open: false, teamId: '', teamName: '' })
+  const [messageModal, setMessageModal] = useState({ open: false, teamId: '', teamName: '' })
+  const [expandedTeams, setExpandedTeams] = useState<Set<string>>(new Set())
 
   useEffect(() => {
-    // Verificar se está logado como admin
-    const cookies = document.cookie.split(';').reduce((acc, cookie) => {
-      const [key, value] = cookie.trim().split('=')
-      acc[key] = value
-      return acc
-    }, {} as Record<string, string>)
-    
-    if (!cookies.adminSession) {
-      router.push('/admin/login')
-      return
-    }
-
     fetchTeams()
-  }, [router, showDeleted])
+  }, [])
 
   const fetchTeams = async () => {
     try {
-      setLoading(true)
-      console.log('🔄 Iniciando busca de times...')
-      
-      const url = showDeleted ? '/api/admin/teams?showDeleted=true' : '/api/admin/teams'
-      const response = await fetch(url)
-      console.log('📡 Response status:', response.status)
-      
-      if (!response.ok) {
-        throw new Error('Erro ao buscar times')
+      const response = await fetch('/api/admin/teams')
+      if (response.ok) {
+        const data = await response.json()
+        setTeams(data.teams || [])
+      } else {
+        console.error('Erro ao buscar times')
       }
-      
-      const data = await response.json()
-      console.log('📦 Dados recebidos:', data)
-      console.log(`📊 Times recebidos: ${data.teams?.length || 0}`)
-      
-      setTeams(data.teams)
-      
-      // Calcular estatísticas
-      const totalUsers = data.teams.reduce((sum: number, team: Team) => sum + team.userCount, 0)
-      const totalPlayers = data.teams.reduce((sum: number, team: Team) => sum + team.playerCount, 0)
-      const totalRevenue = data.teams.reduce((sum: number, team: Team) => sum + (team.totalRevenue || 0), 0)
-
-      setStats({
-        totalTeams: data.teams.length,
-        totalUsers,
-        totalPlayers,
-        totalRevenue
-      })
-      
-      console.log('✅ Times carregados com sucesso')
     } catch (error) {
-      console.error('❌ Erro ao carregar times:', error)
+      console.error('Erro ao buscar times:', error)
     } finally {
       setLoading(false)
     }
   }
 
   const handleLogout = () => {
-    // Remover cookies de admin
-    document.cookie = 'adminSession=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
-    document.cookie = 'adminEmail=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
+    document.cookie = 'adminSession=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
     router.push('/admin/login')
   }
 
@@ -108,36 +64,72 @@ export default function AdminDashboard() {
     return new Date(dateString).toLocaleDateString('pt-BR')
   }
 
-  // Funções de gestão de times
+  const formatLastAccess = (dateString?: string) => {
+    if (!dateString) return 'Nunca acessou'
+    
+    const date = new Date(dateString)
+    const now = new Date()
+    const diffMs = now.getTime() - date.getTime()
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
+    const diffMinutes = Math.floor(diffMs / (1000 * 60))
+    
+    // Formatar data e hora
+    const formatDateTime = (date: Date) => {
+      const day = String(date.getDate()).padStart(2, '0')
+      const month = String(date.getMonth() + 1).padStart(2, '0')
+      const year = date.getFullYear()
+      const hours = String(date.getHours()).padStart(2, '0')
+      const minutes = String(date.getMinutes()).padStart(2, '0')
+      return `${day}/${month}/${year} às ${hours}:${minutes}`
+    }
+    
+    if (diffDays === 0) {
+      if (diffHours === 0) {
+        if (diffMinutes === 0) {
+          return 'Agora mesmo'
+        } else if (diffMinutes === 1) {
+          return 'Há 1 minuto'
+        } else {
+          return `Há ${diffMinutes} minutos`
+        }
+      } else if (diffHours === 1) {
+        return 'Há 1 hora'
+      } else {
+        return `Há ${diffHours} horas`
+      }
+    } else if (diffDays === 1) {
+      return `Ontem às ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
+    } else if (diffDays < 7) {
+      return `${diffDays} dias atrás às ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
+    } else {
+      return formatDateTime(date)
+    }
+  }
+
   const handleTeamAction = async (teamId: string, action: string, newPassword?: string) => {
     try {
-      console.log('Executando ação:', { teamId, action, hasPassword: !!newPassword })
-      
+      const body: any = { action }
+      if (newPassword) body.newPassword = newPassword
+
       const response = await fetch(`/api/admin/teams/${teamId}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ action, newPassword })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
       })
 
-      console.log('Response status:', response.status)
-      
-      if (!response.ok) {
-        const errorData = await response.json()
-        console.error('Erro na resposta:', errorData)
-        throw new Error(`Erro ao executar ação: ${errorData.error || response.statusText}`)
+      if (response.ok) {
+        setTeams(prev => prev.map(team => 
+          team.id === teamId 
+            ? { ...team, status: action === 'activate' ? 'ACTIVE' : action === 'pause' ? 'PAUSED' : 'BLOCKED' }
+            : team
+        ))
+        console.log(`✅ Ação ${action} executada para ${teamId}`)
+      } else {
+        console.error('❌ Erro ao executar ação')
       }
-
-      const result = await response.json()
-      console.log('Ação executada com sucesso:', result)
-      
-      // Recarregar times após ação
-      fetchTeams()
-      alert('Ação executada com sucesso!')
     } catch (error) {
       console.error('Erro ao executar ação:', error)
-      alert(`Erro ao executar ação: ${error instanceof Error ? error.message : 'Erro desconhecido'}`)
     }
   }
 
@@ -147,33 +139,25 @@ export default function AdminDashboard() {
     }
 
     try {
-      console.log('Excluindo time:', teamId)
-      
       const response = await fetch(`/api/admin/teams/${teamId}`, {
         method: 'DELETE'
       })
 
-      console.log('Response status:', response.status)
-      
-      if (!response.ok) {
-        const errorData = await response.json()
-        console.error('Erro na resposta:', errorData)
-        throw new Error(`Erro ao excluir time: ${errorData.error || response.statusText}`)
+      if (response.ok) {
+        setTeams(prev => prev.map(team => 
+          team.id === teamId 
+            ? { ...team, status: 'EXCLUIDO', deletedAt: new Date().toISOString() }
+            : team
+        ))
+        console.log(`✅ Time ${teamId} excluído`)
+      } else {
+        console.error('❌ Erro ao excluir time')
       }
-
-      const result = await response.json()
-      console.log('Time excluído com sucesso:', result)
-      
-      // Recarregar times após exclusão
-      fetchTeams()
-      alert('Time excluído com sucesso!')
     } catch (error) {
       console.error('Erro ao excluir time:', error)
-      alert(`Erro ao excluir time: ${error instanceof Error ? error.message : 'Erro desconhecido'}`)
     }
   }
 
-  // Substituir handleSendMessage para abrir o modal
   const handleOpenMessageModal = (teamId: string, teamName: string) => {
     setMessageModal({ open: true, teamId, teamName })
   }
@@ -181,15 +165,15 @@ export default function AdminDashboard() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'ACTIVE':
-        return 'text-green-600 bg-green-100'
+        return 'bg-green-100 text-green-800'
       case 'PAUSED':
-        return 'text-yellow-600 bg-yellow-100'
+        return 'bg-yellow-100 text-yellow-800'
       case 'BLOCKED':
-        return 'text-red-600 bg-red-100'
+        return 'bg-red-100 text-red-800'
       case 'EXCLUIDO':
-        return 'text-gray-400 bg-gray-200 border border-gray-400'
+        return 'bg-gray-100 text-gray-800'
       default:
-        return 'text-gray-600 bg-gray-100'
+        return 'bg-gray-100 text-gray-800'
     }
   }
 
@@ -209,282 +193,69 @@ export default function AdminDashboard() {
     }
   }
 
-  // Verificar status de pagamento e bloquear automaticamente
-  const checkPaymentStatus = async (teamId: string) => {
-    try {
-      const response = await fetch(`/api/admin/teams/${teamId}/payment-status`)
-      if (!response.ok) {
-        throw new Error('Erro ao verificar status de pagamento')
-      }
-
-      const data = await response.json()
-      
-      // Se está em atraso há mais de 30 dias, bloquear automaticamente
-      if (data.shouldBlock && data.paymentStatus.daysOverdue > 30) {
-        console.log(`🔒 Bloqueando time ${data.teamName} por atraso de ${data.paymentStatus.daysOverdue} dias`)
-        
-        // Bloquear o time
-        await handleTeamAction(teamId, 'block')
-        
-        // Enviar mensagem de bloqueio
-        await sendMessageDirect(teamId, 'access_blocked')
-        
-        alert(`🔒 Time ${data.teamName} foi bloqueado automaticamente por atraso de ${data.paymentStatus.daysOverdue} dias`)
-      }
-      // Se está em atraso há mais de 10 dias, enviar aviso
-      else if (data.isOverdue && data.paymentStatus.daysOverdue > 10) {
-        console.log(`⚠️ Time ${data.teamName} em atraso há ${data.paymentStatus.daysOverdue} dias`)
-        
-        // Enviar mensagem de atraso
-        await sendMessageDirect(teamId, 'payment_overdue')
-        
-        alert(`⚠️ Aviso enviado para ${data.teamName} - ${data.paymentStatus.daysOverdue} dias em atraso`)
-      }
-      
-      return data
-    } catch (error) {
-      console.error('Erro ao verificar status de pagamento:', error)
-      return null
-    }
-  }
-
-  // Função utilitária para envio direto de mensagem (sem modal)
-  const sendMessageDirect = async (teamId: string, messageType: string) => {
-    try {
-      const response = await fetch(`/api/admin/teams/${teamId}/send-message`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messageType })
-      });
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Erro ao enviar mensagem');
-      }
-      return await response.json();
-    } catch (error) {
-      console.error('Erro ao enviar mensagem:', error);
-      return null;
-    }
-  };
-
-  const handleTogglePayment = async (teamId: string, currentStatus: string) => {
-    try {
-      const newStatus = currentStatus === 'PAID' ? 'ACTIVE' : 'PAID'
-      
-      const response = await fetch(`/api/admin/teams/${teamId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          action: 'toggle-payment',
-          status: newStatus
-        })
-      })
-
-      if (response.ok) {
-        // Atualizar lista local
-        setTeams(prev => prev.map(team => 
-          team.id === teamId 
-            ? { ...team, status: newStatus }
-            : team
-        ))
-        console.log(`✅ Status de pagamento alterado para ${teamId}`)
+  const toggleTeamExpansion = (teamId: string) => {
+    setExpandedTeams(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(teamId)) {
+        newSet.delete(teamId)
       } else {
-        console.error('❌ Erro ao alterar status de pagamento')
+        newSet.add(teamId)
       }
-    } catch (error) {
-      console.error('Erro ao alterar status de pagamento:', error)
-    }
+      return newSet
+    })
   }
 
   const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'ACTIVE':
-        return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Ativo</span>
-      case 'OVERDUE':
-        return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">Atraso</span>
-      case 'BLOCKED':
-        return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">Bloqueado</span>
-      case 'PAID':
-        return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">Pago</span>
-      default:
-        return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">{status}</span>
-    }
+    return (
+      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(status)}`}>
+        {getStatusText(status)}
+      </span>
+    )
   }
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-red-600"></div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Carregando times...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center py-4 space-y-2 sm:space-y-0">
-            <div className="flex items-center space-x-3">
-              <div className="bg-gradient-to-r from-red-600 to-blue-600 p-2 rounded-full">
-                <ShieldCheckIcon className="h-6 w-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Dashboard Administrativo</h1>
-                <p className="text-sm text-gray-600">Gerencie todos os times do sistema</p>
-              </div>
-            </div>
-              <button
-                onClick={handleLogout}
-                className="flex items-center space-x-2 px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm"
-              >
-                <ArrowRightOnRectangleIcon className="h-4 w-4" />
-                <span>Sair</span>
-              </button>
+          <div className="flex justify-between items-center py-4">
+            <h1 className="text-2xl font-bold text-gray-900">Painel do Administrador</h1>
+            <button
+              onClick={handleLogout}
+              className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
+            >
+              Sair
+            </button>
           </div>
         </div>
       </div>
 
-      <div className="w-full p-2 sm:p-4 lg:p-6">
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
-          <div className="bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl p-4 sm:p-6 text-white shadow-lg">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-purple-100 text-xs sm:text-sm font-medium">Total de Times</p>
-                <p className="text-xl sm:text-2xl lg:text-3xl font-bold">{stats.totalTeams}</p>
-              </div>
-              <div className="bg-white bg-opacity-20 rounded-full p-2 sm:p-3">
-                <UsersIcon className="h-5 w-5 sm:h-6 sm:w-6 lg:h-8 lg:w-8" />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl p-4 sm:p-6 text-white shadow-lg">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-blue-100 text-xs sm:text-sm font-medium">Total de Usuários</p>
-                <p className="text-xl sm:text-2xl lg:text-3xl font-bold">{stats.totalUsers}</p>
-              </div>
-              <div className="bg-white bg-opacity-20 rounded-full p-2 sm:p-3">
-                <UserIcon className="h-5 w-5 sm:h-6 sm:w-6 lg:h-8 lg:w-8" />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-gradient-to-r from-green-500 to-green-600 rounded-xl p-4 sm:p-6 text-white shadow-lg">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-green-100 text-xs sm:text-sm font-medium">Total de Jogadores</p>
-                <p className="text-2xl sm:text-3xl font-bold">{stats.totalPlayers}</p>
-              </div>
-              <div className="bg-white bg-opacity-20 rounded-full p-2 sm:p-3">
-                <svg className="h-6 w-6 sm:h-8 sm:w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-gradient-to-r from-orange-500 to-orange-600 rounded-xl p-4 sm:p-6 text-white shadow-lg">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-orange-100 text-xs sm:text-sm font-medium">Receita Total</p>
-                <p className="text-2xl sm:text-3xl font-bold">{formatCurrency(stats.totalRevenue)}</p>
-              </div>
-              <div className="bg-white bg-opacity-20 rounded-full p-2 sm:p-3">
-                <CurrencyDollarIcon className="h-6 w-6 sm:h-8 sm:w-8" />
-              </div>
-            </div>
-          </div>
+      {/* Content */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="mb-8">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">Times ({teams.length})</h2>
         </div>
 
-        {/* Filtros de status dos times */}
-        <div className="flex items-center gap-4 mb-4">
-          <button
-            onClick={() => setShowDeleted(!showDeleted)}
-            className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors text-sm font-medium ${
-              showDeleted 
-                ? 'bg-red-100 text-red-700 border border-red-300' 
-                : 'bg-gray-100 text-gray-700 border border-gray-300'
-            }`}
-          >
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-            </svg>
-            <span>{showDeleted ? 'Ocultar Excluídos' : 'Mostrar Excluídos'}</span>
-          </button>
-          {showDeleted && (
-            <span className="text-sm text-gray-500">
-              Mostrando {teams.filter(t => t.status === 'EXCLUIDO').length} times excluídos
-            </span>
-          )}
-        </div>
-
-        {/* Teams List */}
-        <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-          <div className="px-4 sm:px-6 py-4 border-b border-gray-200">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-2 sm:space-y-0">
-              <div>
-                <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Times Cadastrados</h2>
-                <p className="text-gray-600 text-xs sm:text-sm">Gerencie todos os times do sistema</p>
-              </div>
-              <div className="flex space-x-2">
-                <button
-                  onClick={async () => {
-                    if (confirm('Executar fluxo automático de pagamentos (cobrança, atraso e bloqueio)?')) {
-                      try {
-                        const response = await fetch('/api/admin/automated-flow', {
-                          method: 'POST'
-                        })
-                        if (response.ok) {
-                          alert('Fluxo automático executado com sucesso!')
-                          fetchTeams() // Recarregar lista
-                        } else {
-                          alert('Erro ao executar fluxo automático')
-                        }
-                      } catch (error) {
-                        console.error('Erro:', error)
-                        alert('Erro ao executar fluxo automático')
-                      }
-                    }
-                  }}
-                  className="flex items-center space-x-2 px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
-                >
-                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                  <span>Fluxo Automático</span>
-                </button>
-              <button
-                onClick={async () => {
-                  if (confirm('Verificar status de pagamento de todos os times e bloquear automaticamente os em atraso?')) {
-                    for (const team of teams) {
-                      await checkPaymentStatus(team.id)
-                    }
-                    alert('Verificação de pagamentos concluída!')
-                  }
-                }}
-                className="flex items-center space-x-2 px-3 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors text-sm"
+        <div className="grid gap-6">
+          {teams.map((team) => (
+            <div key={team.id} className={`bg-white rounded-lg shadow-sm border ${team.status === 'EXCLUIDO' ? 'opacity-60' : ''}`}>
+              {/* Card Header - Sempre visível */}
+              <div 
+                className="p-6 cursor-pointer hover:bg-gray-50 transition-colors"
+                onClick={() => toggleTeamExpansion(team.id)}
               >
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span>Verificar Pagamentos</span>
-              </button>
-              </div>
-            </div>
-          </div>
-
-          <div className="divide-y divide-gray-200">
-            {teams.map((team) => (
-              <div key={team.id} className={`px-4 sm:px-6 py-4 hover:bg-gray-50 transition-colors ${team.status === 'EXCLUIDO' ? 'opacity-60' : ''}`}>
-                {/* Desktop Layout */}
-                <div className="hidden lg:flex items-center justify-between">
+                <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4">
                     <div 
                       className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg"
@@ -494,15 +265,16 @@ export default function AdminDashboard() {
                     </div>
                     <div>
                       <h3 className="text-lg font-semibold text-gray-900">{team.name}</h3>
-                      <div className="flex items-center space-x-4 text-sm text-gray-500">
+                      <div className="flex items-center space-x-4 text-sm text-gray-500 mt-1">
                         <span>📞 {team.whatsapp || 'Não informado'}</span>
-                        <span>📅 {formatDate(team.createdAt)}</span>
+                        <span>📅 Criado em {formatDate(team.createdAt)}</span>
+                        <span>🕒 Último acesso: {formatLastAccess(team.lastAccess)}</span>
                         {getStatusBadge(team.status)}
                       </div>
                     </div>
                   </div>
-
-                  <div className="flex items-center space-x-6">
+                  
+                  <div className="flex items-center space-x-4">
                     <div className="text-right">
                       <div className="text-sm text-gray-500">Usuários</div>
                       <div className="text-lg font-semibold text-gray-900">{team.userCount}</div>
@@ -515,160 +287,59 @@ export default function AdminDashboard() {
                       <div className="text-sm text-gray-500">Receita</div>
                       <div className="text-lg font-semibold text-green-600">{formatCurrency(team.totalRevenue || 0)}</div>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <button 
-                        onClick={() => handleOpenMessageModal(team.id, team.name)}
-                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                        title="Enviar mensagem"
-                        disabled={team.status === 'EXCLUIDO'}
-                      >
-                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                        </svg>
-                      </button>
-                      <button 
-                        onClick={() => handleTeamAction(team.id, team.status === 'ACTIVE' ? 'pause' : 'activate')}
-                        className={`p-2 rounded-lg transition-colors ${
-                          team.status === 'ACTIVE' 
-                            ? 'text-yellow-600 hover:bg-yellow-50' 
-                            : 'text-green-600 hover:bg-green-50'
-                        }`}
-                        title={team.status === 'ACTIVE' ? 'Pausar acesso' : 'Ativar acesso'}
-                        disabled={team.status === 'EXCLUIDO'}
-                      >
-                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                        </svg>
-                      </button>
-                      <button 
-                        onClick={() => handleTeamAction(team.id, 'block')}
-                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                        title="Bloquear acesso"
-                        disabled={team.status === 'EXCLUIDO'}
-                      >
-                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                        </svg>
-                      </button>
-                      <button 
-                        onClick={() => handleTogglePayment(team.id, team.status)}
-                        className={`p-2 rounded-lg transition-colors ${
-                          team.status === 'PAID' 
-                            ? 'text-blue-600 hover:bg-blue-50' 
-                            : 'text-gray-600 hover:bg-gray-50'
-                        }`}
-                        title={team.status === 'PAID' ? 'Marcar como não pago' : 'Marcar como pago'}
-                        disabled={team.status === 'EXCLUIDO'}
-                      >
-                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                      </button>
-                      <button 
-                        onClick={() => {
-                          const newPassword = prompt('Digite a nova senha:')
-                          if (newPassword) {
-                            handleTeamAction(team.id, 'reset_password', newPassword)
-                          }
-                        }}
-                        className="p-2 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
-                        title="Resetar senha"
-                        disabled={team.status === 'EXCLUIDO'}
-                      >
-                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                        </svg>
-                      </button>
-                      <button 
-                        onClick={() => handleDeleteTeam(team.id)}
-                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                        title="Excluir time"
-                        disabled={team.status === 'EXCLUIDO'}
-                      >
-                        <TrashIcon className="h-5 w-5" />
-                      </button>
-                    </div>
+                    <button className="p-2 text-gray-400 hover:text-gray-600 transition-colors">
+                      {expandedTeams.has(team.id) ? (
+                        <ChevronUpIcon className="h-5 w-5" />
+                      ) : (
+                        <ChevronDownIcon className="h-5 w-5" />
+                      )}
+                    </button>
                   </div>
                 </div>
+              </div>
 
-                {/* Mobile Layout */}
-                <div className="lg:hidden">
-                  <div className="flex items-start space-x-3 mb-3">
-                    <div 
-                      className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0"
-                      style={{ backgroundColor: team.primaryColor }}
-                    >
-                      {team.name.charAt(0)}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-base font-semibold text-gray-900 truncate">{team.name}</h3>
-                      <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500 mt-1">
-                        <span>📞 {team.whatsapp || 'Não informado'}</span>
-                        <span>📅 {formatDate(team.createdAt)}</span>
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(team.status)}`}>
-                          {getStatusText(team.status, team.deletedAt)}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Stats Row */}
-                  <div className="grid grid-cols-3 gap-4 mb-3">
-                    <div className="text-center">
-                      <div className="text-xs text-gray-500">Usuários</div>
-                      <div className="text-sm font-semibold text-gray-900">{team.userCount}</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-xs text-gray-500">Jogadores</div>
-                      <div className="text-sm font-semibold text-gray-900">{team.playerCount}</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-xs text-gray-500">Receita</div>
-                      <div className="text-sm font-semibold text-green-600">{formatCurrency(team.totalRevenue || 0)}</div>
-                    </div>
-                  </div>
-
-                  {/* Action Buttons */}
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {/* Card Content - Expansível */}
+              {expandedTeams.has(team.id) && (
+                <div className="border-t border-gray-200 p-6 bg-gray-50">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     <button 
                       onClick={() => handleOpenMessageModal(team.id, team.name)}
-                      className="flex items-center justify-center space-x-1 px-3 py-2 text-xs bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors"
-                      title="Enviar mensagem"
+                      className="flex items-center justify-center space-x-2 px-4 py-3 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors"
                       disabled={team.status === 'EXCLUIDO'}
                     >
-                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                       </svg>
-                      <span>Mensagem</span>
+                      <span>Enviar Mensagem</span>
                     </button>
+
                     <button 
                       onClick={() => handleTeamAction(team.id, team.status === 'ACTIVE' ? 'pause' : 'activate')}
-                      className={`flex items-center justify-center space-x-1 px-3 py-2 text-xs rounded-lg transition-colors ${
+                      className={`flex items-center justify-center space-x-2 px-4 py-3 rounded-lg transition-colors ${
                         team.status === 'ACTIVE' 
                           ? 'bg-yellow-50 text-yellow-600 hover:bg-yellow-100' 
                           : 'bg-green-50 text-green-600 hover:bg-green-100'
                       }`}
-                      title={team.status === 'ACTIVE' ? 'Pausar acesso' : 'Ativar acesso'}
                       disabled={team.status === 'EXCLUIDO'}
                     >
-                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                       </svg>
                       <span>{team.status === 'ACTIVE' ? 'Pausar' : 'Ativar'}</span>
                     </button>
+
                     <button 
                       onClick={() => handleTeamAction(team.id, 'block')}
-                      className="flex items-center justify-center space-x-1 px-3 py-2 text-xs bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors"
-                      title="Bloquear acesso"
+                      className="flex items-center justify-center space-x-2 px-4 py-3 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors"
                       disabled={team.status === 'EXCLUIDO'}
                     >
-                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                       </svg>
                       <span>Bloquear</span>
                     </button>
+
                     <button 
                       onClick={() => {
                         const newPassword = prompt('Digite a nova senha:')
@@ -676,31 +347,33 @@ export default function AdminDashboard() {
                           handleTeamAction(team.id, 'reset_password', newPassword)
                         }
                       }}
-                      className="flex items-center justify-center space-x-1 px-3 py-2 text-xs bg-purple-50 text-purple-600 rounded-lg hover:bg-purple-100 transition-colors"
-                      title="Resetar senha"
+                      className="flex items-center justify-center space-x-2 px-4 py-3 bg-purple-50 text-purple-600 rounded-lg hover:bg-purple-100 transition-colors"
                       disabled={team.status === 'EXCLUIDO'}
                     >
-                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
                       </svg>
-                      <span>Reset</span>
+                      <span>Resetar Senha</span>
                     </button>
+
                     <button 
                       onClick={() => handleDeleteTeam(team.id)}
-                      className="flex items-center justify-center space-x-1 px-3 py-2 text-xs bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors"
-                      title="Excluir time"
+                      className="flex items-center justify-center space-x-2 px-4 py-3 bg-gray-50 text-gray-600 rounded-lg hover:bg-gray-100 transition-colors"
                       disabled={team.status === 'EXCLUIDO'}
                     >
-                      <TrashIcon className="h-4 w-4" />
+                      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
                       <span>Excluir</span>
                     </button>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              )}
+            </div>
+          ))}
         </div>
       </div>
+
       <AdminSendMessageModal
         isOpen={messageModal.open}
         onClose={() => setMessageModal({ open: false, teamId: '', teamName: '' })}

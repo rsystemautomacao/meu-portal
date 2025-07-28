@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { getToken } from 'next-auth/jwt'
 
 const PUBLIC_PATHS = [
   '/auth/login',
@@ -10,32 +11,49 @@ const PUBLIC_PATHS = [
   '/admin/login'
 ]
 
-export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl
-
-  // Permitir acesso a rotas públicas
-  if (PUBLIC_PATHS.some(path => pathname.startsWith(path))) {
-    return NextResponse.next()
+export async function middleware(request: NextRequest) {
+  const token = await getToken({ req: request })
+  
+  // Se o usuário está autenticado e não está acessando páginas de admin
+  if (token && !request.nextUrl.pathname.startsWith('/admin')) {
+    // Atualizar último acesso do time (apenas para rotas do dashboard)
+    if (request.nextUrl.pathname.startsWith('/dashboard') || 
+        request.nextUrl.pathname.startsWith('/financial') ||
+        request.nextUrl.pathname.startsWith('/matches') ||
+        request.nextUrl.pathname.startsWith('/players') ||
+        request.nextUrl.pathname.startsWith('/settings')) {
+      
+      try {
+        // Buscar o time do usuário e atualizar lastAccess
+        const response = await fetch(`${request.nextUrl.origin}/api/update-last-access`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Cookie': request.headers.get('cookie') || '',
+          },
+        })
+        
+        if (!response.ok) {
+          console.error('Erro ao atualizar último acesso:', response.status)
+        }
+      } catch (error) {
+        console.error('Erro ao atualizar último acesso:', error)
+      }
+    }
   }
 
-  // Proteger rotas do admin (como já faz)
-  if (pathname.startsWith('/admin')) {
-    if (pathname === '/admin/login') {
-      return NextResponse.next()
-    }
-    const adminSession = request.cookies.get('adminSession')
-    if (!adminSession || adminSession.value !== 'true') {
-      return NextResponse.redirect(new URL('/admin/login', request.url))
-    }
-    return NextResponse.next()
-  }
-
-  // Para rotas do app, apenas permitir (proteção será feita nas páginas e APIs)
   return NextResponse.next()
 }
 
 export const config = {
   matcher: [
-    '/((?!_next|api|static|favicon.ico).*)'
-  ]
+    /*
+     * Match all request paths except for the ones starting with:
+     * - api (API routes)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     */
+    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+  ],
 } 
