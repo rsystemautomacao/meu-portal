@@ -95,16 +95,6 @@ export default function DashboardLayout({
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-gradient-to-b from-primary/5 to-secondary/5">
-      {/* Indicador de Admin Universal */}
-      {session?.user?.isUniversalAdmin && (
-        <div className="fixed top-4 right-4 z-50">
-          <div className="bg-indigo-600 text-white px-3 py-2 rounded-lg shadow-lg text-xs font-medium flex items-center space-x-2">
-            <ShieldCheckIcon className="h-4 w-4" />
-            <span>Admin Universal</span>
-          </div>
-        </div>
-      )}
-
       {/* Sidebar */}
       <div className="flex-shrink-0 transition-all duration-300 ease-in-out">
         <Sidebar teamColors={teamColors} />
@@ -115,9 +105,18 @@ export default function DashboardLayout({
         {/* Header com notificações */}
         <header className="bg-white shadow-sm border-b border-gray-200 px-2 sm:px-4 py-3">
           <div className="flex justify-between items-center">
-            <div>
+            <div className="flex items-center space-x-4">
               <h1 className="text-lg font-semibold text-gray-900">Meu Portal</h1>
+              
+              {/* Indicador de Admin Universal */}
+              {session?.user?.isUniversalAdmin && (
+                <div className="bg-indigo-600 text-white px-2 py-1 rounded-md shadow-md text-xs font-medium flex items-center space-x-1 opacity-80 hover:opacity-100 transition-opacity">
+                  <ShieldCheckIcon className="h-3 w-3" />
+                  <span>Admin</span>
+                </div>
+              )}
             </div>
+            
             <div className="flex items-center space-x-4">
               <NotificationBell />
             </div>

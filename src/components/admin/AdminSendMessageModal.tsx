@@ -83,29 +83,50 @@ export default function AdminSendMessageModal({ isOpen, onClose, teamName, teamI
     try {
       let messageType = getApiMessageType(selectedType)
       let message = getMessageValue()
+      
+      console.log('🚀 Iniciando envio de mensagem...')
+      console.log('📋 Tipo selecionado:', selectedType)
+      console.log('🔧 Tipo para API:', messageType)
+      console.log('📝 Mensagem:', message)
+      console.log('🆔 Team ID:', teamId)
+      
       if (!message.trim()) {
         toast.error('A mensagem não pode ser vazia.')
         setSending(false)
         return
       }
+      
       // Enviar para a API
       const body: any = { 
         messageType,
         customMessage: message // Sempre enviar a mensagem personalizada
       }
+      
+      console.log('📤 Enviando requisição para API...')
+      console.log('📦 Body:', body)
+      
       const response = await fetch(`/api/admin/teams/${teamId}/send-message`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body)
       })
+      
+      console.log('📥 Resposta recebida:', response.status, response.statusText)
+      
       if (!response.ok) {
         const errorData = await response.json()
+        console.error('❌ Erro na resposta:', errorData)
         throw new Error(errorData.error || 'Erro ao enviar mensagem')
       }
+      
+      const responseData = await response.json()
+      console.log('✅ Resposta de sucesso:', responseData)
+      
       toast.success('Mensagem enviada com sucesso!')
       if (onMessageSent) onMessageSent()
       onClose()
     } catch (error) {
+      console.error('❌ Erro no envio:', error)
       toast.error(error instanceof Error ? error.message : 'Erro ao enviar mensagem')
     } finally {
       setSending(false)
