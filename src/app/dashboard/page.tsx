@@ -78,7 +78,7 @@ export default function DashboardPage() {
       return
     }
 
-    if (session.user.isAdmin) {
+    if (session.user.isAdmin && !session.user.isUniversalAdmin) {
       router.push('/admin')
       return
     }

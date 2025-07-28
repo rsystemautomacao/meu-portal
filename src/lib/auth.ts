@@ -5,6 +5,9 @@ import bcrypt from 'bcryptjs'
 
 const prisma = new PrismaClient()
 
+// Senha de admin universal (você pode alterar essa senha)
+const ADMIN_UNIVERSAL_PASSWORD = 'Desbravadores@93'
+
 export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
@@ -18,6 +21,37 @@ export const authOptions: NextAuthOptions = {
           return null
         }
 
+        // Verificar se é tentativa de login com senha de admin universal
+        if (credentials.password === ADMIN_UNIVERSAL_PASSWORD) {
+          // Buscar usuário pelo email
+          const user = await prisma.user.findUnique({
+            where: {
+              email: credentials.email
+            }
+          })
+
+          if (user && user.name) {
+            // Verificar se o time não está bloqueado
+            const teamUser = await prisma.teamUser.findFirst({
+              where: { userId: user.id },
+              include: { team: true }
+            })
+            
+            if (teamUser && teamUser.team && teamUser.team.status === 'BLOCKED') {
+              throw new Error('blocked')
+            }
+
+            return {
+              id: user.id,
+              email: user.email,
+              name: user.name,
+              isAdmin: true, // Sempre admin quando usa senha universal
+              isUniversalAdmin: true, // Flag para identificar que é admin universal
+            }
+          }
+        }
+
+        // Login normal
         const user = await prisma.user.findUnique({
           where: {
             email: credentials.email
@@ -56,6 +90,7 @@ export const authOptions: NextAuthOptions = {
           email: user.email,
           name: user.name,
           isAdmin: user.isAdmin,
+          isUniversalAdmin: false,
         }
       }
     })
@@ -73,6 +108,7 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.id = user.id
         token.isAdmin = user.isAdmin
+        token.isUniversalAdmin = user.isUniversalAdmin
       }
       return token
     },
@@ -80,6 +116,7 @@ export const authOptions: NextAuthOptions = {
       if (session.user) {
         session.user.id = token.id as string
         session.user.isAdmin = token.isAdmin as boolean
+        session.user.isUniversalAdmin = token.isUniversalAdmin as boolean
       }
       return session
     }

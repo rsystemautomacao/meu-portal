@@ -59,7 +59,7 @@ export default function PlayersPage() {
     }
 
     // Se for admin, redirecionar para o painel admin
-    if (session.user.isAdmin) {
+    if (session.user.isAdmin && !session.user.isUniversalAdmin) {
       router.push('/admin')
       return
     }

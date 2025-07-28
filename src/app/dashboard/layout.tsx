@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import Sidebar from '@/components/dashboard/Sidebar'
 import NotificationBell from '@/components/NotificationBell'
+import { ShieldCheckIcon } from '@heroicons/react/24/outline'
 
 interface TeamColors {
   primaryColor: string
@@ -94,6 +95,16 @@ export default function DashboardLayout({
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-gradient-to-b from-primary/5 to-secondary/5">
+      {/* Indicador de Admin Universal */}
+      {session?.user?.isUniversalAdmin && (
+        <div className="fixed top-4 right-4 z-50">
+          <div className="bg-indigo-600 text-white px-3 py-2 rounded-lg shadow-lg text-xs font-medium flex items-center space-x-2">
+            <ShieldCheckIcon className="h-4 w-4" />
+            <span>Admin Universal</span>
+          </div>
+        </div>
+      )}
+
       {/* Sidebar */}
       <div className="flex-shrink-0 transition-all duration-300 ease-in-out">
         <Sidebar teamColors={teamColors} />
@@ -112,7 +123,7 @@ export default function DashboardLayout({
             </div>
           </div>
         </header>
-        
+
         <main className="py-2 px-2 sm:py-4 sm:px-4">
           {children}
         </main>

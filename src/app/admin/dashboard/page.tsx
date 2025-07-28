@@ -140,21 +140,39 @@ export default function AdminDashboard() {
 
     try {
       const response = await fetch(`/api/admin/teams/${teamId}`, {
-        method: 'DELETE'
+        method: 'DELETE',
       })
 
       if (response.ok) {
-        setTeams(prev => prev.map(team => 
-          team.id === teamId 
-            ? { ...team, status: 'EXCLUIDO', deletedAt: new Date().toISOString() }
-            : team
-        ))
-        console.log(`✅ Time ${teamId} excluído`)
+        // Atualizar lista local removendo o time
+        setTeams(prev => prev.filter(team => team.id !== teamId))
+        alert('Time excluído com sucesso!')
       } else {
-        console.error('❌ Erro ao excluir time')
+        alert('Erro ao excluir time')
       }
     } catch (error) {
       console.error('Erro ao excluir time:', error)
+      alert('Erro ao excluir time')
+    }
+  }
+
+  const handleSpyTeam = async (teamId: string, teamName: string) => {
+    try {
+      // Buscar o email do usuário owner do time
+      const response = await fetch(`/api/admin/teams/${teamId}/owner-email`)
+      if (response.ok) {
+        const data = await response.json()
+        const { email } = data
+        
+        // Abrir página de login pré-preenchida
+        const loginUrl = `/auth/login?email=${encodeURIComponent(email)}&spy=true`
+        window.open(loginUrl, '_blank')
+      } else {
+        alert('Erro ao buscar email do usuário')
+      }
+    } catch (error) {
+      console.error('Erro ao espiar time:', error)
+      alert('Erro ao espiar time')
     }
   }
 
@@ -354,6 +372,17 @@ export default function AdminDashboard() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
                       </svg>
                       <span>Resetar Senha</span>
+                    </button>
+
+                    <button 
+                      onClick={() => handleSpyTeam(team.id, team.name)}
+                      className="flex items-center justify-center space-x-2 px-4 py-3 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition-colors"
+                      disabled={team.status === 'EXCLUIDO'}
+                    >
+                      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 6v12a3 3 0 103-3H6a3 3 0 10-3 3V6a3 3 0 103-3h12a3 3 0 10-3 3" />
+                      </svg>
+                      <span>Espiar</span>
                     </button>
 
                     <button 

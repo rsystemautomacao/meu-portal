@@ -7,6 +7,7 @@ declare module 'next-auth' {
       email: string
       name: string
       isAdmin: boolean
+      isUniversalAdmin?: boolean
     }
   }
 
@@ -15,5 +16,6 @@ declare module 'next-auth' {
     email: string
     name: string
     isAdmin: boolean
+    isUniversalAdmin?: boolean
   }
 } 

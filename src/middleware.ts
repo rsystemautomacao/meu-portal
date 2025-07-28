@@ -14,6 +14,21 @@ const PUBLIC_PATHS = [
 export async function middleware(request: NextRequest) {
   const token = await getToken({ req: request })
   
+  // Se é uma rota de admin, não aplicar lógica de autenticação normal
+  if (request.nextUrl.pathname.startsWith('/admin')) {
+    return NextResponse.next()
+  }
+  
+  // Verificar se a rota é pública
+  const isPublicPath = PUBLIC_PATHS.some(path => 
+    request.nextUrl.pathname.startsWith(path)
+  )
+  
+  // Se não está autenticado e não é rota pública, redirecionar para login
+  if (!token && !isPublicPath) {
+    return NextResponse.redirect(new URL('/auth/login', request.url))
+  }
+  
   // Se o usuário está autenticado e não está acessando páginas de admin
   if (token && !request.nextUrl.pathname.startsWith('/admin')) {
     // Atualizar último acesso do time (apenas para rotas do dashboard)
