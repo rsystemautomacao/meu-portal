@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client'
 import { MessagingService } from '../lib/messaging'
+import { logPaymentReminder, logPaymentOverdue, logAccessBlocked } from '../lib/userLogs'
 
 const prisma = new PrismaClient()
 
@@ -12,6 +13,12 @@ async function automatedPaymentFlow() {
       where: { 
         status: 'ACTIVE',
         deletedAt: null
+      },
+      include: {
+        users: {
+          where: { role: 'owner' },
+          include: { user: true }
+        }
       }
     })
 
@@ -22,6 +29,12 @@ async function automatedPaymentFlow() {
     }
 
     for (const team of teams) {
+      const owner = team.users[0]?.user
+      if (!owner) {
+        console.log(`⚠️ Time ${team.name} sem owner, pulando...`)
+        continue
+      }
+
       const createdAt = new Date(team.createdAt)
       const diffMs = now.getTime() - createdAt.getTime()
       const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
@@ -64,6 +77,9 @@ async function automatedPaymentFlow() {
           }
         })
 
+        // Registrar log
+        await logPaymentReminder(owner.id, `Lembrete de pagamento enviado para ${team.name} - Vencimento: ${vencimento}`)
+
         console.log(`✅ Cobrança enviada para ${team.name}`)
       }
 
@@ -102,6 +118,9 @@ async function automatedPaymentFlow() {
           }
         })
 
+        // Registrar log
+        await logPaymentOverdue(owner.id, `Pagamento em atraso - Status alterado para OVERDUE - Time: ${team.name}`)
+
         console.log(`✅ Status alterado e aviso enviado para ${team.name}`)
       }
 
@@ -138,6 +157,9 @@ async function automatedPaymentFlow() {
             isRead: false
           }
         })
+
+        // Registrar log
+        await logAccessBlocked(owner.id, `Acesso bloqueado por inadimplência - Time: ${team.name}`)
 
         console.log(`✅ Acesso bloqueado para ${team.name}`)
       }

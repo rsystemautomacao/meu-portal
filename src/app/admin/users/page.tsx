@@ -7,8 +7,10 @@ import {
   EyeIcon, 
   PencilIcon,
   PlusIcon,
-  MagnifyingGlassIcon
+  MagnifyingGlassIcon,
+  ClockIcon
 } from '@heroicons/react/24/outline'
+import UserLogsModal from '@/components/admin/UserLogsModal'
 
 interface User {
   id: string
@@ -28,6 +30,8 @@ export default function AdminUsersPage() {
   const [selectedUser, setSelectedUser] = useState<User | null>(null)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [userToDelete, setUserToDelete] = useState<string>('')
+  const [showLogsModal, setShowLogsModal] = useState(false)
+  const [selectedUserForLogs, setSelectedUserForLogs] = useState<User | null>(null)
 
   useEffect(() => {
     fetchUsers()
@@ -73,6 +77,11 @@ export default function AdminUsersPage() {
     }
   }
 
+  function handleViewLogs(user: User) {
+    setSelectedUserForLogs(user)
+    setShowLogsModal(true)
+  }
+
   const filteredUsers = users.filter(user =>
     user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.email?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -93,9 +102,9 @@ export default function AdminUsersPage() {
         <div className="mb-8">
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-2xl font-semibold text-gray-900">Gerenciar Usuários</h1>
+              <h1 className="text-2xl font-semibold text-gray-900">Logs de Atividade</h1>
               <p className="mt-2 text-gray-600">
-                Visualize e gerencie todos os usuários do sistema
+                Visualize e gerencie todos os logs de atividade dos usuários
               </p>
             </div>
             <button
@@ -213,6 +222,13 @@ export default function AdminUsersPage() {
                           <PencilIcon className="h-4 w-4" />
                         </button>
                         <button
+                          onClick={() => handleViewLogs(user)}
+                          className="text-purple-600 hover:text-purple-900"
+                          title="Ver logs"
+                        >
+                          <ClockIcon className="h-4 w-4" />
+                        </button>
+                        <button
                           onClick={() => handleDeleteUser(user.email)}
                           className="text-red-600 hover:text-red-900"
                           title="Excluir usuário"
@@ -269,6 +285,16 @@ export default function AdminUsersPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* User Logs Modal */}
+      {showLogsModal && selectedUserForLogs && (
+        <UserLogsModal
+          isOpen={showLogsModal}
+          onClose={() => setShowLogsModal(false)}
+          userId={selectedUserForLogs.id}
+          userName={selectedUserForLogs.name || selectedUserForLogs.email}
+        />
       )}
     </div>
   )

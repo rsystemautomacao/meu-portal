@@ -2,7 +2,7 @@
 
 import { ReactNode } from 'react';
 import { Menu } from '@headlessui/react';
-import { Cog6ToothIcon, HomeIcon, ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline';
+import { Cog6ToothIcon, HomeIcon, ArrowRightOnRectangleIcon, UsersIcon } from '@heroicons/react/24/outline';
 import { useRouter, usePathname } from 'next/navigation';
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
@@ -50,6 +50,17 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                       >
                         <Cog6ToothIcon className="h-5 w-5 mr-2 text-blue-600" />
                         Configurações
+                      </button>
+                    )}
+                  </Menu.Item>
+                  <Menu.Item>
+                    {({ active }) => (
+                      <button
+                        onClick={() => router.push('/admin/users')}
+                        className={`${active ? 'bg-blue-100 text-blue-900' : 'text-gray-900'} group flex items-center px-4 py-2 text-sm w-full`}
+                      >
+                        <UsersIcon className="h-5 w-5 mr-2 text-blue-600" />
+                        Logs
                       </button>
                     )}
                   </Menu.Item>

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcrypt'
+import { logAccessBlocked, logAccessUnblocked, logManualMessage } from '@/lib/userLogs'
 
 // PUT - Atualizar status do time
 export async function PUT(
@@ -11,9 +12,22 @@ export async function PUT(
     const { action, newPassword, status } = await request.json()
     const teamId = params.id
 
-    const team = await prisma.team.findUnique({ where: { id: teamId } })
+    const team = await prisma.team.findUnique({ 
+      where: { id: teamId },
+      include: {
+        users: {
+          where: { role: 'owner' },
+          include: { user: true }
+        }
+      }
+    })
     if (!team || (team as any).deletedAt) {
       return NextResponse.json({ error: 'Time não encontrado ou já foi excluído' }, { status: 404 })
+    }
+
+    const owner = team.users[0]?.user
+    if (!owner) {
+      return NextResponse.json({ error: 'Usuário owner não encontrado' }, { status: 404 })
     }
 
     switch (action) {
@@ -37,6 +51,9 @@ export async function PUT(
             updatedAt: new Date()
           }
         })
+        
+        // Registrar log
+        await logAccessBlocked(owner.id, `Acesso bloqueado manualmente pelo admin - Time: ${team.name}`)
         break
 
       case 'pause':
@@ -48,6 +65,9 @@ export async function PUT(
             updatedAt: new Date()
           }
         })
+        
+        // Registrar log
+        await logManualMessage(owner.id, `Time pausado manualmente pelo admin - Time: ${team.name}`)
         break
 
       case 'activate':
@@ -59,6 +79,9 @@ export async function PUT(
             updatedAt: new Date()
           }
         })
+        
+        // Registrar log
+        await logAccessUnblocked(owner.id, `Acesso desbloqueado/ativado manualmente pelo admin - Time: ${team.name}`)
         break
 
       case 'reset_password':
@@ -86,6 +109,9 @@ export async function PUT(
             where: { id: teamUser.user.id },
             data: { password: hashedPassword }
           })
+          
+          // Registrar log
+          await logManualMessage(owner.id, `Senha resetada manualmente pelo admin - Time: ${team.name}`)
         }
         break
 
@@ -102,7 +128,7 @@ export async function PUT(
   } catch (error) {
     console.error('Erro ao atualizar time:', error)
     return NextResponse.json(
-      { error: 'Erro ao atualizar time' },
+      { error: 'Erro interno do servidor' },
       { status: 500 }
     )
   }

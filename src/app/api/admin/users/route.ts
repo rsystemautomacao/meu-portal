@@ -1,148 +1,64 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { getServerSession } from 'next-auth/next'
-import { authOptions } from '@/lib/auth'
-import { User, Team } from '@prisma/client'
+import { cookies } from 'next/headers'
 
-interface TeamUser {
-  id: string
-  teamId: string
-  userId: string
-  role: string
-  team: Team
-  createdAt: Date
-  updatedAt: Date
-}
-
-interface UserWithTeams extends User {
-  teams: TeamUser[]
-}
-
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    // Verificar se o usuário está autenticado
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.id) {
-      return NextResponse.json(
-        { message: 'Não autorizado' },
-        { status: 401 }
-      )
+    // Verificar se é admin
+    const cookieStore = cookies()
+    const adminSession = cookieStore.get('adminSession')
+    if (!adminSession || adminSession.value !== 'true') {
+      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
     }
 
-    const users = await prisma.user.findMany({
-      include: {
-        teams: {
-          include: {
-            team: true
-          }
-        }
-      }
-    }) as UserWithTeams[]
+    const { searchParams } = new URL(request.url)
+    const email = searchParams.get('email')
 
-    // Transformar os dados para o formato esperado pelo frontend
-    const formattedUsers = users.map(user => ({
+    if (email) {
+      // Buscar usuário específico por email
+      console.log('🔍 Buscando usuário por email:', email)
+      
+      // Verificar se há múltiplos usuários com este email
+      const allUsersWithEmail = await prisma.user.findMany({
+        where: { email }
+      })
+      
+      console.log(`📊 Usuários encontrados com email ${email}: ${allUsersWithEmail.length}`)
+      allUsersWithEmail.forEach((user, index) => {
+        console.log(`   ${index + 1}. ID: ${user.id} | Email: ${user.email} | Nome: ${user.name}`)
+      })
+      
+      // Usar o primeiro usuário encontrado (que é o correto)
+      const user = allUsersWithEmail[0]
+      
+      if (!user) {
+        console.log('❌ Usuário não encontrado para email:', email)
+        return NextResponse.json({ error: 'Usuário não encontrado' }, { status: 404 })
+      }
+
+      console.log('✅ Usuário encontrado:', user.id, user.email)
+      console.log('📋 Dados completos do usuário:', JSON.stringify(user, null, 2))
+      
+      return NextResponse.json([user])
+    }
+
+    // Buscar todos os usuários
+    const users = await prisma.user.findMany()
+
+    // Mapear para o formato esperado
+    const mappedUsers = users.map(user => ({
       id: user.id,
-      name: user.name || '',
-      email: user.email || '',
-      createdAt: user.createdAt?.toISOString(),
-      ownedTeams: user.teams
-        .filter(teamUser => teamUser.role === 'owner')
-        .map(teamUser => ({
-          id: teamUser.team.id,
-          name: teamUser.team.name
-        }))
+      email: user.email,
+      name: user.name,
+      ownedTeams: [], // Por enquanto vazio
+      createdAt: user.createdAt
     }))
 
-    return NextResponse.json(formattedUsers)
+    return NextResponse.json(mappedUsers)
   } catch (error) {
-    console.error('Erro ao listar usuários:', error)
-    return NextResponse.json([], { status: 200 }) // Retorna array vazio em caso de erro
-  }
-}
-
-export async function DELETE(req: Request) {
-  try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.id) {
-      return NextResponse.json(
-        { message: 'Não autorizado' },
-        { status: 401 }
-      )
-    }
-
-    const { email } = await req.json()
-
-    // Primeiro, encontrar o usuário
-    const user = await prisma.user.findUnique({
-      where: { email },
-      include: {
-        teams: {
-          include: {
-            team: true
-          }
-        }
-      }
-    }) as UserWithTeams | null
-
-    if (!user) {
-      return NextResponse.json(
-        { message: 'Usuário não encontrado' },
-        { status: 404 }
-      )
-    }
-
-    // Excluir os times que o usuário é dono
-    for (const teamUser of user.teams) {
-      if (teamUser.role === 'owner') {
-        // Deletar dados relacionados ao time de forma sequencial
-        // Primeiro, encontrar todos os matches do time
-        const matches = await prisma.match.findMany({ 
-          where: { teamId: teamUser.team.id },
-          select: { id: true }
-        });
-        
-        // Deletar MatchEvents relacionados aos matches
-        for (const match of matches) {
-          await prisma.matchEvent.deleteMany({ where: { matchId: match.id } });
-        }
-        
-        // Deletar matches
-        await prisma.match.deleteMany({ where: { teamId: teamUser.team.id } });
-        
-        // Encontrar todos os players do time
-        const players = await prisma.player.findMany({
-          where: { teamId: teamUser.team.id },
-          select: { id: true }
-        });
-        
-        // Deletar payments relacionados aos players
-        for (const player of players) {
-          await prisma.payment.deleteMany({ where: { playerId: player.id } });
-        }
-        
-        // Deletar dados restantes
-        await prisma.transaction.deleteMany({ where: { teamId: teamUser.team.id } });
-        await prisma.monthlyFeeConfig.deleteMany({ where: { teamId: teamUser.team.id } });
-        await prisma.player.deleteMany({ where: { teamId: teamUser.team.id } });
-        await prisma.teamUser.deleteMany({ where: { teamId: teamUser.team.id } });
-        await prisma.team.delete({ where: { id: teamUser.team.id } });
-      }
-    }
-
-    // Finalmente, excluir as associações restantes do usuário e o próprio usuário
-    await prisma.teamUser.deleteMany({ where: { userId: user.id } });
-    await prisma.user.delete({
-      where: { email }
-    });
-
+    console.error('Erro ao buscar usuários:', error)
     return NextResponse.json(
-      { message: 'Usuário e times excluídos com sucesso' },
-      { status: 200 }
-    )
-  } catch (error) {
-    console.error('Erro ao excluir usuário:', error)
-    return NextResponse.json(
-      { message: 'Erro ao excluir usuário' },
+      { error: 'Erro interno do servidor' },
       { status: 500 }
     )
   }

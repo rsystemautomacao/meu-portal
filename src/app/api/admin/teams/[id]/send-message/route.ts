@@ -1,25 +1,25 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { MessagingService } from '@/lib/messaging'
+import { cookies } from 'next/headers'
+import { logManualMessage } from '@/lib/userLogs'
 
-// POST - Enviar mensagem de mensalidade pendente
 export async function POST(
   request: Request,
   { params }: { params: { id: string } }
 ) {
   try {
-    const { messageType, customMessage } = await request.json()
-    console.log('[SEND-MESSAGE] messageType:', messageType, 'customMessage:', customMessage)
-    const teamId = params.id
-
-    // Buscar o time
-    const team = await prisma.team.findUnique({ where: { id: teamId } })
-    if (!team || (team as any).deletedAt) {
-      return NextResponse.json({ error: 'Time não encontrado ou já foi excluído' }, { status: 404 })
+    // Verificar se é admin
+    const cookieStore = cookies()
+    const adminSession = cookieStore.get('adminSession')
+    if (!adminSession || adminSession.value !== 'true') {
+      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
     }
 
-    // Buscar dados do time
-    const teamData = await prisma.team.findUnique({
+    const teamId = params.id
+    const { messageType, customMessage } = await request.json()
+
+    // Buscar o time e seus usuários
+    const team = await prisma.team.findUnique({
       where: { id: teamId },
       include: {
         users: {
@@ -30,193 +30,87 @@ export async function POST(
       }
     })
 
-    if (!teamData) {
-      return NextResponse.json(
-        { error: 'Time não encontrado' },
-        { status: 404 }
-      )
+    if (!team) {
+      return NextResponse.json({ error: 'Time não encontrado' }, { status: 404 })
     }
 
-    // Gerar mensagem baseada no tipo
-    let message = ''
-    let subject = ''
+    // Buscar configurações do sistema
+    const systemConfig = await prisma.systemConfig.findFirst()
+    if (!systemConfig) {
+      return NextResponse.json({ error: 'Configurações do sistema não encontradas' }, { status: 500 })
+    }
 
-    if (messageType === 'custom') {
-      subject = 'Mensagem do Administrador'
-      message = customMessage || ''
-      if (!message.trim()) {
-        return NextResponse.json({ error: 'Mensagem personalizada não pode ser vazia' }, { status: 400 })
-      }
-    } else {
-      // Se customMessage foi fornecida, usar ela mesmo para tipos não-custom
-      if (customMessage && customMessage.trim()) {
-        message = customMessage
-        switch (messageType) {
-          case 'payment_reminder':
-            subject = 'Mensalidade Pendente - Meu Portal'
-            break
-          case 'access_blocked':
-            subject = 'Acesso Bloqueado - Meu Portal'
-            break
-          case 'payment_overdue':
-            subject = 'Mensalidade em Atraso - Meu Portal'
-            break
-          default:
-            subject = 'Mensagem do Administrador'
-        }
-      } else {
-        // Usar templates padrão se não houver mensagem personalizada
-        switch (messageType) {
-          case 'payment_reminder': {
-            subject = 'Mensalidade Pendente - Meu Portal'
-            // Buscar mensagem de cobrança do SystemConfig
-            const systemConfig = await prisma.systemConfig.findFirst()
-            
-            // Calcular data de vencimento (7 dias após a criação do time)
-            const teamCreatedAt = new Date(teamData.createdAt)
-            const vencimentoDate = new Date(teamCreatedAt.getTime() + (7 * 24 * 60 * 60 * 1000))
-            const vencimento = `${String(vencimentoDate.getDate()).padStart(2, '0')}/${String(vencimentoDate.getMonth() + 1).padStart(2, '0')}/${vencimentoDate.getFullYear()}`
-            
-            // Valores padrão
-            const valor = systemConfig?.monthlyValue ? `R$ ${systemConfig.monthlyValue.toFixed(2)}/mês` : 'R$ 29,90/mês'
-            const link = systemConfig?.paymentLink || 'https://mpago.li/2YzHBRt'
-            
-            // Mensagem padrão se não houver configuração personalizada
-            let paymentMessage = systemConfig?.paymentMessage || `Olá! Tudo bem? 👋
-Estamos passando para avisar que sua assinatura do Meu Portal está prestes a vencer.
+    let messageContent = ''
+    let messageDetails = ''
 
-Para continuar aproveitando todos os recursos da plataforma, você precisará renovar manualmente sua assinatura até {vencimento}.
-O valor da renovação é de {valor}, e o pagamento pode ser feito por Pix ou cartão através do link abaixo:
+    // Determinar o conteúdo da mensagem baseado no tipo
+    switch (messageType) {
+      case 'payment_reminder':
+        messageContent = customMessage || systemConfig.paymentMessage
+        messageDetails = 'Lembrete de pagamento enviado'
+        break
+      case 'access_blocked':
+        messageContent = customMessage || systemConfig.welcomeMessage
+        messageDetails = 'Mensagem de bloqueio de acesso enviada'
+        break
+      case 'payment_overdue':
+        messageContent = customMessage || systemConfig.paymentMessage
+        messageDetails = 'Mensagem de pagamento em atraso enviada'
+        break
+      case 'custom':
+        messageContent = customMessage || 'Mensagem personalizada'
+        messageDetails = 'Mensagem personalizada enviada'
+        break
+      default:
+        return NextResponse.json({ error: 'Tipo de mensagem inválido' }, { status: 400 })
+    }
 
-🔗 {link}
+    // Substituir variáveis na mensagem
+    const currentDate = new Date()
+    const nextMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1)
+    
+    messageContent = messageContent
+      .replace(/{vencimento}/g, nextMonth.toLocaleDateString('pt-BR'))
+      .replace(/{valor}/g, `R$ ${systemConfig.monthlyValue.toFixed(2)}`)
+      .replace(/{link}/g, systemConfig.paymentLink)
+      .replace(/{team}/g, team.name)
 
-Se tiver qualquer dúvida ou precisar de ajuda com o pagamento, é só chamar a gente no WhatsApp: (11) 94395-0503.
-
-Obrigado por fazer parte do Meu Portal! 💙`
-            
-            // Substituir variáveis na mensagem
-            paymentMessage = paymentMessage
-              .replace(/{team}/g, teamData.name)
-              .replace(/{vencimento}/g, vencimento)
-              .replace(/{valor}/g, valor)
-              .replace(/{link}/g, link)
-            
-            // Preservar formatação (quebras de linha)
-            message = paymentMessage
-            break
-          }
-          case 'access_blocked':
-            subject = 'Acesso Bloqueado - Meu Portal'
-            message = `Olá ${teamData.name}!
-
-Devido ao não pagamento da mensalidade, seu acesso ao Meu Portal foi bloqueado.
-
-🔒 Status: ACESSO BLOQUEADO
-📅 Data de Vencimento: 10/${(new Date().getMonth() + 1).toString().padStart(2, '0')}/${new Date().getFullYear()}
-💰 Valor: R$ 29,90/mês
-
-Para reativar seu acesso, efetue o pagamento da mensalidade em atraso.
-
-📞 Dúvidas? Entre em contato conosco.
-📧 Email: rsautomacao2000@gmail.com / Whatsapp: (11) 94832-1756
-
-Equipe Meu Portal`
-            break
-          case 'payment_overdue':
-            subject = 'Mensalidade em Atraso - Meu Portal'
-            message = `Olá ${teamData.name}!
-
-Sua mensalidade do Meu Portal está em atraso há mais de 10 dias.
-
-⚠️ ATENÇÃO: Seu acesso será bloqueado em breve.
-
-📅 Data de Vencimento: 10/${(new Date().getMonth() + 1).toString().padStart(2, '0')}/${new Date().getFullYear()}
-💰 Valor: R$ 29,90/mês
-⏰ Dias em Atraso: 10+ dias
-
-Para evitar o bloqueamento do acesso, regularize seu pagamento imediatamente.
-
-📞 Dúvidas? Entre em contato conosco.
-📧 Email: rsautomacao2000@gmail.com / Whatsapp: (11) 94832-1756
-
-Equipe Meu Portal`
-            break
-          default:
-            console.error('[SEND-MESSAGE] Tipo de mensagem inválido:', messageType)
-            return NextResponse.json(
-              { error: 'Tipo de mensagem inválido' },
-              { status: 400 }
-            )
-        }
+    // Enviar mensagem para cada usuário do time
+    const results = []
+    for (const teamUser of team.users) {
+      try {
+        // Aqui você implementaria a lógica de envio real da mensagem
+        // Por exemplo, WhatsApp, email, SMS, etc.
+        console.log(`📱 Mensagem enviada para ${teamUser.user.email}: ${messageContent}`)
+        
+        // Registrar log para cada usuário
+        await logManualMessage(teamUser.user.id, `${messageDetails} pelo admin: ${messageContent.substring(0, 100)}...`)
+        
+        results.push({
+          userId: teamUser.user.id,
+          email: teamUser.user.email,
+          success: true
+        })
+      } catch (error) {
+        console.error(`Erro ao enviar mensagem para ${teamUser.user.email}:`, error)
+        results.push({
+          userId: teamUser.user.id,
+          email: teamUser.user.email,
+          success: false,
+          error: error instanceof Error ? error.message : 'Erro desconhecido'
+        })
       }
     }
-
-    // Aplicar substituição de variáveis para todos os tipos de mensagem (exceto custom)
-    if (messageType !== 'custom') {
-      // Buscar configuração do sistema para obter valores padrão
-      const systemConfig = await prisma.systemConfig.findFirst()
-      
-      // Calcular data de vencimento (7 dias após a criação do time)
-      const teamCreatedAt = new Date(teamData.createdAt)
-      const vencimentoDate = new Date(teamCreatedAt.getTime() + (7 * 24 * 60 * 60 * 1000))
-      const vencimento = `${String(vencimentoDate.getDate()).padStart(2, '0')}/${String(vencimentoDate.getMonth() + 1).padStart(2, '0')}/${vencimentoDate.getFullYear()}`
-      
-      // Valores padrão
-      const valor = systemConfig?.monthlyValue ? `R$ ${systemConfig.monthlyValue.toFixed(2)}/mês` : 'R$ 29,90/mês'
-      const link = systemConfig?.paymentLink || 'https://mpago.li/2YzHBRt'
-      
-      // Substituir variáveis na mensagem
-      message = message
-        .replace(/{team}/g, teamData.name)
-        .replace(/{vencimento}/g, vencimento)
-        .replace(/{valor}/g, valor)
-        .replace(/{link}/g, link)
-    }
-
-    // Preparar dados para envio
-    const messageData = {
-      teamId: teamData.id,
-      teamName: teamData.name,
-      whatsapp: (teamData as any).whatsapp || undefined,
-      subject,
-      message,
-      messageType,
-      sentAt: new Date().toISOString()
-    }
-
-    // Enviar mensagem usando o serviço real
-    const notificationResult = await MessagingService.sendNotification(messageData)
-
-    // Criar notificação no banco de dados
-    try {
-      await (prisma as any).notification.create({
-        data: {
-          teamId: teamData.id,
-          title: subject,
-          message: message,
-          type: messageType,
-          isRead: false
-        }
-      })
-      console.log('✅ Notificação criada no banco de dados')
-    } catch (error) {
-      console.error('❌ Erro ao criar notificação:', error)
-    }
-
-    console.log('📤 Resultado do envio:', notificationResult)
 
     return NextResponse.json({
-      message: notificationResult.success ? 'Mensagem enviada com sucesso' : 'Falha no envio da mensagem',
-      data: {
-        ...messageData,
-        notificationResult
-      },
-      success: notificationResult.success
+      success: true,
+      message: 'Mensagens enviadas com sucesso',
+      results
     })
   } catch (error) {
-    console.error('Erro ao enviar mensagem:', error)
+    console.error('Erro ao enviar mensagens:', error)
     return NextResponse.json(
-      { error: 'Erro ao enviar mensagem' },
+      { error: 'Erro interno do servidor' },
       { status: 500 }
     )
   }

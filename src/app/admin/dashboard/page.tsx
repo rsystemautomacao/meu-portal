@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline'
+import { ChevronDownIcon, ChevronUpIcon, ClockIcon } from '@heroicons/react/24/outline'
 import AdminSendMessageModal from '@/components/admin/AdminSendMessageModal'
+import UserLogsModal from '@/components/admin/UserLogsModal'
 
 interface Team {
   id: string
@@ -19,6 +20,8 @@ interface Team {
   totalRevenue?: number
   status: string
   deletedAt?: string | null
+  ownerEmail?: string
+  userId?: string
 }
 
 export default function AdminDashboard() {
@@ -27,6 +30,8 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true)
   const [messageModal, setMessageModal] = useState({ open: false, teamId: '', teamName: '' })
   const [expandedTeams, setExpandedTeams] = useState<Set<string>>(new Set())
+  const [showLogsModal, setShowLogsModal] = useState(false)
+  const [selectedTeamForLogs, setSelectedTeamForLogs] = useState<Team | null>(null)
 
   useEffect(() => {
     fetchTeams()
@@ -178,6 +183,43 @@ export default function AdminDashboard() {
 
   const handleOpenMessageModal = (teamId: string, teamName: string) => {
     setMessageModal({ open: true, teamId, teamName })
+  }
+
+  const handleViewLogs = async (team: Team) => {
+    // Buscar o email do owner do time
+    try {
+      console.log('🔍 Buscando logs para time:', team.name)
+      console.log('🆔 ID do time:', team.id)
+      
+      const response = await fetch(`/api/admin/teams/${team.id}/owner-email`)
+      if (response.ok) {
+        const data = await response.json()
+        console.log('📧 Email do owner:', data.email)
+        
+        // Buscar o usuário pelo email para obter o ID
+        const userResponse = await fetch(`/api/admin/users?email=${encodeURIComponent(data.email)}`)
+        if (userResponse.ok) {
+          const users = await userResponse.json()
+          console.log('👥 Usuários encontrados:', users)
+          console.log('📋 Array completo:', JSON.stringify(users, null, 2))
+          
+          if (users.length > 0) {
+            const user = users[0]
+            console.log('✅ Usuário selecionado:', user.id, user.email)
+            console.log('🔍 Tipo do ID:', typeof user.id)
+            console.log('🔍 ID como string:', String(user.id))
+            setSelectedTeamForLogs({ ...team, ownerEmail: data.email, userId: user.id })
+            setShowLogsModal(true)
+          }
+        } else {
+          console.error('❌ Erro na resposta da API de usuários:', userResponse.status)
+        }
+      } else {
+        console.error('❌ Erro ao buscar email do owner:', response.status)
+      }
+    } catch (error) {
+      console.error('❌ Erro ao buscar email do owner:', error)
+    }
   }
 
   const getStatusColor = (status: string) => {
@@ -386,6 +428,17 @@ export default function AdminDashboard() {
                     </button>
 
                     <button 
+                      onClick={() => handleViewLogs(team)}
+                      className="flex items-center justify-center space-x-2 px-4 py-3 bg-gray-50 text-gray-600 rounded-lg hover:bg-gray-100 transition-colors"
+                      disabled={team.status === 'EXCLUIDO'}
+                    >
+                      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                      <span>Ver Logs</span>
+                    </button>
+
+                    <button 
                       onClick={() => handleDeleteTeam(team.id)}
                       className="flex items-center justify-center space-x-2 px-4 py-3 bg-gray-50 text-gray-600 rounded-lg hover:bg-gray-100 transition-colors"
                       disabled={team.status === 'EXCLUIDO'}
@@ -410,6 +463,16 @@ export default function AdminDashboard() {
         teamName={messageModal.teamName}
         onMessageSent={fetchTeams}
       />
+
+      {/* User Logs Modal */}
+      {showLogsModal && selectedTeamForLogs && selectedTeamForLogs.userId && (
+        <UserLogsModal
+          isOpen={showLogsModal}
+          onClose={() => setShowLogsModal(false)}
+          userId={selectedTeamForLogs.userId}
+          userName={selectedTeamForLogs.name}
+        />
+      )}
     </div>
   )
 } 

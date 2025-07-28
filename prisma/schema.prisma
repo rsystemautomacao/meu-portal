@@ -20,6 +20,7 @@ model User {
   sessions      Session[]
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+  logs          UserLog[]
 }
 
 model Team {
@@ -43,6 +44,7 @@ model Team {
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
   deletedAt       DateTime?   // Soft delete
+  logs            UserLog[]
 }
 
 model TeamUser {
@@ -292,4 +294,21 @@ model DeletedTeamAnalytics {
 
   @@index([deletedAt])
   @@index([deletedBy])
+}
+
+model UserLog {
+  id        String   @id @default(cuid()) @map("_id")
+  userId    String
+  teamId    String
+  action    String   // Ex: "payment_reminder_sent", "access_blocked", "welcome_message_sent", etc.
+  type      String   // "automatic" ou "manual"
+  details   String?  // Detalhes adicionais do evento
+  createdAt DateTime @default(now())
+  
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([teamId])
+  @@index([createdAt])
 } 
