@@ -18,27 +18,25 @@ export default function AdminLoginPage() {
     setLoading(true)
     setError('')
 
-    // Validação específica para o administrador
-    if (formData.email !== 'rsautomacao2000@gmail.com') {
-      setError('Email de administrador inválido')
-      setLoading(false)
-      return
-    }
+    try {
+      const response = await fetch('/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      })
 
-    if (formData.password !== 'Desbravadores@93') {
-      setError('Senha de administrador inválida')
-      setLoading(false)
-      return
-    }
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}))
+        setError(data.error || 'Não foi possível entrar')
+        setLoading(false)
+        return
+      }
 
-    // Simular delay de login
-    setTimeout(() => {
-      // Armazenar sessão de admin em cookie
-      document.cookie = 'adminSession=true; path=/; max-age=86400' // 24 horas
-      document.cookie = `adminEmail=${formData.email}; path=/; max-age=86400`
-      
       router.push('/admin/dashboard')
-    }, 1000)
+    } catch (error) {
+      setError('Erro ao conectar com o servidor')
+      setLoading(false)
+    }
   }
 
   return (

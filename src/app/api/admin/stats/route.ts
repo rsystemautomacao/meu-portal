@@ -2,11 +2,14 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
+import { getAdminSession } from '@/lib/adminAuth'
 
 export async function GET(request: Request) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user) {
+    const adminSession = await getAdminSession()
+
+    if (!session?.user && !adminSession) {
       return NextResponse.json(
         { message: 'Não autorizado' },
         { status: 401 }
@@ -14,7 +17,7 @@ export async function GET(request: Request) {
     }
 
     // Verificar se o usuário é admin
-    if (!session.user.isAdmin) {
+    if (!session?.user?.isAdmin && !adminSession) {
       return NextResponse.json(
         { message: 'Acesso negado. Apenas administradores podem acessar esta área.' },
         { status: 403 }

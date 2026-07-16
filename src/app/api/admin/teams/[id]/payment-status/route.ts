@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { MessagingService } from '@/lib/messaging'
+import { getAdminSession } from '@/lib/adminAuth'
 
 // GET - Verificar status de pagamento do time
 export async function GET(
@@ -8,6 +9,11 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
+    const adminSession = await getAdminSession()
+    if (!adminSession) {
+      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+    }
+
     const teamId = params.id
 
     // Buscar dados do time

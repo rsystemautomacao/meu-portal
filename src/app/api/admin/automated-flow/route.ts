@@ -1,18 +1,17 @@
 import { NextResponse } from 'next/server'
 import { automatedPaymentFlow } from '@/scripts/automated-payment-flow'
-import { cookies } from 'next/headers'
+import { getAdminSession } from '@/lib/adminAuth'
 
 export async function POST(request: Request) {
   try {
-    // Verificar se é admin OU se é uma execução automática (cron)
-    const cookieStore = cookies()
-    const adminSession = cookieStore.get('adminSession')
-    const userAgent = request.headers.get('user-agent') || ''
-    
-    // Permitir execução automática (cron job) ou admin
-    const isCronJob = userAgent.includes('Vercel') || userAgent.includes('cron')
-    const isAdmin = adminSession?.value === 'true'
-    
+    // Verificar se é admin OU se é uma execução automática (cron da Vercel)
+    // A Vercel injeta automaticamente "Authorization: Bearer <CRON_SECRET>" quando
+    // a env var CRON_SECRET está configurada no projeto.
+    const authHeader = request.headers.get('authorization')
+    const isCronJob = Boolean(process.env.CRON_SECRET) && authHeader === `Bearer ${process.env.CRON_SECRET}`
+    const adminSession = await getAdminSession()
+    const isAdmin = Boolean(adminSession)
+
     if (!isCronJob && !isAdmin) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
     }

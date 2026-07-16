@@ -1,15 +1,14 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { cookies } from 'next/headers'
+import { getAdminSession } from '@/lib/adminAuth'
 
 export async function POST(
   request: Request,
   { params }: { params: { id: string } }
 ) {
   try {
-    const cookieStore = cookies()
-    const adminSession = cookieStore.get('adminSession')
-    if (!adminSession || adminSession.value !== 'true') {
+    const adminSession = await getAdminSession()
+    if (!adminSession) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
     }
 
@@ -53,9 +52,8 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const cookieStore = cookies()
-    const adminSession = cookieStore.get('adminSession')
-    if (!adminSession || adminSession.value !== 'true') {
+    const adminSession = await getAdminSession()
+    if (!adminSession) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
     }
 

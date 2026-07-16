@@ -1,9 +1,15 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { getAdminSession } from '@/lib/adminAuth';
 
 // GET - Listar mensalidades do sistema para o time/ano
 export async function GET(request: Request, { params }: { params: { id: string } }) {
   try {
+    const adminSession = await getAdminSession();
+    if (!adminSession) {
+      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    }
+
     const url = new URL(request.url);
     const year = Number(url.searchParams.get('year')) || new Date().getFullYear();
     const teamId = params.id;
@@ -21,6 +27,11 @@ export async function GET(request: Request, { params }: { params: { id: string }
 // POST - Gerar mensalidade do sistema para o time/mês/ano atual
 export async function POST(request: Request, { params }: { params: { id: string } }) {
   try {
+    const adminSession = await getAdminSession();
+    if (!adminSession) {
+      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    }
+
     const { year, amount, month } = await request.json();
     const teamId = params.id;
     // Se não vier o mês, usar o mês atual

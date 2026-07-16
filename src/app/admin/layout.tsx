@@ -12,9 +12,8 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   // Não mostrar header na página de login
   const isLoginPage = pathname === '/admin/login';
   
-  const handleLogout = () => {
-    document.cookie = 'adminSession=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
-    document.cookie = 'adminEmail=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+  const handleLogout = async () => {
+    await fetch('/api/admin/logout', { method: 'POST' });
     router.push('/admin/login');
   };
   

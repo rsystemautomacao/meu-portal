@@ -1,11 +1,17 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { getAdminSession } from '@/lib/adminAuth'
 
 // GET - Buscar todos os times com estatísticas
 export async function GET(request: Request) {
   try {
+    const adminSession = await getAdminSession()
+    if (!adminSession) {
+      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+    }
+
     console.log('🔍 API /api/admin/teams chamada')
-    
+
     const { searchParams } = new URL(request.url)
     const showDeleted = searchParams.get('showDeleted') === 'true'
     

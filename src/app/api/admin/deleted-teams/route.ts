@@ -1,11 +1,17 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { getAdminSession } from '@/lib/adminAuth'
 
 // GET - Buscar times excluídos pelos clientes
 export async function GET(request: Request) {
   try {
+    const adminSession = await getAdminSession()
+    if (!adminSession) {
+      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+    }
+
     console.log('🔍 API /api/admin/deleted-teams chamada')
-    
+
     const deletedTeams = await prisma.deletedTeamAnalytics.findMany({
       orderBy: {
         deletedAt: 'desc'

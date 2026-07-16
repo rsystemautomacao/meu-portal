@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { cookies } from 'next/headers'
+import { getAdminSession } from '@/lib/adminAuth'
 import { logManualMessage } from '@/lib/userLogs'
 
 export async function POST(
@@ -9,13 +9,11 @@ export async function POST(
 ) {
   try {
     console.log('🚀 API de mensagens chamada')
-    
+
     // Verificar se é admin
-    const cookieStore = cookies()
-    const adminSession = cookieStore.get('adminSession')
-    console.log('🔐 Admin session:', adminSession?.value)
-    
-    if (!adminSession || adminSession.value !== 'true') {
+    const adminSession = await getAdminSession()
+
+    if (!adminSession) {
       console.log('❌ Não autorizado')
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
     }

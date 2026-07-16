@@ -53,8 +53,8 @@ export default function AdminDashboard() {
     }
   }
 
-  const handleLogout = () => {
-    document.cookie = 'adminSession=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
+  const handleLogout = async () => {
+    await fetch('/api/admin/logout', { method: 'POST' })
     router.push('/admin/login')
   }
 

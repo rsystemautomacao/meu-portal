@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { getToken } from 'next-auth/jwt'
+import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from '@/lib/adminAuth'
 
 const PUBLIC_PATHS = [
   '/auth/login',
@@ -14,8 +15,19 @@ const PUBLIC_PATHS = [
 export async function middleware(request: NextRequest) {
   const token = await getToken({ req: request })
   
-  // Se é uma rota de admin, não aplicar lógica de autenticação normal
+  // Rotas de admin usam sessão própria (cookie assinado), não a sessão normal do NextAuth
   if (request.nextUrl.pathname.startsWith('/admin')) {
+    if (request.nextUrl.pathname === '/admin/login') {
+      return NextResponse.next()
+    }
+
+    const adminToken = request.cookies.get(ADMIN_SESSION_COOKIE)?.value
+    const adminSession = await verifyAdminSessionToken(adminToken)
+
+    if (!adminSession) {
+      return NextResponse.redirect(new URL('/admin/login', request.url))
+    }
+
     return NextResponse.next()
   }
   

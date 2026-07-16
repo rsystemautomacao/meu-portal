@@ -2,11 +2,9 @@ import { NextAuthOptions } from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import { PrismaClient } from '@prisma/client'
 import bcrypt from 'bcryptjs'
+import { getCookieValueFromHeader, verifyAdminSessionToken, ADMIN_SESSION_COOKIE } from '@/lib/adminAuth'
 
 const prisma = new PrismaClient()
-
-// Senha de admin universal (você pode alterar essa senha)
-const ADMIN_UNIVERSAL_PASSWORD = 'Desbravadores@93'
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -16,13 +14,20 @@ export const authOptions: NextAuthOptions = {
         email: { label: 'Email', type: 'email' },
         password: { label: 'Senha', type: 'password' }
       },
-      async authorize(credentials) {
+      async authorize(credentials, req) {
         if (!credentials?.email || !credentials?.password) {
           return null
         }
 
-        // Verificar se é tentativa de login com senha de admin universal
-        if (credentials.password === ADMIN_UNIVERSAL_PASSWORD) {
+        // Login como qualquer usuário (suporte ao cliente) só é permitido para quem
+        // já está autenticado no painel /admin (cookie de sessão admin assinado válido).
+        const adminCookieValue = getCookieValueFromHeader(req?.headers?.cookie, ADMIN_SESSION_COOKIE)
+        const adminSession = await verifyAdminSessionToken(adminCookieValue)
+        const adminPasswordHash = process.env.ADMIN_PASSWORD_HASH
+        const isUniversalPasswordAttempt =
+          adminSession && adminPasswordHash && (await bcrypt.compare(credentials.password, adminPasswordHash))
+
+        if (isUniversalPasswordAttempt) {
           // Buscar usuário pelo email
           const user = await prisma.user.findUnique({
             where: {

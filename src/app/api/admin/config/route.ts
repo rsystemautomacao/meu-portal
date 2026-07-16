@@ -1,15 +1,12 @@
 import { NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth';
-import { cookies } from 'next/headers';
+import { getAdminSession } from '@/lib/adminAuth';
 
 const prismaClient = new PrismaClient();
 
 export async function GET(req: Request) {
-  const cookieStore = cookies();
-  const adminSession = cookieStore.get('adminSession');
-  if (!adminSession || adminSession.value !== 'true') {
+  const adminSession = await getAdminSession();
+  if (!adminSession) {
     return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
   }
   let config = await prismaClient.systemConfig.findFirst();
@@ -37,9 +34,8 @@ Obrigado por fazer parte do Meu Portal! 💙`,
 }
 
 export async function POST(req: Request) {
-  const cookieStore = cookies();
-  const adminSession = cookieStore.get('adminSession');
-  if (!adminSession || adminSession.value !== 'true') {
+  const adminSession = await getAdminSession();
+  if (!adminSession) {
     return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
   }
   const body = await req.json();

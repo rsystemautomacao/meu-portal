@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcrypt'
 import { logAccessBlocked, logAccessUnblocked, logManualMessage } from '@/lib/userLogs'
+import { getAdminSession } from '@/lib/adminAuth'
 
 // PUT - Atualizar status do time
 export async function PUT(
@@ -9,6 +10,11 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
+    const adminSession = await getAdminSession()
+    if (!adminSession) {
+      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+    }
+
     const { action, newPassword, status } = await request.json()
     const teamId = params.id
 
@@ -140,6 +146,11 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
+    const adminSession = await getAdminSession()
+    if (!adminSession) {
+      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+    }
+
     const teamId = params.id
 
     const team = await prisma.team.findUnique({ where: { id: teamId } })
