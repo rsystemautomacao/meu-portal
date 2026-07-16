@@ -266,6 +266,12 @@ export default function MatchModal({ isOpen, onClose, onSave, match }: MatchModa
       events.push({ type: 'goal', player: 'Adversário', minute: 0, team: 'away', quadro: 2 })
     }
 
+    // Presenças reais (jogadores marcados presentes em cada quadro), independente de terem eventos
+    const presences: { playerId: string; quadro: number }[] = [
+      ...presentes1.map(j => ({ playerId: j.id, quadro: 1 })),
+      ...presentes2.map(j => ({ playerId: j.id, quadro: 2 })),
+    ]
+
     const matchData = {
       ...formData,
       date: formData.date ? formData.date.toISOString() : '',
@@ -274,7 +280,8 @@ export default function MatchModal({ isOpen, onClose, onSave, match }: MatchModa
       ourScore2,
       opponentScore2,
       location: formData.location,
-      events
+      events,
+      presences
     }
     // Remover shareToken se existir (por segurança)
     if ('shareToken' in matchData) {

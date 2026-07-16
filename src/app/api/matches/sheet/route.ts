@@ -67,8 +67,15 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Token não fornecido' }, { status: 400 })
     }
     const match = await prisma.match.findFirst({
-      where: { shareToken },
-      include: { events: true, team: true }
+      where: { shareToken: shareToken },
+      include: {
+        events: true,
+        presences: {
+          include: {
+            player: true
+          }
+        }
+      }
     })
     if (!match) {
       return NextResponse.json({ error: 'Súmula não encontrada' }, { status: 404 })
@@ -88,7 +95,7 @@ export async function GET(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const data = await request.json()
-    const { shareToken, ourScore1, opponentScore1, ourScore2, opponentScore2, events } = data
+    const { shareToken, ourScore1, opponentScore1, ourScore2, opponentScore2, events, quadro, presentes } = data
     if (!shareToken) {
       return NextResponse.json({ error: 'Token não fornecido' }, { status: 400 })
     }
@@ -144,6 +151,21 @@ export async function PUT(request: NextRequest) {
         })
       }
     }
+
+    // Presença real do quadro finalizado (substitui só as presenças daquele quadro)
+    if (quadro && Array.isArray(presentes)) {
+      await prisma.matchPresence.deleteMany({ where: { matchId: match.id, quadro } })
+      if (presentes.length > 0) {
+        await prisma.matchPresence.createMany({
+          data: presentes.map((p: any) => ({
+            matchId: match.id,
+            playerId: p.playerId,
+            quadro
+          }))
+        })
+      }
+    }
+
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Erro ao atualizar súmula:', error)

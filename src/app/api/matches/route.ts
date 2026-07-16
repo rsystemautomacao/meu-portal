@@ -21,10 +21,15 @@ export async function GET(request: NextRequest) {
     // Listar partidas do time
     const matches = await prisma.match.findMany({
       where: { teamId: teamUser.teamId },
+      orderBy: { date: 'desc' },
       include: {
-        events: true
-      },
-      orderBy: { date: 'desc' }
+        events: true,
+        presences: {
+          include: {
+            player: true
+          }
+        }
+      }
     })
     return NextResponse.json(matches)
   } catch (error) {
@@ -51,7 +56,8 @@ export async function POST(request: NextRequest) {
       opponentScore1,
       ourScore2,
       opponentScore2,
-      events = [] // Novo campo para eventos
+      events = [], // Novo campo para eventos
+      presences = [] // Presenças reais por quadro: { playerId, quadro }
     } = data
     if (!date || !opponent || !location) {
       return NextResponse.json({ error: 'Data, adversário e local são obrigatórios' }, { status: 400 })
@@ -87,7 +93,15 @@ export async function POST(request: NextRequest) {
           assist: event.assist,
           ...(typeof event.goleiro === 'string' ? { goleiro: event.goleiro } : {})
         }))
-      }
+      },
+      ...(Array.isArray(presences) && presences.length > 0 ? {
+        presences: {
+          create: presences.map((p: any) => ({
+            playerId: p.playerId,
+            quadro: p.quadro
+          }))
+        }
+      } : {})
     }
     if (data.shareToken) {
       matchData.shareToken = data.shareToken
@@ -105,7 +119,12 @@ export async function POST(request: NextRequest) {
     const match = await prisma.match.create({
       data: matchData,
       include: {
-        events: true
+        events: true,
+        presences: {
+          include: {
+            player: true
+          }
+        }
       }
     })
     return NextResponse.json(match, { status: 201 })

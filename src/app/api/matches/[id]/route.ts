@@ -14,9 +14,9 @@ export async function GET(
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
     }
 
-    const match = await prisma.match.findFirst({
-      where: { 
-        id: params.id,
+    const teamUser = await prisma.teamUser.findFirst({
+      where: {
+        userId: session.user.id,
         team: {
           users: {
             some: {
@@ -26,7 +26,26 @@ export async function GET(
         }
       },
       include: {
-        events: true
+        team: true
+      }
+    })
+
+    if (!teamUser) {
+      return NextResponse.json({ error: 'Usuário não pertence a nenhum time' }, { status: 401 })
+    }
+
+    const match = await prisma.match.findFirst({
+      where: { 
+        id: params.id,
+        teamId: teamUser.teamId 
+      },
+      include: {
+        events: true,
+        presences: {
+          include: {
+            player: true
+          }
+        }
       }
     })
 
@@ -63,7 +82,8 @@ export async function PUT(
       opponentScore1,
       ourScore2,
       opponentScore2,
-      events = [] // Novo campo para eventos
+      events = [], // Novo campo para eventos
+      presences // Presenças reais por quadro: { playerId, quadro } (undefined = não alterar)
     } = data
 
     // Verificar se a partida pertence ao time do usuário
@@ -122,16 +142,39 @@ export async function PUT(
           assist: event.assist
         }))
       })
+    }
 
-      // Buscar partida atualizada com eventos
-      const matchWithEvents = await prisma.match.findUnique({
+    // Se veio a lista de presenças, substituir as existentes pelas novas
+    if (Array.isArray(presences)) {
+      await prisma.matchPresence.deleteMany({
+        where: { matchId: params.id }
+      })
+
+      if (presences.length > 0) {
+        await prisma.matchPresence.createMany({
+          data: presences.map((p: any) => ({
+            matchId: params.id,
+            playerId: p.playerId,
+            quadro: p.quadro
+          }))
+        })
+      }
+    }
+
+    if (events.length > 0 || Array.isArray(presences)) {
+      const matchWithRelations = await prisma.match.findUnique({
         where: { id: params.id },
         include: {
-          events: true
+          events: true,
+          presences: {
+            include: {
+              player: true
+            }
+          }
         }
       })
 
-      return NextResponse.json(matchWithEvents)
+      return NextResponse.json(matchWithRelations)
     }
 
     return NextResponse.json(updatedMatch)

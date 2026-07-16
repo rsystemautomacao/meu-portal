@@ -102,7 +102,12 @@ export async function GET() {
       orderBy: { date: 'desc' },
       take: 5,
       include: {
-        events: true
+        events: true,
+        presences: {
+          include: {
+            player: true
+          }
+        }
       }
     })
     // Último resultado

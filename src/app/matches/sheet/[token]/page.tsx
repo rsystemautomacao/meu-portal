@@ -567,7 +567,9 @@ export default function MatchSheetPage() {
             quadro: ev.quadro || quadroSelecionado,
             assist: ev.assist,
             goleiro: ev.goleiro
-          }))
+          })),
+          quadro: quadroSelecionado,
+          presentes: presentes.map(p => ({ playerId: p.id }))
         })
       })
       setQuadrosPreenchidos(q => ({ ...q, [quadroSelecionado as 1|2]: true }))

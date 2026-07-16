@@ -76,6 +76,7 @@ model Player {
   payments        Payment[]
   monthlyFeeExceptions MonthlyFeeException[]
   historicalDebts HistoricalDebt[]
+  presences       MatchPresence[]
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 }
@@ -96,6 +97,7 @@ model Match {
   team           Team      @relation(fields: [teamId], references: [id], onDelete: Cascade)
   teamId         String    @db.ObjectId
   events         MatchEvent[]
+  presences      MatchPresence[]
   status         String    @default("open") // open, completed, expired
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
@@ -115,6 +117,19 @@ model MatchEvent {
   goleiro   String?  // Nome do goleiro (opcional, para gols sofridos)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model MatchPresence {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  match     Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  matchId   String   @db.ObjectId
+  player    Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  playerId  String   @db.ObjectId
+  quadro    Int      // 1 ou 2
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([matchId, playerId, quadro])
 }
 
 model Transaction {

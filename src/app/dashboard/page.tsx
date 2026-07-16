@@ -37,6 +37,7 @@ interface Match {
   ourScore2?: number;
   opponentScore2?: number;
   events?: any[]; // Adicionado para armazenar os eventos de cada partida
+  presences?: any[]; // Adicionado para armazenar as presenças de cada partida
 }
 
 interface Transaction {
@@ -168,73 +169,66 @@ export default function DashboardPage() {
     let presencas: Record<string, number> = {};
     
     matches.forEach(match => {
-      if (!Array.isArray(match.events)) return;
-      
-      // Presenças: para cada quadro, se o jogador tem evento 'home' naquele quadro, conta presença
-      [1, 2].forEach(quadro => {
-        const presentesQuadro = new Set(
-          (match.events || [])
-            .filter(ev => 
-              ev.team === 'home' && 
-              ev.quadro === quadro && 
-              ev.player && 
-              typeof ev.player === 'string' && 
-              ev.player !== 'Adversário' &&
-              ev.player.trim() !== ''
-            )
-            .map(ev => ev.player)
-        );
-        presentesQuadro.forEach(playerName => {
-          allPlayers.add(playerName);
-          if (!presencas[playerName]) presencas[playerName] = 0;
-          presencas[playerName]++;
-        });
-      });
-      
-      (match.events || []).forEach(ev => {
-        // Gols sofridos por goleiro: contabilizar SEMPRE que houver campo goleiro
-        if (ev.goleiro && typeof ev.goleiro === 'string' && ev.type === 'goal' && ev.team === 'away' && ev.goleiro !== 'Adversário' && ev.goleiro.trim() !== '') {
-          allPlayers.add(ev.goleiro);
-          if (!stats[ev.goleiro]) stats[ev.goleiro] = { presencas: 0, gols: 0, assist: 0, amarelo: 0, vermelho: 0, faltas: 0, golsSofridos: 0 };
-          stats[ev.goleiro].golsSofridos++;
-        }
-        
-        // Contabilizar gols contra (gols do adversário)
-        if (ev.type === 'goal' && ev.team === 'away') {
-          golsContra++;
-        }
-        
-        // Estatísticas normais para jogadores do time (NUNCA para adversário)
-        if (!ev.player || ev.player === 'Adversário' || ev.player.trim() === '' || ev.team === 'away') return;
-        
-        const playerName = typeof ev.player === 'string' ? ev.player : ev.player.name;
-        
-        // Garantir que é um jogador válido do time
-        if (!playerName || playerName === 'Adversário' || playerName.trim() === '') return;
-        
-        allPlayers.add(playerName);
-        if (!stats[playerName]) stats[playerName] = { presencas: 0, gols: 0, assist: 0, amarelo: 0, vermelho: 0, faltas: 0, golsSofridos: 0 };
-        
-        if (ev.type === 'goal') {
-          if (ev.team === 'home') {
-            stats[playerName].gols++;
-            golsPro++;
+      // PRESENÇAS: APENAS baseadas na seleção explícita do jogador
+      if (Array.isArray(match.presences)) {
+        match.presences.forEach(presence => {
+          const playerId = presence.playerId
+          const playerName = presence.player?.name || playerId
+          if (playerName && playerName !== 'Adversário' && playerName.trim() !== '') {
+            allPlayers.add(playerName)
+            if (!presencas[playerName]) presencas[playerName] = 0
+            presencas[playerName]++
           }
-        }
-        if (ev.type === 'assist') stats[playerName].assist++;
-        if (ev.type === 'yellow_card') stats[playerName].amarelo++;
-        if (ev.type === 'red_card') stats[playerName].vermelho++;
-        if (ev.type === 'fault') stats[playerName].faltas = (stats[playerName].faltas || 0) + 1
-      });
+        })
+      }
+      
+      // EVENTOS: apenas para estatísticas de jogo (gols, cartões, etc.)
+      if (Array.isArray(match.events)) {
+        match.events.forEach(ev => {
+          // Gols sofridos por goleiro: contabilizar SEMPRE que houver campo goleiro
+          if (ev.goleiro && typeof ev.goleiro === 'string' && ev.type === 'goal' && ev.team === 'away' && ev.goleiro !== 'Adversário' && ev.goleiro.trim() !== '') {
+            allPlayers.add(ev.goleiro);
+            if (!stats[ev.goleiro]) stats[ev.goleiro] = { presencas: 0, gols: 0, assist: 0, amarelo: 0, vermelho: 0, faltas: 0, golsSofridos: 0 };
+            stats[ev.goleiro].golsSofridos++;
+          }
+          
+          // Contabilizar gols contra (gols do adversário)
+          if (ev.type === 'goal' && ev.team === 'away') {
+            golsContra++;
+          }
+          
+          // Estatísticas normais para jogadores do time (NUNCA para adversário)
+          if (!ev.player || ev.player === 'Adversário' || ev.player.trim() === '' || ev.team === 'away') return;
+          
+          const playerName = typeof ev.player === 'string' ? ev.player : ev.player.name;
+          
+          // Garantir que é um jogador válido do time
+          if (!playerName || playerName === 'Adversário' || playerName.trim() === '') return;
+          
+          allPlayers.add(playerName);
+          if (!stats[playerName]) stats[playerName] = { presencas: 0, gols: 0, assist: 0, amarelo: 0, vermelho: 0, faltas: 0, golsSofridos: 0 };
+          
+          if (ev.type === 'goal') {
+            if (ev.team === 'home') {
+              stats[playerName].gols++;
+              golsPro++;
+            }
+          }
+          if (ev.type === 'assist') stats[playerName].assist++;
+          if (ev.type === 'yellow_card') stats[playerName].amarelo++;
+          if (ev.type === 'red_card') stats[playerName].vermelho++;
+          if (ev.type === 'fault') stats[playerName].faltas = (stats[playerName].faltas || 0) + 1
+        });
+      }
     });
     
     // Preencher presenças no stats
     Object.keys(presencas).forEach(player => {
-      if (!stats[player]) stats[player] = { presencas: 0, gols: 0, assist: 0, amarelo: 0, vermelho: 0, faltas: 0, golsSofridos: 0 };
-      stats[player].presencas = presencas[player];
-    });
+      if (!stats[player]) stats[player] = { presencas: 0, gols: 0, assist: 0, amarelo: 0, vermelho: 0, faltas: 0, golsSofridos: 0 }
+      stats[player].presencas = presencas[player]
+    })
     
-    return { stats, allPlayers: Array.from(allPlayers), golsPro, golsContra };
+    return { stats, allPlayers: Array.from(allPlayers), golsPro, golsContra, presencas };
   }
 
   // Função para lidar com clique no ícone
