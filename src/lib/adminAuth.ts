@@ -80,7 +80,7 @@ export async function verifyAdminSessionToken(token: string | undefined | null):
 
 /** Para uso em Route Handlers (runtime Node): lê o cookie da requisição atual e valida. */
 export async function getAdminSession(): Promise<{ email: string } | null> {
-  const token = cookies().get(ADMIN_SESSION_COOKIE)?.value
+  const token = (await cookies()).get(ADMIN_SESSION_COOKIE)?.value
   return verifyAdminSessionToken(token)
 }
 

@@ -5,8 +5,9 @@ import { getActiveSession } from '@/lib/session'
 // GET - Buscar partida específica
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params: paramsPromise }: { params: Promise<{ id: string }> }
 ) {
+  const params = await paramsPromise
   try {
     const session = await getActiveSession()
     if (!session?.user) {
@@ -62,8 +63,9 @@ export async function GET(
 // PUT - Atualizar partida
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params: paramsPromise }: { params: Promise<{ id: string }> }
 ) {
+  const params = await paramsPromise
   try {
     const session = await getActiveSession()
     if (!session?.user) {
@@ -186,8 +188,9 @@ export async function PUT(
 // DELETE - Excluir partida
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params: paramsPromise }: { params: Promise<{ id: string }> }
 ) {
+  const params = await paramsPromise
   try {
     const session = await getActiveSession()
     if (!session?.user) {

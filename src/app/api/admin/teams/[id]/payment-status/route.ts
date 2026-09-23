@@ -6,8 +6,9 @@ import { getAdminSession } from '@/lib/adminAuth'
 // GET - Verificar status de pagamento do time
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params: paramsPromise }: { params: Promise<{ id: string }> }
 ) {
+  const params = await paramsPromise
   try {
     const adminSession = await getAdminSession()
     if (!adminSession) {

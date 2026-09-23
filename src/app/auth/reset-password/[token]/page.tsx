@@ -1,8 +1,9 @@
 "use client"
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 
-export default function ResetPasswordPage({ params }: { params: { token: string } }) {
+export default function ResetPasswordPage() {
+  const params = useParams<{ token: string }>()
   const router = useRouter()
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
@@ -29,7 +30,7 @@ export default function ResetPasswordPage({ params }: { params: { token: string 
       const response = await fetch('/api/auth/reset-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: params.token, password })
+        body: JSON.stringify({ token: params?.token, password })
       })
       const data = await response.json()
       if (!response.ok) throw new Error(data.error || 'Erro ao redefinir senha')

@@ -4,8 +4,9 @@ import { getAdminSession } from '@/lib/adminAuth'
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params: paramsPromise }: { params: Promise<{ id: string }> }
 ) {
+  const params = await paramsPromise
   try {
     // Verificar se é admin
     const adminSession = await getAdminSession()

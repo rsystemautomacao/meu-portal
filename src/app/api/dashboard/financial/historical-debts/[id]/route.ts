@@ -5,8 +5,9 @@ import { getActiveSession } from '@/lib/session'
 // DELETE - Excluir débito histórico
 export async function DELETE(
   req: Request,
-  { params }: { params: { id: string } }
+  { params: paramsPromise }: { params: Promise<{ id: string }> }
 ) {
+  const params = await paramsPromise
   try {
     const session = await getActiveSession()
     if (!session?.user?.id) {

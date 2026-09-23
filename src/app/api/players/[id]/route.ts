@@ -4,8 +4,9 @@ import { getActiveSession } from '@/lib/session'
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params: paramsPromise }: { params: Promise<{ id: string }> }
 ) {
+  const params = await paramsPromise
   try {
     const session = await getActiveSession()
     if (!session?.user) {
@@ -80,8 +81,9 @@ export async function GET(
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params: paramsPromise }: { params: Promise<{ id: string }> }
 ) {
+  const params = await paramsPromise
   try {
     const session = await getActiveSession()
     if (!session?.user) {
@@ -209,8 +211,9 @@ export async function PUT(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params: paramsPromise }: { params: Promise<{ id: string }> }
 ) {
+  const params = await paramsPromise
   try {
     const session = await getActiveSession()
 

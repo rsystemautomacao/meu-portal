@@ -5,8 +5,9 @@ import { logManualMessage } from '@/lib/userLogs'
 
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  { params: paramsPromise }: { params: Promise<{ id: string }> }
 ) {
+  const params = await paramsPromise
   try {
     console.log('🚀 API de mensagens chamada')
 

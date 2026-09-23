@@ -1,14 +1,15 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import bcrypt from 'bcrypt'
+import bcrypt from 'bcryptjs'
 import { logAccessBlocked, logAccessUnblocked, logManualMessage } from '@/lib/userLogs'
 import { getAdminSession } from '@/lib/adminAuth'
 
 // PUT - Atualizar status do time
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params: paramsPromise }: { params: Promise<{ id: string }> }
 ) {
+  const params = await paramsPromise
   try {
     const adminSession = await getAdminSession()
     if (!adminSession) {
@@ -143,8 +144,9 @@ export async function PUT(
 // DELETE - Excluir time
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params: paramsPromise }: { params: Promise<{ id: string }> }
 ) {
+  const params = await paramsPromise
   try {
     const adminSession = await getAdminSession()
     if (!adminSession) {

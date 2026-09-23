@@ -3,7 +3,8 @@ import { prisma } from '@/lib/prisma';
 import { getAdminSession } from '@/lib/adminAuth';
 
 // GET - Listar mensalidades do sistema para o time/ano
-export async function GET(request: Request, { params }: { params: { id: string } }) {
+export async function GET(request: Request, { params: paramsPromise }: { params: Promise<{ id: string }> }) {
+  const params = await paramsPromise
   try {
     const adminSession = await getAdminSession();
     if (!adminSession) {
@@ -25,7 +26,8 @@ export async function GET(request: Request, { params }: { params: { id: string }
 }
 
 // POST - Gerar mensalidade do sistema para o time/mês/ano atual
-export async function POST(request: Request, { params }: { params: { id: string } }) {
+export async function POST(request: Request, { params: paramsPromise }: { params: Promise<{ id: string }> }) {
+  const params = await paramsPromise
   try {
     const adminSession = await getAdminSession();
     if (!adminSession) {

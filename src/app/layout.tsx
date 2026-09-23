@@ -1,24 +1,8 @@
 import '@/styles/globals.css'
 import { Inter } from 'next/font/google'
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Providers } from '@/components/providers'
-import dynamic from 'next/dynamic'
-
-// Carregar componentes PWA dinamicamente apenas em produção
-const PWAInstallPrompt = dynamic(() => import('@/components/PWAInstallPrompt'), {
-  ssr: false,
-  loading: () => null,
-})
-
-const OfflineIndicator = dynamic(() => import('@/components/OfflineIndicator').then(mod => ({ default: mod.OfflineIndicator })), {
-  ssr: false,
-  loading: () => null,
-})
-
-const ServiceWorkerRegister = dynamic(() => import('@/components/ServiceWorkerRegister'), {
-  ssr: false,
-  loading: () => null,
-})
+import { PWAOverlays, PWAServiceWorker } from '@/components/PWAComponents'
 
 const inter = Inter({ 
   subsets: ['latin'],
@@ -31,13 +15,6 @@ export const metadata: Metadata = {
   title: 'Meu Portal - Gerenciamento de Times',
   description: 'Aplicativo completo para gerenciamento de times esportivos com controle de jogadores, partidas, estatísticas e finanças',
   manifest: '/manifest.json',
-  themeColor: '#1a365d',
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-    maximumScale: 1,
-    userScalable: false,
-  },
   icons: {
     icon: [
       { url: '/icons/icon-192x192.png', sizes: '192x192', type: 'image/png' },
@@ -72,6 +49,14 @@ export const metadata: Metadata = {
     index: true,
     follow: true,
   },
+}
+
+export const viewport: Viewport = {
+  themeColor: '#1a365d',
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 }
 
 export default function RootLayout({
@@ -115,10 +100,9 @@ export default function RootLayout({
       </head>
       <body className="h-full bg-gray-50 text-gray-900">
         <Providers>
-          {process.env.NODE_ENV === 'production' && <ServiceWorkerRegister />}
+          {process.env.NODE_ENV === 'production' && <PWAServiceWorker />}
           {children}
-          {process.env.NODE_ENV === 'production' && <PWAInstallPrompt />}
-          {process.env.NODE_ENV === 'production' && <OfflineIndicator />}
+          {process.env.NODE_ENV === 'production' && <PWAOverlays />}
         </Providers>
       </body>
     </html>
