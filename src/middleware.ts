@@ -8,8 +8,13 @@ const PUBLIC_PATHS = [
   '/auth/logout',
   '/auth/register',
   '/auth/error',
+  '/auth/forgot-password',
+  '/auth/reset-password',
   '/acesso-bloqueado',
-  '/admin/login'
+  '/admin/login',
+  // Links compartilhados: o acesso é controlado pelo token na URL (validado nas APIs)
+  '/matches/sheet/',
+  '/shared-reports/'
 ]
 
 export async function middleware(request: NextRequest) {
@@ -31,8 +36,8 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
   
-  // Verificar se a rota é pública
-  const isPublicPath = PUBLIC_PATHS.some(path => 
+  // Verificar se a rota é pública (a landing "/" só na comparação exata)
+  const isPublicPath = request.nextUrl.pathname === '/' || PUBLIC_PATHS.some(path =>
     request.nextUrl.pathname.startsWith(path)
   )
   
@@ -81,7 +86,9 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
+     * - arquivos estáticos de /public (sw.js, workbox-*.js, manifest.json, ícones...),
+     *   que antes eram redirecionados para o login e quebravam o PWA para visitantes
      */
-    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+    '/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:js|json|map|xml|txt|png|jpg|jpeg|gif|svg|ico|webp)$).*)',
   ],
 } 
