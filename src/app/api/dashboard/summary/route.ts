@@ -26,6 +26,11 @@ export async function GET() {
     })
     const teamStatus = team?.status || 'ACTIVE'
 
+    // Time bloqueado: devolve só o status, para o cliente redirecionar sem receber os dados
+    if (teamStatus === 'BLOCKED') {
+      return NextResponse.json({ teamStatus })
+    }
+
     // Saldo em caixa
     const transactions = await prisma.transaction.findMany({
       where: { teamId: teamUser.teamId },

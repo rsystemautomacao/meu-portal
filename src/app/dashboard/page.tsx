@@ -1,6 +1,6 @@
 'use client'
 
-import { useSession } from 'next-auth/react'
+import { useSession, signOut } from 'next-auth/react'
 import {
   TrophyIcon,
   BanknotesIcon,
@@ -92,7 +92,7 @@ export default function DashboardPage() {
           const data = await res.json()
           if (data.teamStatus === 'BLOCKED') {
             // Forçar signOut e redirecionar
-            await fetch('/api/auth/logout')
+            await signOut({ redirect: false })
             router.push('/auth/login?blocked=1')
             return
           }

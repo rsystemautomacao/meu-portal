@@ -201,7 +201,7 @@ export default function SettingsPage() {
         if (!response.ok) throw new Error('Falha ao buscar configurações')
         const data = await response.json()
         if (data.status === 'BLOCKED') {
-          await fetch('/api/auth/logout')
+          await signOut({ redirect: false })
           router.push('/auth/login?blocked=1')
           return
         }

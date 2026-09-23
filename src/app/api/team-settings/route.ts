@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
+import { getActiveSession } from '@/lib/session'
+import { ImageUploadError, uploadImage } from '@/lib/imageUpload'
 
 async function getTeamId(userId: string) {
     const teamUser = await prisma.teamUser.findFirst({
@@ -32,6 +34,11 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: 'Time não encontrado' }, { status: 404 });
         }
 
+        // Time bloqueado: devolve só o status, para o cliente redirecionar sem receber os dados
+        if (team.status === 'BLOCKED') {
+            return NextResponse.json({ status: 'BLOCKED' });
+        }
+
         // Buscar configuração de mensalidade separadamente
         const monthlyFeeConfig = await prisma.monthlyFeeConfig.findFirst({
             where: { teamId }
@@ -49,7 +56,7 @@ export async function GET(request: NextRequest) {
 
 // PATCH: Atualizar configurações do time
 export async function PATCH(request: NextRequest) {
-    const session = await getServerSession(authOptions);
+    const session = await getActiveSession();
     if (!session?.user.id) {
         return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
     }
@@ -97,7 +104,7 @@ export async function PATCH(request: NextRequest) {
 
 // PUT: Atualizar configurações do time (suporte a FormData)
 export async function PUT(request: NextRequest) {
-    const session = await getServerSession(authOptions);
+    const session = await getActiveSession();
     if (!session?.user.id) {
         return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
     }
@@ -118,23 +125,13 @@ export async function PUT(request: NextRequest) {
             const logoFile = formData.get('logo') as File | null;
 
             let logoUrl = undefined;
-            if (logoFile) {
-                // Upload da imagem para o backend (API /api/upload)
-                const uploadFormData = new FormData();
-                uploadFormData.append('file', logoFile);
-
-                const uploadResponse = await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/upload`, {
-                    method: 'POST',
-                    body: uploadFormData,
-                });
-
-                if (!uploadResponse.ok) {
-                    const errorData = await uploadResponse.json();
-                    throw new Error(errorData.message || 'Falha no upload da imagem.');
+            if (logoFile && logoFile.size > 0) {
+                try {
+                    logoUrl = (await uploadImage(logoFile, 'team_logos')).secure_url;
+                } catch (uploadError) {
+                    const message = uploadError instanceof ImageUploadError ? uploadError.message : 'Falha no upload da imagem.';
+                    return NextResponse.json({ error: message }, { status: 400 });
                 }
-
-                const uploadData = await uploadResponse.json();
-                logoUrl = uploadData.secure_url;
             }
 
             await prisma.team.update({
@@ -185,7 +182,7 @@ export async function PUT(request: NextRequest) {
 
 // DELETE: Exclusão permanente mas preserva dados para análise
 export async function DELETE(request: NextRequest) {
-    const session = await getServerSession(authOptions);
+    const session = await getActiveSession();
     if (!session?.user.id) {
         return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
     }

@@ -1,14 +1,13 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { getActiveSession } from '@/lib/session'
 
 export async function GET(
   request: Request,
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getActiveSession()
     if (!session?.user) {
       return NextResponse.json(
         { error: 'Não autorizado' },
@@ -84,7 +83,7 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getActiveSession()
     if (!session?.user) {
       return NextResponse.json(
         { error: 'Não autorizado' },
@@ -213,7 +212,7 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getActiveSession()
 
     if (!session?.user) {
       return NextResponse.json(

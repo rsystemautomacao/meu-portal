@@ -44,50 +44,23 @@ export default function RegisterForm() {
         return
       }
 
-      let logoUrl = null
+      // A logo vai junto no cadastro: o servidor só faz o upload depois de validar os dados
+      const registerFormData = new FormData()
+      registerFormData.append('email', email)
+      registerFormData.append('password', password)
+      registerFormData.append('teamName', teamName)
+      registerFormData.append('whatsapp', whatsapp || '')
+      registerFormData.append('primaryColor', primaryColor)
+      registerFormData.append('secondaryColor', secondaryColor)
       if (logoFile) {
-        const uploadFormData = new FormData()
-        uploadFormData.append('file', logoFile)
-        
-        try {
-          console.log('Tentando fazer upload da logo...')
-          const uploadResponse = await fetch('/api/upload', {
-            method: 'POST',
-            body: uploadFormData,
-          })
-
-          if (!uploadResponse.ok) {
-            const errorData = await uploadResponse.json()
-            throw new Error(errorData.message || 'Erro ao fazer upload da logo')
-          }
-
-          const uploadResult = await uploadResponse.json()
-          logoUrl = uploadResult.secure_url
-          console.log('Logo enviada com sucesso:', logoUrl)
-        } catch (uploadError) {
-          console.error('Erro no upload da logo:', uploadError)
-          throw new Error('Erro ao fazer upload da logo')
-        }
+        registerFormData.append('logo', logoFile)
       }
 
       console.log('Tentando registrar usuário...')
       // Registrar usuário
       const registerResponse = await fetch('/api/auth/register', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email,
-          password,
-          team: {
-            name: teamName,
-            whatsapp,
-            primaryColor,
-            secondaryColor,
-            logo: logoUrl
-          },
-        }),
+        body: registerFormData,
       })
 
       const responseData = await registerResponse.json()
@@ -211,6 +184,7 @@ export default function RegisterForm() {
             type="password"
             autoComplete="new-password"
             required
+            minLength={6}
             className="block w-full rounded-2xl border-0 py-4 pl-12 pr-4 text-gray-900 shadow-lg ring-1 ring-inset ring-gray-200 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 sm:text-sm sm:leading-6 bg-white/80 backdrop-blur-sm"
           />
         </div>

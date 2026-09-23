@@ -19,9 +19,9 @@ export default function LoginForm() {
     const spyEmail = searchParams?.get('email')
     const spyMode = searchParams?.get('spy')
     
+    // Acesso de suporte: o servidor autoriza pela sessão do painel /admin, sem senha
     if (spyEmail && spyMode === 'true') {
       setEmail(spyEmail)
-      setPassword('Desbravadores@93') // Senha universal
       setIsSpyMode(true)
     }
 
@@ -106,15 +106,18 @@ export default function LoginForm() {
     }
 
     try {
-      const result = await signIn('credentials', {
-        redirect: false,
-        email: emailValue,
-        password: passwordValue,
-      })
+      const result = await signIn('credentials', isSpyMode
+        ? { redirect: false, email: emailValue, impersonate: 'true' }
+        : { redirect: false, email: emailValue, password: passwordValue }
+      )
 
       if (result?.error) {
         if (result.error === 'blocked') {
           setError('Seu acesso está bloqueado por inadimplência ou punição.\nEntre em contato para regularizar:\nE-mail: rsautomacao2000@gmail.com\nWhatsApp: (11) 94832-1756')
+        } else if (result.error === 'rate_limited') {
+          setError('Muitas tentativas de login. Aguarde alguns minutos e tente novamente.')
+        } else if (isSpyMode) {
+          setError('Sessão do painel admin inválida ou expirada. Entre no /admin novamente.')
         } else {
           setError('Credenciais inválidas')
         }
@@ -226,6 +229,7 @@ export default function LoginForm() {
         </div>
       </div>
 
+      {!isSpyMode && (
       <div className="space-y-3">
         <label
           htmlFor="password"
@@ -252,6 +256,7 @@ export default function LoginForm() {
           />
         </div>
       </div>
+      )}
 
       <div>
         <button

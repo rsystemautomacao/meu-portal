@@ -1,26 +1,73 @@
 import { NextResponse } from 'next/server'
+import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
 import { MessagingService } from '@/lib/messaging'
 import { logWelcomeMessage } from '@/lib/userLogs'
+import { ImageUploadError, uploadImage } from '@/lib/imageUpload'
+import { getClientIp, rateLimit, tooManyRequestsBody } from '@/lib/rateLimit'
 
-interface TeamData {
-  name: string
-  whatsapp?: string
-  primaryColor: string
-  secondaryColor: string
-  logo?: string
-}
+const hexColor = z.string().regex(/^#[0-9a-fA-F]{6}$/, 'Cor inválida')
 
-interface RegisterData {
-  email: string
-  password: string
-  team: TeamData
+const registerSchema = z.object({
+  email: z.string().email('E-mail inválido').max(254),
+  password: z.string().min(6, 'A senha deve ter pelo menos 6 caracteres').max(128),
+  team: z.object({
+    name: z.string().trim().min(2, 'Nome do time muito curto').max(80, 'Nome do time muito longo'),
+    whatsapp: z.string().trim().max(30).optional(),
+    primaryColor: hexColor.optional(),
+    secondaryColor: hexColor.optional(),
+  }),
+})
+
+// Aceita multipart/form-data (com a logo como arquivo) ou JSON (sem logo).
+// A logo só é enviada ao Cloudinary depois de validar os dados, para que o
+// cadastro não sirva de upload anônimo.
+async function parseRequest(req: Request): Promise<{ data: unknown; logoFile: File | null }> {
+  const contentType = req.headers.get('content-type') || ''
+  if (contentType.includes('multipart/form-data')) {
+    const form = await req.formData()
+    const text = (key: string) => {
+      const value = form.get(key)
+      return typeof value === 'string' && value !== '' ? value : undefined
+    }
+    const logo = form.get('logo')
+    return {
+      data: {
+        email: text('email'),
+        password: text('password'),
+        team: {
+          name: text('teamName'),
+          whatsapp: text('whatsapp'),
+          primaryColor: text('primaryColor'),
+          secondaryColor: text('secondaryColor'),
+        },
+      },
+      // Sem `instanceof File`: o global File não existe no Node 18
+      logoFile: logo && typeof logo !== 'string' && logo.size > 0 ? logo : null,
+    }
+  }
+
+  const body = await req.json()
+  return { data: body, logoFile: null }
 }
 
 export async function POST(req: Request) {
   try {
-    const { email, password, team }: RegisterData = await req.json()
+    const limit = rateLimit(`register:${getClientIp(req.headers)}`, 5, 60 * 60 * 1000)
+    if (!limit.ok) {
+      return NextResponse.json({ message: tooManyRequestsBody(limit.retryAfterSec).error }, { status: 429 })
+    }
+
+    const { data, logoFile } = await parseRequest(req)
+    const parsed = registerSchema.safeParse(data)
+    if (!parsed.success) {
+      return NextResponse.json(
+        { message: parsed.error.issues[0]?.message || 'Dados inválidos' },
+        { status: 400 }
+      )
+    }
+    const { email, password, team } = parsed.data
 
     // Verificar se o email já existe
     const existingUser = await prisma.user.findUnique({
@@ -44,6 +91,16 @@ export async function POST(req: Request) {
         { message: 'Nome do time já cadastrado' },
         { status: 400 }
       )
+    }
+
+    let logoUrl: string | undefined
+    if (logoFile) {
+      try {
+        logoUrl = (await uploadImage(logoFile, 'team_logos')).secure_url
+      } catch (uploadError) {
+        const message = uploadError instanceof ImageUploadError ? uploadError.message : 'Erro ao fazer upload da logo'
+        return NextResponse.json({ message }, { status: 400 })
+      }
     }
 
     // Hash da senha
@@ -72,7 +129,7 @@ export async function POST(req: Request) {
             whatsapp: team.whatsapp,
             primaryColor: team.primaryColor,
             secondaryColor: team.secondaryColor,
-            logo: team.logo
+            logo: logoUrl
           }
         })
 
@@ -144,10 +201,7 @@ export async function POST(req: Request) {
   } catch (error) {
     console.error('Erro ao criar usuário:', error)
     return NextResponse.json(
-      { 
-        message: 'Erro ao criar usuário',
-        details: error instanceof Error ? error.message : 'Erro desconhecido'
-      },
+      { message: 'Erro ao criar usuário' },
       { status: 500 }
     )
   }

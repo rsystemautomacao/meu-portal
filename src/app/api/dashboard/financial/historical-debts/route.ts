@@ -1,12 +1,11 @@
 import { NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth/next'
-import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { getActiveSession } from '@/lib/session'
 
 // GET - Buscar débitos históricos
 export async function GET(req: Request) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getActiveSession()
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
     }
@@ -56,7 +55,7 @@ export async function GET(req: Request) {
 // POST - Criar débito histórico
 export async function POST(req: Request) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getActiveSession()
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
     }

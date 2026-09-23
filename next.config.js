@@ -118,23 +118,8 @@ const withPWA = require('next-pwa')({
         },
       },
     },
-    {
-      urlPattern: ({ url }) => {
-        const isSameOrigin = self.origin === url.origin;
-        const isApiRoute = url.pathname.startsWith('/api/');
-        const isAuthRoute = url.pathname.startsWith('/api/auth/');
-        return isSameOrigin && isApiRoute && !isAuthRoute;
-      },
-      handler: 'NetworkFirst',
-      options: {
-        cacheName: 'apis',
-        networkTimeoutSeconds: 10,
-        expiration: {
-          maxEntries: 16,
-          maxAgeSeconds: 24 * 60 * 60, // 24 hours
-        },
-      },
-    },
+    // /api/* propositalmente sem cache: as respostas têm dados financeiros e pessoais
+    // do time logado e ficariam no aparelho mesmo depois do logout.
     {
       urlPattern: ({ url }) => {
         const isSameOrigin = self.origin === url.origin;
@@ -171,11 +156,8 @@ const withPWA = require('next-pwa')({
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  experimental: {
-    serverActions: true,
-  },
   images: {
-    domains: ['res.cloudinary.com'],
+    remotePatterns: [{ protocol: 'https', hostname: 'res.cloudinary.com' }],
   },
 }
 

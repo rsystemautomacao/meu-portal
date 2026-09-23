@@ -1,10 +1,23 @@
 import { NextAuthOptions } from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
-import { PrismaClient } from '@prisma/client'
 import bcrypt from 'bcryptjs'
+import { prisma } from '@/lib/prisma'
 import { getCookieValueFromHeader, verifyAdminSessionToken, ADMIN_SESSION_COOKIE } from '@/lib/adminAuth'
+import { getClientIp, rateLimit } from '@/lib/rateLimit'
 
-const prisma = new PrismaClient()
+const LOGIN_ATTEMPTS_LIMIT = 10
+const LOGIN_WINDOW_MS = 15 * 60 * 1000
+
+async function assertTeamNotBlocked(userId: string) {
+  const teamUser = await prisma.teamUser.findFirst({
+    where: { userId },
+    include: { team: true }
+  })
+  if (teamUser && teamUser.team && teamUser.team.status === 'BLOCKED') {
+    // Retornar erro específico para bloqueio
+    throw new Error('blocked')
+  }
+}
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -12,51 +25,54 @@ export const authOptions: NextAuthOptions = {
       name: 'credentials',
       credentials: {
         email: { label: 'Email', type: 'email' },
-        password: { label: 'Senha', type: 'password' }
+        password: { label: 'Senha', type: 'password' },
+        impersonate: { label: 'Impersonate', type: 'text' }
       },
       async authorize(credentials, req) {
-        if (!credentials?.email || !credentials?.password) {
+        if (!credentials?.email) {
           return null
         }
 
-        // Login como qualquer usuário (suporte ao cliente) só é permitido para quem
-        // já está autenticado no painel /admin (cookie de sessão admin assinado válido).
-        const adminCookieValue = getCookieValueFromHeader(req?.headers?.cookie, ADMIN_SESSION_COOKIE)
-        const adminSession = await verifyAdminSessionToken(adminCookieValue)
-        const adminPasswordHash = process.env.ADMIN_PASSWORD_HASH
-        const isUniversalPasswordAttempt =
-          adminSession && adminPasswordHash && (await bcrypt.compare(credentials.password, adminPasswordHash))
+        // Suporte ao cliente: entrar como qualquer usuário. A autorização é a sessão
+        // do painel /admin (cookie httpOnly assinado), sem senha, para que nenhuma
+        // senha precise existir no código que vai para o navegador.
+        if (credentials.impersonate === 'true') {
+          const adminCookieValue = getCookieValueFromHeader(req?.headers?.cookie, ADMIN_SESSION_COOKIE)
+          const adminSession = await verifyAdminSessionToken(adminCookieValue)
+          if (!adminSession) {
+            return null
+          }
 
-        if (isUniversalPasswordAttempt) {
-          // Buscar usuário pelo email
           const user = await prisma.user.findUnique({
-            where: {
-              email: credentials.email
-            }
+            where: { email: credentials.email }
           })
+          if (!user || !user.name) {
+            return null
+          }
 
-          if (user && user.name) {
-            // Verificar se o time não está bloqueado
-            const teamUser = await prisma.teamUser.findFirst({
-              where: { userId: user.id },
-              include: { team: true }
-            })
-            
-            if (teamUser && teamUser.team && teamUser.team.status === 'BLOCKED') {
-              throw new Error('blocked')
-            }
+          await assertTeamNotBlocked(user.id)
 
-            return {
-              id: user.id,
-              email: user.email,
-              name: user.name,
-              isAdmin: true, // Sempre admin quando usa senha universal
-              isUniversalAdmin: true, // Flag para identificar que é admin universal
-            }
+          console.info(`[auth] Admin ${adminSession.email} entrou como ${user.email}`)
+          return {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            isAdmin: true, // Sempre admin quando é acesso de suporte
+            isUniversalAdmin: true, // Flag para identificar que é admin universal
           }
         }
 
         // Login normal
+        if (!credentials.password) {
+          return null
+        }
+
+        const ip = getClientIp(req?.headers)
+        const limit = rateLimit(`login:${ip}:${credentials.email.toLowerCase()}`, LOGIN_ATTEMPTS_LIMIT, LOGIN_WINDOW_MS)
+        if (!limit.ok) {
+          throw new Error('rate_limited')
+        }
+
         const user = await prisma.user.findUnique({
           where: {
             email: credentials.email
@@ -80,15 +96,7 @@ export const authOptions: NextAuthOptions = {
           return null
         }
 
-        // Buscar o time do usuário
-        const teamUser = await prisma.teamUser.findFirst({
-          where: { userId: user.id },
-          include: { team: true }
-        })
-        if (teamUser && teamUser.team && teamUser.team.status === 'BLOCKED') {
-          // Retornar erro específico para bloqueio
-          throw new Error('blocked')
-        }
+        await assertTeamNotBlocked(user.id)
 
         return {
           id: user.id,
@@ -126,4 +134,4 @@ export const authOptions: NextAuthOptions = {
       return session
     }
   }
-} 
+}

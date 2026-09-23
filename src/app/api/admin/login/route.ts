@@ -1,9 +1,15 @@
 import { NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
 import { ADMIN_SESSION_COOKIE, createAdminSessionToken } from '@/lib/adminAuth'
+import { getClientIp, rateLimit, tooManyRequestsBody } from '@/lib/rateLimit'
 
 export async function POST(request: Request) {
   try {
+    const limit = rateLimit(`admin-login:${getClientIp(request.headers)}`, 5, 15 * 60 * 1000)
+    if (!limit.ok) {
+      return NextResponse.json(tooManyRequestsBody(limit.retryAfterSec), { status: 429 })
+    }
+
     const { email, password } = await request.json()
 
     const adminEmail = process.env.ADMIN_EMAIL

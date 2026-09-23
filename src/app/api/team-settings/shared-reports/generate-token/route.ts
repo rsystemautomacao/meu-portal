@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { getServerSession } from 'next-auth/next'
-import { authOptions } from '@/lib/auth'
+import { getActiveSession } from '@/lib/session'
 import { randomBytes } from 'crypto'
 
 async function getTeamId(userId: string) {
@@ -14,7 +13,7 @@ async function getTeamId(userId: string) {
 
 // POST: Gerar novo token de compartilhamento
 export async function POST(request: NextRequest) {
-    const session = await getServerSession(authOptions);
+    const session = await getActiveSession();
     if (!session?.user.id) {
         return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
     }

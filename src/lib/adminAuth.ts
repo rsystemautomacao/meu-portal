@@ -27,6 +27,14 @@ function toHex(buffer: ArrayBuffer): string {
     .join('')
 }
 
+// Comparação em tempo constante (roda no Edge, sem o módulo crypto do Node)
+function safeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false
+  let diff = 0
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i)
+  return diff === 0
+}
+
 async function getSigningKey(): Promise<CryptoKey> {
   const secret = process.env.NEXTAUTH_SECRET
   if (!secret) {
@@ -58,7 +66,7 @@ export async function verifyAdminSessionToken(token: string | undefined | null):
   try {
     const key = await getSigningKey()
     const expectedSignature = toHex(await crypto.subtle.sign('HMAC', key, encoder.encode(payload)))
-    if (expectedSignature !== signature) return null
+    if (!safeEqual(expectedSignature, signature)) return null
 
     const [email, expiresAtStr] = base64UrlDecode(payload).split('|')
     const expiresAt = Number(expiresAtStr)

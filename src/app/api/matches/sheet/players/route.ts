@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
     // Buscar a partida pelo shareToken
     const match = await prisma.match.findFirst({
       where: { shareToken },
-      include: { team: true }
+      select: { teamId: true }
     })
 
     if (!match) {
@@ -26,6 +26,8 @@ export async function GET(request: NextRequest) {
         teamId: match.teamId,
         status: 'ACTIVE' // Apenas jogadores ativos
       },
+      // Link público: só o necessário para a súmula (sem mensalidade, nascimento etc.)
+      select: { id: true, name: true, number: true, position: true },
       orderBy: { name: 'asc' }
     })
 

@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import Link from 'next/link'
 import LoginForm from '@/components/auth/LoginForm'
 import Image from 'next/image'
@@ -48,8 +49,11 @@ export default function LoginPage() {
         </div>
 
         <div className="mt-8">
-          <LoginForm />
-          
+          {/* LoginForm usa useSearchParams, que exige Suspense no Next 14 */}
+          <Suspense>
+            <LoginForm />
+          </Suspense>
+
           <div className="mt-6">
             <div className="relative">
               <div className="absolute inset-0 flex items-center">

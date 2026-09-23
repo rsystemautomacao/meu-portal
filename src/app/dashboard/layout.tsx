@@ -51,7 +51,7 @@ export default function DashboardLayout({
     async function fetchTeamColors() {
       if (session?.user?.id) {
         try {
-          const response = await fetch(`/api/teams/colors?userId=${session.user.id}`)
+          const response = await fetch('/api/teams/colors')
           if (response.ok) {
             const colors = await response.json()
             setTeamColors(colors)

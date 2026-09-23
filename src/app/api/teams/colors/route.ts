@@ -1,21 +1,23 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { getActiveSession } from '@/lib/session'
 
-export async function GET(req: Request) {
+const DEFAULT_COLORS = {
+  primaryColor: '#1a365d',
+  secondaryColor: '#2563eb'
+}
+
+// Cores do time do usuário logado (antes aceitava qualquer ?userId= sem autenticação)
+export async function GET() {
   try {
-    const { searchParams } = new URL(req.url)
-    const userId = searchParams.get('userId')
-
-    if (!userId) {
-      return NextResponse.json(
-        { message: 'ID do usuário não fornecido' },
-        { status: 400 }
-      )
+    const session = await getActiveSession()
+    if (!session?.user?.id) {
+      return NextResponse.json({ message: 'Não autorizado' }, { status: 401 })
     }
 
     const teamUser = await prisma.teamUser.findFirst({
       where: {
-        userId: userId,
+        userId: session.user.id,
         role: 'owner'
       },
       include: {
@@ -29,12 +31,7 @@ export async function GET(req: Request) {
     })
 
     if (!teamUser?.team) {
-      return NextResponse.json(
-        {
-          primaryColor: '#1a365d',
-          secondaryColor: '#2563eb'
-        }
-      )
+      return NextResponse.json(DEFAULT_COLORS)
     }
 
     return NextResponse.json({
@@ -48,4 +45,4 @@ export async function GET(req: Request) {
       { status: 500 }
     )
   }
-} 
+}
